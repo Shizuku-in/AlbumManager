@@ -9,6 +9,7 @@ import 'package:album_manager/ui/album/tabs/files_tab.dart';
 import 'package:album_manager/ui/album/tabs/logs_tab.dart';
 import 'package:album_manager/ui/album/tabs/scans_tab.dart';
 import 'package:album_manager/ui/album/tabs/tracks_tab.dart';
+import 'package:album_manager/ui/common/collapsing_app_bar.dart';
 import 'package:album_manager/ui/common/cover_image.dart';
 import 'package:album_manager/ui/common/smooth_scroll.dart';
 import 'package:album_manager/util/format.dart';
@@ -107,6 +108,11 @@ class _AlbumPageState extends State<AlbumPage> with SingleTickerProviderStateMix
       body: CustomScrollView(controller: _scroll, slivers: [
         SliverAppBar(
           pinned: true,
+          // Background drawn by flexibleSpace so the scrolled-under change fades.
+          backgroundColor: Colors.transparent,
+          surfaceTintColor: Colors.transparent,
+          scrolledUnderElevation: 0,
+          flexibleSpace: const ScrolledUnderBackground(),
           title: Text(_s.title, maxLines: 1, overflow: TextOverflow.ellipsis),
           actions: [
             IconButton(tooltip: '打开文件夹', onPressed: () => openPath(_s.path), icon: const Icon(Icons.folder_open_outlined)),

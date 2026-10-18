@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 
+import 'package:album_manager/ui/common/collapsing_app_bar.dart';
 import 'package:album_manager/ui/common/smooth_scroll.dart';
 
-/// Top-level page with an M3 medium top app bar and smooth wheel scrolling.
+/// Top-level page with an collapsing M3 medium top app bar and smooth wheel scrolling.
 class AppPage extends StatefulWidget {
   final String title;
   final List<Widget> actions;
@@ -28,7 +29,7 @@ class _AppPageState extends State<AppPage> {
       body: CustomScrollView(
         controller: _scroll,
         slivers: [
-          SliverAppBar.medium(title: Text(widget.title), actions: [...widget.actions, const SizedBox(width: 12)]),
+          collapsingAppBar(title: Text(widget.title), actions: [...widget.actions, const SizedBox(width: 12)]),
           ...widget.slivers,
           const SliverToBoxAdapter(child: SizedBox(height: 24)),
         ],
