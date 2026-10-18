@@ -149,18 +149,12 @@ class _LibraryPageState extends State<LibraryPage> {
     };
   }
 
-  static const _gridDelegate = SliverGridDelegateWithMaxCrossAxisExtent(
-    maxCrossAxisExtent: 220,
-    mainAxisSpacing: 16,
-    crossAxisSpacing: 16,
-    childAspectRatio: 0.72,
-  );
-
   List<Widget> _gridSlivers(BuildContext context, List<AlbumSummary> albums) {
+    final gridDelegate = AlbumCard.gridDelegate(context);
     Widget grid(List<AlbumSummary> items) => SliverPadding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       sliver: SliverGrid.builder(
-        gridDelegate: _gridDelegate,
+        gridDelegate: gridDelegate,
         itemCount: items.length,
         itemBuilder: (context, i) => _marked(items[i], AlbumCard(album: items[i], onTap: () => _open(items[i]))),
       ),

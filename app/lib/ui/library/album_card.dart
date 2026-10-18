@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/rendering.dart';
 
 import 'package:album_manager/src/rust/third_party/album_model.dart';
 import 'package:album_manager/ui/common/cover_image.dart';
@@ -13,6 +14,19 @@ class AlbumCard extends StatelessWidget {
   final AlbumSummary album;
   final VoidCallback onTap;
   const AlbumCard({super.key, required this.album, required this.onTap});
+
+  static const _infoPadding = EdgeInsets.fromLTRB(12, 10, 8, 8);
+
+  /// Grid of cards at most 220 wide: a square cover plus an info area sized
+  /// for two title lines and one subtitle line. Unlike a fixed aspect ratio,
+  /// the info area doesn't shrink with narrow tiles and overflow.
+  static SliverGridDelegate gridDelegate(BuildContext context) {
+    final t = Theme.of(context).textTheme;
+    final scaler = MediaQuery.textScalerOf(context);
+    double line(TextStyle s) => scaler.scale(s.fontSize!) * (s.height ?? 1.2);
+    // +1 absorbs rounding in text layout.
+    return _CoverGridDelegate(_infoPadding.vertical + 2 * line(t.titleSmall!) + 2 + line(t.bodySmall!) + 1);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -46,7 +60,7 @@ class AlbumCard extends StatelessWidget {
           ),
           Expanded(
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(12, 10, 8, 8),
+              padding: _infoPadding,
               child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
                 Expanded(
                   child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
@@ -72,6 +86,32 @@ class AlbumCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class _CoverGridDelegate extends SliverGridDelegate {
+  static const _maxExtent = 220.0;
+  static const _spacing = 16.0;
+  final double infoHeight;
+  const _CoverGridDelegate(this.infoHeight);
+
+  @override
+  SliverGridLayout getLayout(SliverConstraints constraints) {
+    final width = constraints.crossAxisExtent;
+    // Same column count as SliverGridDelegateWithMaxCrossAxisExtent.
+    final columns = math.max(1, (width / (_maxExtent + _spacing)).ceil());
+    final tile = math.max(0.0, (width - _spacing * (columns - 1)) / columns);
+    return SliverGridRegularTileLayout(
+      crossAxisCount: columns,
+      mainAxisStride: tile + infoHeight + _spacing,
+      crossAxisStride: tile + _spacing,
+      childMainAxisExtent: tile + infoHeight,
+      childCrossAxisExtent: tile,
+      reverseCrossAxis: axisDirectionIsReversed(constraints.crossAxisDirection),
+    );
+  }
+
+  @override
+  bool shouldRelayout(_CoverGridDelegate oldDelegate) => oldDelegate.infoHeight != infoHeight;
 }
 
 /// M3 two-line list item.
