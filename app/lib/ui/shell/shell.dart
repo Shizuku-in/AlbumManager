@@ -76,7 +76,7 @@ class _ShellState extends State<Shell> {
             ValueListenableBuilder(
               valueListenable: library.scanProgress,
               builder: (context, scan, _) => scan == null
-                  ? const SizedBox(height: 4)
+                  ? const SizedBox.shrink()
                   : LinearProgressIndicator(value: scan.total == 0 ? null : scan.fraction),
             ),
             Expanded(
