@@ -7,7 +7,7 @@ import 'package:album_manager/ui/library/library_page.dart';
 import 'package:album_manager/ui/settings/settings_page.dart';
 import 'package:album_manager/ui/settings/welcome_page.dart';
 import 'package:album_manager/ui/shell/scan_status.dart';
-import 'package:album_manager/ui/shell/drawer_destination.dart';
+import 'package:album_manager/ui/shell/nav_panel.dart';
 import 'package:album_manager/ui/stats/stats_page.dart';
 import 'package:album_manager/ui/timeline/timeline_page.dart';
 
@@ -29,8 +29,8 @@ const _dests = [
 
 const _healthIndex = 3;
 
-/// M3 navigation: a standard navigation drawer on expanded widths,
-/// a navigation rail on medium widths.
+/// M3 navigation: a drawer on expanded widths, a rail on medium widths; the
+/// user can toggle between them and the change animates (see [NavPanel]).
 class Shell extends StatefulWidget {
   const Shell({super.key});
 
@@ -56,12 +56,6 @@ class _ShellState extends State<Shell> {
     navIndex.value = i;
   }
 
-  Widget _icon(int i, {required bool selected}) {
-    final icon = Icon(selected ? _dests[i].selectedIcon : _dests[i].icon);
-    if (i != _healthIndex || library.issueCount == 0) return icon;
-    return Badge.count(count: library.issueCount, child: icon);
-  }
-
   @override
   Widget build(BuildContext context) {
     final wide = MediaQuery.sizeOf(context).width >= 1200;
@@ -69,7 +63,21 @@ class _ShellState extends State<Shell> {
       body: Row(children: [
         ListenableBuilder(
           listenable: Listenable.merge([library, navIndex]),
-          builder: (context, _) => wide ? _drawer(context) : _rail(context),
+          builder: (context, _) => NavPanel(
+            wide: wide,
+            selectedIndex: navIndex.value,
+            onSelected: _select,
+            items: [
+              for (var i = 0; i < _dests.length; i++)
+                NavItem(
+                  icon: _dests[i].icon,
+                  selectedIcon: _dests[i].selectedIcon,
+                  label: _dests[i].label,
+                  count: i == _healthIndex ? library.issueCount : 0,
+                ),
+            ],
+            footer: const ScanStatus(),
+          ),
         ),
         Expanded(
           child: Column(children: [
@@ -94,49 +102,6 @@ class _ShellState extends State<Shell> {
           ]),
         ),
       ]),
-    );
-  }
-
-  Widget _drawer(BuildContext context) {
-    final tt = Theme.of(context).textTheme;
-    final cs = Theme.of(context).colorScheme;
-    return NavigationDrawer(
-      backgroundColor: cs.surfaceContainerLow,
-      selectedIndex: navIndex.value,
-      onDestinationSelected: _select,
-      children: [
-        const SizedBox(height: 12),
-        for (var i = 0; i < _dests.length; i++)
-          DrawerDestination(
-            icon: Icon(_dests[i].icon),
-            selectedIcon: Icon(_dests[i].selectedIcon),
-            // M3 drawer: counts are shown as trailing badge label text.
-            label: SizedBox(
-              width: 176,
-              child: Row(children: [
-                Expanded(child: Text(_dests[i].label)),
-                if (i == _healthIndex && library.issueCount > 0) Text('${library.issueCount}', style: tt.labelLarge),
-              ]),
-            ),
-          ),
-        const ScanStatus(),
-      ],
-    );
-  }
-
-  Widget _rail(BuildContext context) {
-    return NavigationRail(
-      selectedIndex: navIndex.value,
-      onDestinationSelected: _select,
-      labelType: NavigationRailLabelType.all,
-      destinations: [
-        for (var i = 0; i < _dests.length; i++)
-          NavigationRailDestination(
-            icon: _icon(i, selected: false),
-            selectedIcon: _icon(i, selected: true),
-            label: Text(_dests[i].label),
-          ),
-      ],
     );
   }
 }
