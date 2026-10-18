@@ -85,6 +85,7 @@ class _HealthPageState extends State<HealthPage> {
                   Wrap(spacing: 8, runSpacing: 8, children: [
                     for (final k in kinds)
                       ChoiceChip(
+                        showCheckmark: false,
                         avatar: Icon(k.icon, color: k.tone(context).color),
                         label: Text('${k.label}  ${byKind[k]!.length}'),
                         selected: k == kind,
