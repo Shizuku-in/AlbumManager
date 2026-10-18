@@ -7,6 +7,7 @@ import 'package:album_manager/ui/library/library_page.dart';
 import 'package:album_manager/ui/settings/settings_page.dart';
 import 'package:album_manager/ui/settings/welcome_page.dart';
 import 'package:album_manager/ui/shell/scan_status.dart';
+import 'package:album_manager/ui/shell/drawer_destination.dart';
 import 'package:album_manager/ui/stats/stats_page.dart';
 import 'package:album_manager/ui/timeline/timeline_page.dart';
 
@@ -106,7 +107,7 @@ class _ShellState extends State<Shell> {
       children: [
         const SizedBox(height: 12),
         for (var i = 0; i < _dests.length; i++)
-          NavigationDrawerDestination(
+          DrawerDestination(
             icon: Icon(_dests[i].icon),
             selectedIcon: Icon(_dests[i].selectedIcon),
             // M3 drawer: counts are shown as trailing badge label text.
