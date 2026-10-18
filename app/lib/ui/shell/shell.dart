@@ -158,13 +158,14 @@ class _PageHost extends StatefulWidget {
 }
 
 class _PageHostState extends State<_PageHost> with SingleTickerProviderStateMixin {
-  ThemeData? _theme;
+  Widget? _themedChild;
   late final _enter = AnimationController(vsync: this, duration: const Duration(milliseconds: 250), value: 1);
   late final _curve = CurvedAnimation(parent: _enter, curve: Easing.emphasizedDecelerate);
 
   @override
   void didUpdateWidget(_PageHost old) {
     super.didUpdateWidget(old);
+    if (widget.child != old.child) _themedChild = null;
     if (widget.active && !old.active) _enter.forward(from: 0);
   }
 
@@ -177,8 +178,13 @@ class _PageHostState extends State<_PageHost> with SingleTickerProviderStateMixi
 
   @override
   Widget build(BuildContext context) {
-    final live = Theme.of(context);
-    if (widget.active || _theme == null) _theme = live;
-    return FadeTransition(opacity: _curve, child: Theme(data: _theme!, child: widget.child));
+    // Subscribe to animated theme updates, but only forward them while visible.
+    // Capture all inherited themes: Theme(data: ...) alone still inherits the
+    // live Cupertino theme and wakes hidden descendants on every frame.
+    Theme.of(context);
+    if (widget.active || _themedChild == null) {
+      _themedChild = InheritedTheme.captureAll(context, widget.child);
+    }
+    return FadeTransition(opacity: _curve, child: _themedChild!);
   }
 }

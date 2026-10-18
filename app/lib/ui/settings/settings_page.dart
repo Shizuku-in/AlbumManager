@@ -16,7 +16,6 @@ class SettingsPage extends StatelessWidget {
     return ListenableBuilder(
       listenable: Listenable.merge([library, settings]),
       builder: (context, _) {
-        final t = Theme.of(context);
         Widget group(String title, List<Widget> children) => Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
               child: Card.outlined(
@@ -95,12 +94,11 @@ class SettingsPage extends StatelessWidget {
                 ),
               ]),
               group('关于', [
-                ListTile(
-                  leading: const Icon(Icons.album_outlined),
-                  title: const Text('Album Manager'),
+                const ListTile(
+                  leading: Icon(Icons.album_outlined),
+                  title: Text('Album Manager'),
                   subtitle: Text(
                     'Flutter + Rust。解析 EAC / XLD 抓轨日志（AccurateRip、CTDB、CRC）、CUE（自动识别 Shift-JIS / GBK 等编码）、FLAC / WAV / APE / TAK / TTA / DSF 等格式。',
-                    style: t.textTheme.bodyMedium?.copyWith(color: t.colorScheme.onSurfaceVariant),
                   ),
                 ),
               ]),
