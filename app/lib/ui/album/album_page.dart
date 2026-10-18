@@ -10,6 +10,7 @@ import 'package:album_manager/ui/album/tabs/logs_tab.dart';
 import 'package:album_manager/ui/album/tabs/scans_tab.dart';
 import 'package:album_manager/ui/album/tabs/tracks_tab.dart';
 import 'package:album_manager/ui/common/cover_image.dart';
+import 'package:album_manager/ui/common/smooth_scroll.dart';
 import 'package:album_manager/util/format.dart';
 import 'package:album_manager/util/labels.dart';
 import 'package:album_manager/util/system.dart';
@@ -29,6 +30,7 @@ class _AlbumPageState extends State<AlbumPage> with SingleTickerProviderStateMix
   Album? _album;
   late final _tabs = TabController(length: 4, vsync: this)..addListener(() => setState(() {}));
   bool _busy = false;
+  final _scroll = SmoothScrollController();
 
   @override
   void initState() {
@@ -41,6 +43,7 @@ class _AlbumPageState extends State<AlbumPage> with SingleTickerProviderStateMix
   void dispose() {
     library.albumChanged.removeListener(_onChanged);
     _tabs.dispose();
+    _scroll.dispose();
     super.dispose();
   }
 
@@ -101,7 +104,7 @@ class _AlbumPageState extends State<AlbumPage> with SingleTickerProviderStateMix
     final hasBadCue = a?.cues.any((c) => !c.isUtf8) ?? false;
     final issues = _s.issues.where((i) => i.kind != IssueKind.nonStandardName).toList();
     return Scaffold(
-      body: CustomScrollView(slivers: [
+      body: CustomScrollView(controller: _scroll, slivers: [
         SliverAppBar(
           pinned: true,
           title: Text(_s.title, maxLines: 1, overflow: TextOverflow.ellipsis),
@@ -193,7 +196,7 @@ class _AlbumPageState extends State<AlbumPage> with SingleTickerProviderStateMix
             elevation: 1,
             borderRadius: BorderRadius.circular(16),
             clipBehavior: Clip.antiAlias,
-            child: Hero(tag: 'cover:${s.id}', child: CoverImage(path: s.coverThumb, radius: 16)),
+            child: CoverImage(path: s.coverThumb, radius: 16),
           ),
         ),
         const SizedBox(width: 24),

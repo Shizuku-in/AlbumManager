@@ -4,6 +4,7 @@ import 'package:album_manager/src/rust/third_party/album_model.dart';
 import 'package:album_manager/state/library_browser.dart';
 import 'package:album_manager/state/library_controller.dart';
 import 'package:album_manager/ui/album/album_page.dart';
+import 'package:album_manager/ui/common/smooth_scroll.dart';
 import 'package:album_manager/ui/library/album_card.dart';
 import 'package:album_manager/util/format.dart';
 
@@ -16,10 +17,12 @@ class LibraryPage extends StatefulWidget {
 
 class _LibraryPageState extends State<LibraryPage> {
   final _search = TextEditingController(text: browser.query);
+  final _scroll = SmoothScrollController();
 
   @override
   void dispose() {
     _search.dispose();
+    _scroll.dispose();
     super.dispose();
   }
 
@@ -36,83 +39,81 @@ class _LibraryPageState extends State<LibraryPage> {
         final totalSize = albums.fold<int>(0, (n, a) => n + a.totalSize);
         final totalDur = albums.fold<double>(0, (n, a) => n + a.durationSecs);
         return Scaffold(
-          body: Scrollbar(
-            child: CustomScrollView(slivers: [
-              SliverAppBar.medium(
-                title: Text(browser.yearFilter == null ? '专辑库' : '${browser.yearFilter} 年'),
-                actions: [
-                  _SortMenu(),
-                  const SizedBox(width: 8),
-                  SegmentedButton<bool>(
-                    showSelectedIcon: false,
-                    segments: const [
-                      ButtonSegment(value: true, icon: Icon(Icons.grid_view), tooltip: '网格'),
-                      ButtonSegment(value: false, icon: Icon(Icons.view_list), tooltip: '列表'),
+          body: CustomScrollView(controller: _scroll, slivers: [
+            SliverAppBar.medium(
+              title: Text(browser.yearFilter == null ? '专辑库' : '${browser.yearFilter} 年'),
+              actions: [
+                _SortMenu(),
+                const SizedBox(width: 8),
+                SegmentedButton<bool>(
+                  showSelectedIcon: false,
+                  segments: const [
+                    ButtonSegment(value: true, icon: Icon(Icons.grid_view), tooltip: '网格'),
+                    ButtonSegment(value: false, icon: Icon(Icons.view_list), tooltip: '列表'),
+                  ],
+                  selected: {browser.gridView},
+                  onSelectionChanged: (s) => browser.setGridView(s.first),
+                ),
+                const SizedBox(width: 16),
+              ],
+            ),
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+                  SearchBar(
+                    controller: _search,
+                    hintText: '搜索标题、艺术家、文件夹',
+                    leading: const Icon(Icons.search),
+                    elevation: const WidgetStatePropertyAll(0),
+                    padding: const WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 16)),
+                    onChanged: browser.setQuery,
+                    trailing: [
+                      if (browser.query.isNotEmpty)
+                        IconButton(
+                          tooltip: '清除',
+                          icon: const Icon(Icons.close),
+                          onPressed: () {
+                            _search.clear();
+                            browser.setQuery('');
+                          },
+                        ),
                     ],
-                    selected: {browser.gridView},
-                    onSelectionChanged: (s) => browser.setGridView(s.first),
                   ),
-                  const SizedBox(width: 16),
-                ],
-              ),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                  child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    SearchBar(
-                      controller: _search,
-                      hintText: '搜索标题、艺术家、文件夹',
-                      leading: const Icon(Icons.search),
-                      elevation: const WidgetStatePropertyAll(0),
-                      padding: const WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 16)),
-                      onChanged: browser.setQuery,
-                      trailing: [
-                        if (browser.query.isNotEmpty)
-                          IconButton(
-                            tooltip: '清除',
-                            icon: const Icon(Icons.close),
-                            onPressed: () {
-                              _search.clear();
-                              browser.setQuery('');
-                            },
-                          ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Wrap(spacing: 8, runSpacing: 8, children: [
-                      if (browser.yearFilter != null)
-                        InputChip(
-                          avatar: const Icon(Icons.calendar_today_outlined),
-                          label: Text('${browser.yearFilter} 年'),
-                          onDeleted: () => browser.setYear(null),
-                        ),
-                      for (final f in SourceFilter.values)
-                        ChoiceChip(
-                          label: Text('${f.label}  ${counts[f]}'),
-                          selected: browser.filter == f,
-                          onSelected: (_) => browser.setFilter(f),
-                        ),
-                    ]),
-                    const SizedBox(height: 12),
-                    Text(
-                      '${albums.length} 张专辑 · ${formatHours(totalDur)} · ${formatSize(totalSize)}',
-                      style: t.textTheme.bodyMedium?.copyWith(color: t.colorScheme.onSurfaceVariant),
-                    ),
+                  const SizedBox(height: 12),
+                  Wrap(spacing: 8, runSpacing: 8, children: [
+                    if (browser.yearFilter != null)
+                      InputChip(
+                        avatar: const Icon(Icons.calendar_today_outlined),
+                        label: Text('${browser.yearFilter} 年'),
+                        onDeleted: () => browser.setYear(null),
+                      ),
+                    for (final f in SourceFilter.values)
+                      ChoiceChip(
+                        label: Text('${f.label}  ${counts[f]}'),
+                        selected: browser.filter == f,
+                        onSelected: (_) => browser.setFilter(f),
+                      ),
                   ]),
-                ),
+                  const SizedBox(height: 12),
+                  Text(
+                    '${albums.length} 张专辑 · ${formatHours(totalDur)} · ${formatSize(totalSize)}',
+                    style: t.textTheme.bodyMedium?.copyWith(color: t.colorScheme.onSurfaceVariant),
+                  ),
+                ]),
               ),
-              if (albums.isEmpty)
-                SliverFillRemaining(hasScrollBody: false, child: _Empty(scanning: library.scanning))
-              else if (browser.gridView)
-                ..._gridSlivers(context, albums)
-              else
-                SliverList.builder(
-                  itemCount: albums.length,
-                  itemBuilder: (context, i) => AlbumTile(album: albums[i], onTap: () => _open(albums[i])),
-                ),
-              const SliverToBoxAdapter(child: SizedBox(height: 24)),
-            ]),
-          ),
+            ),
+            if (albums.isEmpty)
+              SliverFillRemaining(hasScrollBody: false, child: _Empty(scanning: library.scanning))
+            else if (browser.gridView)
+              ..._gridSlivers(context, albums)
+            else
+              SliverList.builder(
+                itemCount: albums.length,
+                itemBuilder: (context, i) => AlbumTile(album: albums[i], onTap: () => _open(albums[i])),
+              ),
+            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+          ]),
         );
       },
     );

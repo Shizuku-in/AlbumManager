@@ -45,7 +45,6 @@ class _ShellState extends State<Shell> {
     for (var i = 0; i < _dests.length; i++)
       Navigator(
         key: _navKeys[i],
-        observers: [HeroController()],
         onGenerateRoute: (_) => MaterialPageRoute(builder: (_) => _dests[i].page),
       ),
   ];
@@ -105,14 +104,7 @@ class _ShellState extends State<Shell> {
       selectedIndex: navIndex.value,
       onDestinationSelected: _select,
       children: [
-        Padding(
-          padding: const EdgeInsets.fromLTRB(28, 20, 16, 16),
-          child: Row(children: [
-            Icon(Icons.album, color: cs.primary, size: 28),
-            const SizedBox(width: 12),
-            Text('Album Manager', style: tt.titleMedium),
-          ]),
-        ),
+        const SizedBox(height: 12),
         for (var i = 0; i < _dests.length; i++)
           NavigationDrawerDestination(
             icon: Icon(_dests[i].icon),
@@ -136,10 +128,6 @@ class _ShellState extends State<Shell> {
       selectedIndex: navIndex.value,
       onDestinationSelected: _select,
       labelType: NavigationRailLabelType.all,
-      leading: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 8),
-        child: Icon(Icons.album, color: Theme.of(context).colorScheme.primary, size: 28),
-      ),
       destinations: [
         for (var i = 0; i < _dests.length; i++)
           NavigationRailDestination(
@@ -152,10 +140,13 @@ class _ShellState extends State<Shell> {
   }
 }
 
-/// Hosts one destination inside the IndexedStack. Hidden destinations keep
-/// the theme they were last shown with, so a theme change (which animates
-/// frame by frame) only rebuilds the visible page; a hidden page catches up
-/// once when it is shown again.
+/// Hosts one destination inside the IndexedStack.
+///
+/// * Shown destinations fade in. No scaling: a transform that is not exactly
+///   identity makes text render blurry.
+/// * Hidden destinations keep the theme they were last shown with, so a theme
+///   change (which animates frame by frame) only rebuilds the visible page;
+///   a hidden page catches up once when it is shown again.
 class _PageHost extends StatefulWidget {
   final bool active;
   final Widget child;
@@ -165,13 +156,28 @@ class _PageHost extends StatefulWidget {
   State<_PageHost> createState() => _PageHostState();
 }
 
-class _PageHostState extends State<_PageHost> {
+class _PageHostState extends State<_PageHost> with SingleTickerProviderStateMixin {
   ThemeData? _theme;
+  late final _enter = AnimationController(vsync: this, duration: const Duration(milliseconds: 250), value: 1);
+  late final _curve = CurvedAnimation(parent: _enter, curve: Easing.emphasizedDecelerate);
+
+  @override
+  void didUpdateWidget(_PageHost old) {
+    super.didUpdateWidget(old);
+    if (widget.active && !old.active) _enter.forward(from: 0);
+  }
+
+  @override
+  void dispose() {
+    _curve.dispose();
+    _enter.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final live = Theme.of(context);
     if (widget.active || _theme == null) _theme = live;
-    return Theme(data: _theme!, child: widget.child);
+    return FadeTransition(opacity: _curve, child: Theme(data: _theme!, child: widget.child));
   }
 }

@@ -5,8 +5,9 @@ import 'package:album_manager/theme/app_colors.dart';
 /// Fallback seed when the OS provides no accent color.
 const defaultSeed = Color(0xFF6750A4);
 
-const appFont = 'Microsoft YaHei UI';
-const appFontFallback = ['Yu Gothic UI', 'Segoe UI', 'Microsoft YaHei'];
+/// Bundled (see pubspec.yaml). Fallbacks cover Japanese-only kanji etc.
+const appFont = 'HarmonyOS Sans SC';
+const appFontFallback = ['Microsoft YaHei UI', 'Yu Gothic UI', 'Segoe UI'];
 
 ThemeData buildTheme(ColorScheme scheme) {
   return ThemeData(

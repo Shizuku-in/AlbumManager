@@ -12,6 +12,8 @@
 *.jpg binary
 *.jpeg binary
 *.webp binary
+*.ttf binary
+*.otf binary
 
 # Generated code: collapsed in diffs, excluded from language statistics.
 app/lib/src/rust/** linguist-generated=true

@@ -14,7 +14,13 @@ Future<void> main() async {
   browser.load();
   await windowManager.ensureInitialized();
   await windowManager.waitUntilReadyToShow(
-    const WindowOptions(size: Size(1440, 900), minimumSize: Size(960, 640), center: true, title: 'Album Manager'),
+    const WindowOptions(
+      size: Size(1440, 900),
+      minimumSize: Size(960, 640),
+      center: true,
+      title: 'Album Manager',
+      titleBarStyle: TitleBarStyle.hidden, // replaced by the Material TitleBar
+    ),
     () async {
       await windowManager.show();
       await windowManager.focus();

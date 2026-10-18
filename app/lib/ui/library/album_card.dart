@@ -25,7 +25,7 @@ class AlbumCard extends StatelessWidget {
           AspectRatio(
             aspectRatio: 1,
             child: Stack(fit: StackFit.expand, children: [
-              Hero(tag: 'cover:${album.id}', child: CoverImage(path: album.coverThumb, radius: 0, cacheWidth: 480)),
+              CoverImage(path: album.coverThumb, radius: 0, cacheWidth: 480),
               Positioned(
                 left: 8,
                 bottom: 8,
@@ -84,7 +84,7 @@ class AlbumTile extends StatelessWidget {
       leading: SizedBox(
         width: 56,
         height: 56,
-        child: Hero(tag: 'cover:${album.id}', child: CoverImage(path: album.coverThumb, radius: 8, cacheWidth: 120)),
+        child: CoverImage(path: album.coverThumb, radius: 8, cacheWidth: 120),
       ),
       title: Text(album.title, maxLines: 1, overflow: TextOverflow.ellipsis),
       subtitle: Text([album.artist ?? '—', album.date].whereType<String>().join(' · '), maxLines: 1, overflow: TextOverflow.ellipsis),
