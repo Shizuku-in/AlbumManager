@@ -8,6 +8,7 @@ import 'package:album_manager/ui/common/collapsing_app_bar.dart';
 import 'package:album_manager/ui/common/scroll_label.dart';
 import 'package:album_manager/ui/common/smooth_scroll.dart';
 import 'package:album_manager/ui/library/album_card.dart';
+import 'package:album_manager/ui/library/filter_panel.dart';
 import 'package:album_manager/util/format.dart';
 
 class LibraryPage extends StatefulWidget {
@@ -37,7 +38,7 @@ class _LibraryPageState extends State<LibraryPage> {
       listenable: Listenable.merge([library, browser]),
       builder: (context, _) {
         final albums = browser.visible(library.albums);
-        final counts = browser.counts(library.albums);
+        final filterCount = browser.activeFilterCount;
         final totalSize = albums.fold<int>(0, (n, a) => n + a.totalSize);
         final totalDur = albums.fold<double>(0, (n, a) => n + a.durationSecs);
         return Scaffold(
@@ -86,27 +87,30 @@ class _LibraryPageState extends State<LibraryPage> {
                                   browser.setQuery('');
                                 },
                               ),
+                            IconButton(
+                              tooltip: '筛选',
+                              isSelected: filterCount > 0,
+                              onPressed: () => showFilterPanel(context),
+                              icon: Badge.count(count: filterCount, isLabelVisible: filterCount > 0, child: const Icon(Icons.filter_list)),
+                            ),
                           ],
                         ),
                         const SizedBox(height: 12),
-                        Wrap(
-                          spacing: 8,
-                          runSpacing: 8,
+                        Row(
                           children: [
-                            if (browser.yearFilter != null)
-                              InputChip(
-                                avatar: const Icon(Icons.calendar_today_outlined),
-                                label: Text('${browser.yearFilter} 年'),
-                                onDeleted: () => browser.setYear(null),
+                            Text(
+                              '${albums.length} 张专辑 · ${formatHours(totalDur)} · ${formatSize(totalSize)}',
+                              style: t.textTheme.bodyMedium?.copyWith(color: t.colorScheme.onSurfaceVariant),
+                            ),
+                            if (filterCount > 0) ...[
+                              const SizedBox(width: 8),
+                              TextButton.icon(
+                                onPressed: browser.clearFilters,
+                                icon: const Icon(Icons.filter_list_off, size: 18),
+                                label: Text('清除 $filterCount 项筛选'),
                               ),
-                            for (final f in SourceFilter.values)
-                              ChoiceChip(label: Text('${f.label}  ${counts[f]}'), selected: browser.filter == f, onSelected: (_) => browser.setFilter(f)),
+                            ],
                           ],
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          '${albums.length} 张专辑 · ${formatHours(totalDur)} · ${formatSize(totalSize)}',
-                          style: t.textTheme.bodyMedium?.copyWith(color: t.colorScheme.onSurfaceVariant),
                         ),
                       ],
                     ),

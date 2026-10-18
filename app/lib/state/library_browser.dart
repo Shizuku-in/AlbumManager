@@ -5,46 +5,109 @@ import 'package:album_manager/state/navigation.dart';
 import 'package:album_manager/state/settings_controller.dart';
 import 'package:album_manager/util/memo.dart';
 
-enum SourceFilter { all, cdRip, digital, hiRes, dsd, discImage }
-
 enum SortMode { dateDesc, dateAsc, addedDesc, title, artist, size }
 
 extension SortModeX on SortMode {
   String get label => switch (this) {
-        SortMode.dateDesc => '发行日期（新→旧）',
-        SortMode.dateAsc => '发行日期（旧→新）',
-        SortMode.addedDesc => '最近添加',
-        SortMode.title => '标题',
-        SortMode.artist => '艺术家',
-        SortMode.size => '占用空间',
-      };
+    SortMode.dateDesc => '发行日期（新→旧）',
+    SortMode.dateAsc => '发行日期（旧→新）',
+    SortMode.addedDesc => '最近添加',
+    SortMode.title => '标题',
+    SortMode.artist => '艺术家',
+    SortMode.size => '占用空间',
+  };
   bool get groupsByYear => this == SortMode.dateDesc || this == SortMode.dateAsc;
 }
 
-extension SourceFilterX on SourceFilter {
+/// Yes/no properties of an album; selected flags must all hold.
+enum ContentFlag { hasIssues, missingCover, hasScans, hasCue, multiDisc, edited }
+
+extension ContentFlagX on ContentFlag {
   String get label => switch (this) {
-        SourceFilter.all => '全部',
-        SourceFilter.cdRip => 'CD 抓轨',
-        SourceFilter.digital => '数字发行',
-        SourceFilter.hiRes => 'Hi-Res',
-        SourceFilter.dsd => 'DSD',
-        SourceFilter.discImage => '光盘镜像',
-      };
+    ContentFlag.hasIssues => '有问题',
+    ContentFlag.missingCover => '缺少封面',
+    ContentFlag.hasScans => '有扫图',
+    ContentFlag.hasCue => '有 CUE',
+    ContentFlag.multiDisc => '多碟',
+    ContentFlag.edited => '手动编辑过',
+  };
   bool matches(AlbumSummary a) => switch (this) {
-        SourceFilter.all => true,
-        SourceFilter.cdRip => a.source == AlbumSource.cdRip,
-        SourceFilter.digital => a.source == AlbumSource.digital,
-        SourceFilter.hiRes => a.quality == AudioQuality.hiRes,
-        SourceFilter.dsd => a.quality == AudioQuality.dsd,
-        SourceFilter.discImage => a.source == AlbumSource.discImage,
-      };
+    ContentFlag.hasIssues => a.issues.isNotEmpty,
+    ContentFlag.missingCover => a.coverThumb == null,
+    // More than one image: a cover alone isn't a scan.
+    ContentFlag.hasScans => a.imageCount > 1,
+    ContentFlag.hasCue => a.hasCue,
+    ContentFlag.multiDisc => a.discCount > 1,
+    ContentFlag.edited => a.overrides.source != null || a.overrides.coverPath != null,
+  };
+}
+
+/// Rip statuses offered as filters (CD rips only).
+const ripStatusFilters = [RipStatus.perfect, RipStatus.good, RipStatus.warning, RipStatus.error, RipStatus.noLog, RipStatus.unknown];
+
+/// Filter selection. Within a group any selected value matches (empty = no
+/// constraint); groups combine with AND, and so do content flags. Immutable:
+/// every change makes a new instance, so derived lists memoize by identity.
+class AlbumFilters {
+  final Set<AlbumSource> sources;
+  final Set<AudioQuality> qualities;
+  final Set<String> formats;
+  final Set<RipStatus> ripStatuses;
+  final Set<ContentFlag> flags;
+  const AlbumFilters({this.sources = const {}, this.qualities = const {}, this.formats = const {}, this.ripStatuses = const {}, this.flags = const {}});
+
+  int get count => sources.length + qualities.length + formats.length + ripStatuses.length + flags.length;
+
+  bool matches(AlbumSummary a) =>
+      (sources.isEmpty || sources.contains(a.source)) &&
+      (qualities.isEmpty || qualities.contains(a.quality)) &&
+      (formats.isEmpty || a.formats.any(formats.contains)) &&
+      (ripStatuses.isEmpty || ripStatuses.contains(a.ripStatus)) &&
+      flags.every((f) => f.matches(a));
+
+  static Set<T> _toggle<T>(Set<T> s, T v) => s.contains(v) ? ({...s}..remove(v)) : {...s, v};
+
+  AlbumFilters toggleSource(AlbumSource v) =>
+      AlbumFilters(sources: _toggle(sources, v), qualities: qualities, formats: formats, ripStatuses: ripStatuses, flags: flags);
+  AlbumFilters toggleQuality(AudioQuality v) =>
+      AlbumFilters(sources: sources, qualities: _toggle(qualities, v), formats: formats, ripStatuses: ripStatuses, flags: flags);
+  AlbumFilters toggleFormat(String v) =>
+      AlbumFilters(sources: sources, qualities: qualities, formats: _toggle(formats, v), ripStatuses: ripStatuses, flags: flags);
+  AlbumFilters toggleRipStatus(RipStatus v) =>
+      AlbumFilters(sources: sources, qualities: qualities, formats: formats, ripStatuses: _toggle(ripStatuses, v), flags: flags);
+  AlbumFilters toggleFlag(ContentFlag v) =>
+      AlbumFilters(sources: sources, qualities: qualities, formats: formats, ripStatuses: ripStatuses, flags: _toggle(flags, v));
+}
+
+/// Album counts per filter option, over the whole library.
+class FilterCounts {
+  final Map<AlbumSource, int> sources = {};
+  final Map<AudioQuality, int> qualities = {};
+
+  /// Most common first.
+  final Map<String, int> formats;
+  final Map<RipStatus, int> ripStatuses = {};
+  final Map<ContentFlag, int> flags;
+
+  FilterCounts(List<AlbumSummary> albums) : formats = {}, flags = {for (final f in ContentFlag.values) f: albums.where(f.matches).length} {
+    final fmt = <String, int>{};
+    for (final a in albums) {
+      sources.update(a.source, (n) => n + 1, ifAbsent: () => 1);
+      qualities.update(a.quality, (n) => n + 1, ifAbsent: () => 1);
+      ripStatuses.update(a.ripStatus, (n) => n + 1, ifAbsent: () => 1);
+      for (final f in a.formats) {
+        fmt.update(f, (n) => n + 1, ifAbsent: () => 1);
+      }
+    }
+    formats.addEntries(fmt.entries.toList()..sort((a, b) => b.value.compareTo(a.value)));
+  }
 }
 
 /// Search / filter / sort / layout of the library page. Kept apart from the
 /// album data so typing or toggling the layout only rebuilds that page.
 class LibraryBrowser extends ChangeNotifier {
   String query = '';
-  SourceFilter filter = SourceFilter.all;
+  AlbumFilters filters = const AlbumFilters();
   SortMode sort = SortMode.dateDesc;
   int? yearFilter;
   bool gridView = true;
@@ -56,8 +119,17 @@ class LibraryBrowser extends ChangeNotifier {
     notifyListeners();
   }
 
-  void setFilter(SourceFilter f) {
-    filter = f;
+  void setFilters(AlbumFilters f) {
+    filters = f;
+    notifyListeners();
+  }
+
+  /// Number of active filters, including the year.
+  int get activeFilterCount => filters.count + (yearFilter == null ? 0 : 1);
+
+  void clearFilters() {
+    filters = const AlbumFilters();
+    yearFilter = null;
     notifyListeners();
   }
 
@@ -84,42 +156,41 @@ class LibraryBrowser extends ChangeNotifier {
     notifyListeners();
   }
 
-  final _visible = Memo<(List<AlbumSummary>, String, SourceFilter, SortMode, int?), List<AlbumSummary>>();
-  final _counts = Memo<List<AlbumSummary>, Map<SourceFilter, int>>();
+  final _visible = Memo<(List<AlbumSummary>, String, AlbumFilters, SortMode, int?), List<AlbumSummary>>();
+  final _counts = Memo<List<AlbumSummary>, FilterCounts>();
 
   /// Albums after search / filters / sort.
-  List<AlbumSummary> visible(List<AlbumSummary> albums) => _visible((albums, query, filter, sort, yearFilter), () {
-        final q = query.trim().toLowerCase();
-        final list = albums.where((a) {
-          if (!filter.matches(a)) return false;
-          if (yearFilter != null && a.year != yearFilter) return false;
-          if (q.isEmpty) return true;
-          return a.title.toLowerCase().contains(q) ||
-              (a.artist?.toLowerCase().contains(q) ?? false) ||
-              a.folderName.toLowerCase().contains(q) ||
-              (a.genre?.toLowerCase().contains(q) ?? false);
-        }).toList();
-        int byDate(AlbumSummary a, AlbumSummary b) => (a.date ?? '${a.year ?? 0}').compareTo(b.date ?? '${b.year ?? 0}');
-        switch (sort) {
-          case SortMode.dateDesc:
-            list.sort((a, b) => byDate(b, a));
-          case SortMode.dateAsc:
-            list.sort(byDate);
-          case SortMode.addedDesc:
-            list.sort((a, b) => b.addedAt.compareTo(a.addedAt));
-          case SortMode.title:
-            list.sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
-          case SortMode.artist:
-            list.sort((a, b) => (a.artist ?? '￿').compareTo(b.artist ?? '￿'));
-          case SortMode.size:
-            list.sort((a, b) => b.totalSize.compareTo(a.totalSize));
-        }
-        return list;
-      });
+  List<AlbumSummary> visible(List<AlbumSummary> albums) => _visible((albums, query, filters, sort, yearFilter), () {
+    final q = query.trim().toLowerCase();
+    final list = albums.where((a) {
+      if (!filters.matches(a)) return false;
+      if (yearFilter != null && a.year != yearFilter) return false;
+      if (q.isEmpty) return true;
+      return a.title.toLowerCase().contains(q) ||
+          (a.artist?.toLowerCase().contains(q) ?? false) ||
+          a.folderName.toLowerCase().contains(q) ||
+          (a.genre?.toLowerCase().contains(q) ?? false);
+    }).toList();
+    int byDate(AlbumSummary a, AlbumSummary b) => (a.date ?? '${a.year ?? 0}').compareTo(b.date ?? '${b.year ?? 0}');
+    switch (sort) {
+      case SortMode.dateDesc:
+        list.sort((a, b) => byDate(b, a));
+      case SortMode.dateAsc:
+        list.sort(byDate);
+      case SortMode.addedDesc:
+        list.sort((a, b) => b.addedAt.compareTo(a.addedAt));
+      case SortMode.title:
+        list.sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
+      case SortMode.artist:
+        list.sort((a, b) => (a.artist ?? '￿').compareTo(b.artist ?? '￿'));
+      case SortMode.size:
+        list.sort((a, b) => b.totalSize.compareTo(a.totalSize));
+    }
+    return list;
+  });
 
-  /// Number of albums per source filter (for the filter chips).
-  Map<SourceFilter, int> counts(List<AlbumSummary> albums) =>
-      _counts(albums, () => {for (final f in SourceFilter.values) f: albums.where(f.matches).length});
+  /// Album counts per filter option (for the filter panel).
+  FilterCounts counts(List<AlbumSummary> albums) => _counts(albums, () => FilterCounts(albums));
 }
 
 final browser = LibraryBrowser();
