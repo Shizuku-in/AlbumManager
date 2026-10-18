@@ -19,7 +19,12 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated_web.dart';
 import 'third_party/album_model.dart';
 
 abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
-  RustLibApiImplPlatform({required super.handler, required super.wire, required super.generalizedFrbRustBinding, required super.portManager});
+  RustLibApiImplPlatform({
+    required super.handler,
+    required super.wire,
+    required super.generalizedFrbRustBinding,
+    required super.portManager,
+  });
 
   @protected
   AnyhowException dco_decode_AnyhowException(dynamic raw);
@@ -32,6 +37,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Album dco_decode_album(dynamic raw);
+
+  @protected
+  AlbumOverride dco_decode_album_override(dynamic raw);
 
   @protected
   AlbumSource dco_decode_album_source(dynamic raw);
@@ -47,6 +55,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Album dco_decode_box_autoadd_album(dynamic raw);
+
+  @protected
+  AlbumOverride dco_decode_box_autoadd_album_override(dynamic raw);
+
+  @protected
+  AlbumSource dco_decode_box_autoadd_album_source(dynamic raw);
 
   @protected
   bool dco_decode_box_autoadd_bool(dynamic raw);
@@ -130,6 +144,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   Album? dco_decode_opt_box_autoadd_album(dynamic raw);
 
   @protected
+  AlbumSource? dco_decode_opt_box_autoadd_album_source(dynamic raw);
+
+  @protected
   bool? dco_decode_opt_box_autoadd_bool(dynamic raw);
 
   @protected
@@ -172,13 +189,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   AnyhowException sse_decode_AnyhowException(SseDeserializer deserializer);
 
   @protected
-  RustStreamSink<ScanEvent> sse_decode_StreamSink_scan_event_Sse(SseDeserializer deserializer);
+  RustStreamSink<ScanEvent> sse_decode_StreamSink_scan_event_Sse(
+    SseDeserializer deserializer,
+  );
 
   @protected
   String sse_decode_String(SseDeserializer deserializer);
 
   @protected
   Album sse_decode_album(SseDeserializer deserializer);
+
+  @protected
+  AlbumOverride sse_decode_album_override(SseDeserializer deserializer);
 
   @protected
   AlbumSource sse_decode_album_source(SseDeserializer deserializer);
@@ -194,6 +216,14 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Album sse_decode_box_autoadd_album(SseDeserializer deserializer);
+
+  @protected
+  AlbumOverride sse_decode_box_autoadd_album_override(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  AlbumSource sse_decode_box_autoadd_album_source(SseDeserializer deserializer);
 
   @protected
   bool sse_decode_box_autoadd_bool(SseDeserializer deserializer);
@@ -241,7 +271,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<String> sse_decode_list_String(SseDeserializer deserializer);
 
   @protected
-  List<AlbumSummary> sse_decode_list_album_summary(SseDeserializer deserializer);
+  List<AlbumSummary> sse_decode_list_album_summary(
+    SseDeserializer deserializer,
+  );
 
   @protected
   List<CueInfo> sse_decode_list_cue_info(SseDeserializer deserializer);
@@ -275,6 +307,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   Album? sse_decode_opt_box_autoadd_album(SseDeserializer deserializer);
+
+  @protected
+  AlbumSource? sse_decode_opt_box_autoadd_album_source(
+    SseDeserializer deserializer,
+  );
 
   @protected
   bool? sse_decode_opt_box_autoadd_bool(SseDeserializer deserializer);
@@ -316,16 +353,25 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_decode_unit(SseDeserializer deserializer);
 
   @protected
-  void sse_encode_AnyhowException(AnyhowException self, SseSerializer serializer);
+  void sse_encode_AnyhowException(
+    AnyhowException self,
+    SseSerializer serializer,
+  );
 
   @protected
-  void sse_encode_StreamSink_scan_event_Sse(RustStreamSink<ScanEvent> self, SseSerializer serializer);
+  void sse_encode_StreamSink_scan_event_Sse(
+    RustStreamSink<ScanEvent> self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_String(String self, SseSerializer serializer);
 
   @protected
   void sse_encode_album(Album self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_album_override(AlbumOverride self, SseSerializer serializer);
 
   @protected
   void sse_encode_album_source(AlbumSource self, SseSerializer serializer);
@@ -341,6 +387,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_box_autoadd_album(Album self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_box_autoadd_album_override(
+    AlbumOverride self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_box_autoadd_album_source(
+    AlbumSource self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_box_autoadd_bool(bool self, SseSerializer serializer);
@@ -388,7 +446,10 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_list_String(List<String> self, SseSerializer serializer);
 
   @protected
-  void sse_encode_list_album_summary(List<AlbumSummary> self, SseSerializer serializer);
+  void sse_encode_list_album_summary(
+    List<AlbumSummary> self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_list_cue_info(List<CueInfo> self, SseSerializer serializer);
@@ -397,16 +458,25 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_list_disc(List<Disc> self, SseSerializer serializer);
 
   @protected
-  void sse_encode_list_file_entry(List<FileEntry> self, SseSerializer serializer);
+  void sse_encode_list_file_entry(
+    List<FileEntry> self,
+    SseSerializer serializer,
+  );
 
   @protected
-  void sse_encode_list_image_item(List<ImageItem> self, SseSerializer serializer);
+  void sse_encode_list_image_item(
+    List<ImageItem> self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_list_issue(List<Issue> self, SseSerializer serializer);
 
   @protected
-  void sse_encode_list_prim_u_8_strict(Uint8List self, SseSerializer serializer);
+  void sse_encode_list_prim_u_8_strict(
+    Uint8List self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_list_rip_log(List<RipLog> self, SseSerializer serializer);
@@ -415,13 +485,22 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_list_track(List<Track> self, SseSerializer serializer);
 
   @protected
-  void sse_encode_list_track_verify(List<TrackVerify> self, SseSerializer serializer);
+  void sse_encode_list_track_verify(
+    List<TrackVerify> self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_opt_String(String? self, SseSerializer serializer);
 
   @protected
   void sse_encode_opt_box_autoadd_album(Album? self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_opt_box_autoadd_album_source(
+    AlbumSource? self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_opt_box_autoadd_bool(bool? self, SseSerializer serializer);

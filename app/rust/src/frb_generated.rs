@@ -39,7 +39,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.13.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -13439582;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 1486659204;
 
 // Section: executor
 
@@ -47,6 +47,38 @@ flutter_rust_bridge::frb_generated_default_handler!();
 
 // Section: wire_funcs
 
+fn wire__album_model__album_override_default_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "album_override_default",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, ()>((move || {
+                    let output_ok = Ok::<_, ()>(album_model::AlbumOverride::default())?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
 fn wire__crate__api__library__clear_thumbnail_cache_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -363,6 +395,43 @@ fn wire__crate__api__library__scan_library_impl(
         },
     )
 }
+fn wire__crate__api__library__set_album_override_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "set_album_override",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_id = <String>::sse_decode(&mut deserializer);
+            let api_overrides = <album_model::AlbumOverride>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, flutter_rust_bridge::for_generated::anyhow::Error>(
+                    (move || {
+                        let output_ok =
+                            crate::api::library::set_album_override(api_id, api_overrides)?;
+                        std::result::Result::Ok(output_ok)
+                    })(),
+                )
+            }
+        },
+    )
+}
 fn wire__crate__api__library__set_library_root_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -414,6 +483,11 @@ const _: fn() = || {
         let _: u64 = Album.fingerprint;
     }
     {
+        let AlbumOverride = None::<album_model::AlbumOverride>.unwrap();
+        let _: Option<album_model::AlbumSource> = AlbumOverride.source;
+        let _: Option<String> = AlbumOverride.cover_path;
+    }
+    {
         let AlbumSummary = None::<album_model::AlbumSummary>.unwrap();
         let _: String = AlbumSummary.id;
         let _: String = AlbumSummary.path;
@@ -444,6 +518,7 @@ const _: fn() = || {
         let _: i64 = AlbumSummary.added_at;
         let _: i64 = AlbumSummary.modified_at;
         let _: Vec<album_model::Issue> = AlbumSummary.issues;
+        let _: album_model::AlbumOverride = AlbumSummary.overrides;
     }
     {
         let CueInfo = None::<album_model::CueInfo>.unwrap();
@@ -565,6 +640,18 @@ impl SseDecode for album_model::Album {
     }
 }
 
+impl SseDecode for album_model::AlbumOverride {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_source = <Option<album_model::AlbumSource>>::sse_decode(deserializer);
+        let mut var_coverPath = <Option<String>>::sse_decode(deserializer);
+        return album_model::AlbumOverride {
+            source: var_source,
+            cover_path: var_coverPath,
+        };
+    }
+}
+
 impl SseDecode for album_model::AlbumSource {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -611,6 +698,7 @@ impl SseDecode for album_model::AlbumSummary {
         let mut var_addedAt = <i64>::sse_decode(deserializer);
         let mut var_modifiedAt = <i64>::sse_decode(deserializer);
         let mut var_issues = <Vec<album_model::Issue>>::sse_decode(deserializer);
+        let mut var_overrides = <album_model::AlbumOverride>::sse_decode(deserializer);
         return album_model::AlbumSummary {
             id: var_id,
             path: var_path,
@@ -641,6 +729,7 @@ impl SseDecode for album_model::AlbumSummary {
             added_at: var_addedAt,
             modified_at: var_modifiedAt,
             issues: var_issues,
+            overrides: var_overrides,
         };
     }
 }
@@ -943,6 +1032,17 @@ impl SseDecode for Option<album_model::Album> {
     }
 }
 
+impl SseDecode for Option<album_model::AlbumSource> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        if (<bool>::sse_decode(deserializer)) {
+            return Some(<album_model::AlbumSource>::sse_decode(deserializer));
+        } else {
+            return None;
+        }
+    }
+}
+
 impl SseDecode for Option<bool> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -1155,18 +1255,20 @@ fn pde_ffi_dispatcher_primary_impl(
 ) {
     // Codec=Pde (Serialization + dispatch), see doc to use other codecs
     match func_id {
-        1 => {
+        1 => wire__album_model__album_override_default_impl(port, ptr, rust_vec_len, data_len),
+        2 => {
             wire__crate__api__library__clear_thumbnail_cache_impl(port, ptr, rust_vec_len, data_len)
         }
-        2 => wire__crate__api__library__fix_cue_encoding_impl(port, ptr, rust_vec_len, data_len),
-        3 => wire__crate__api__library__get_album_impl(port, ptr, rust_vec_len, data_len),
-        4 => wire__crate__api__library__get_thumbnail_impl(port, ptr, rust_vec_len, data_len),
-        5 => wire__crate__api__init_app_impl(port, ptr, rust_vec_len, data_len),
-        6 => wire__crate__api__library__init_library_impl(port, ptr, rust_vec_len, data_len),
-        7 => wire__crate__api__library__read_text_file_impl(port, ptr, rust_vec_len, data_len),
-        8 => wire__crate__api__library__rescan_album_impl(port, ptr, rust_vec_len, data_len),
-        9 => wire__crate__api__library__scan_library_impl(port, ptr, rust_vec_len, data_len),
-        10 => wire__crate__api__library__set_library_root_impl(port, ptr, rust_vec_len, data_len),
+        3 => wire__crate__api__library__fix_cue_encoding_impl(port, ptr, rust_vec_len, data_len),
+        4 => wire__crate__api__library__get_album_impl(port, ptr, rust_vec_len, data_len),
+        5 => wire__crate__api__library__get_thumbnail_impl(port, ptr, rust_vec_len, data_len),
+        6 => wire__crate__api__init_app_impl(port, ptr, rust_vec_len, data_len),
+        7 => wire__crate__api__library__init_library_impl(port, ptr, rust_vec_len, data_len),
+        8 => wire__crate__api__library__read_text_file_impl(port, ptr, rust_vec_len, data_len),
+        9 => wire__crate__api__library__rescan_album_impl(port, ptr, rust_vec_len, data_len),
+        10 => wire__crate__api__library__scan_library_impl(port, ptr, rust_vec_len, data_len),
+        11 => wire__crate__api__library__set_album_override_impl(port, ptr, rust_vec_len, data_len),
+        12 => wire__crate__api__library__set_library_root_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -1206,6 +1308,27 @@ impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
 }
 impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<album_model::Album>> for album_model::Album {
     fn into_into_dart(self) -> FrbWrapper<album_model::Album> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<album_model::AlbumOverride> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.0.source.into_into_dart().into_dart(),
+            self.0.cover_path.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for FrbWrapper<album_model::AlbumOverride>
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<album_model::AlbumOverride>>
+    for album_model::AlbumOverride
+{
+    fn into_into_dart(self) -> FrbWrapper<album_model::AlbumOverride> {
         self.into()
     }
 }
@@ -1265,6 +1388,7 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<album_model::AlbumSummary> {
             self.0.added_at.into_into_dart().into_dart(),
             self.0.modified_at.into_into_dart().into_dart(),
             self.0.issues.into_into_dart().into_dart(),
+            self.0.overrides.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
@@ -1640,6 +1764,14 @@ impl SseEncode for album_model::Album {
     }
 }
 
+impl SseEncode for album_model::AlbumOverride {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <Option<album_model::AlbumSource>>::sse_encode(self.source, serializer);
+        <Option<String>>::sse_encode(self.cover_path, serializer);
+    }
+}
+
 impl SseEncode for album_model::AlbumSource {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -1690,6 +1822,7 @@ impl SseEncode for album_model::AlbumSummary {
         <i64>::sse_encode(self.added_at, serializer);
         <i64>::sse_encode(self.modified_at, serializer);
         <Vec<album_model::Issue>>::sse_encode(self.issues, serializer);
+        <album_model::AlbumOverride>::sse_encode(self.overrides, serializer);
     }
 }
 
@@ -1941,6 +2074,16 @@ impl SseEncode for Option<album_model::Album> {
         <bool>::sse_encode(self.is_some(), serializer);
         if let Some(value) = self {
             <album_model::Album>::sse_encode(value, serializer);
+        }
+    }
+}
+
+impl SseEncode for Option<album_model::AlbumSource> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <bool>::sse_encode(self.is_some(), serializer);
+        if let Some(value) = self {
+            <album_model::AlbumSource>::sse_encode(value, serializer);
         }
     }
 }

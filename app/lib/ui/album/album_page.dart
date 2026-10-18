@@ -5,6 +5,7 @@ import 'package:album_manager/src/rust/third_party/album_model.dart';
 import 'package:album_manager/state/library_controller.dart';
 import 'package:album_manager/theme/app_theme.dart';
 import 'package:album_manager/ui/album/cue_fix_dialog.dart';
+import 'package:album_manager/ui/album/edit_album_dialog.dart';
 import 'package:album_manager/ui/album/tabs/files_tab.dart';
 import 'package:album_manager/ui/album/tabs/logs_tab.dart';
 import 'package:album_manager/ui/album/tabs/scans_tab.dart';
@@ -75,6 +76,12 @@ class _AlbumPageState extends State<AlbumPage> with SingleTickerProviderStateMix
     }
   }
 
+  Future<void> _edit(BuildContext context, Album album) async {
+    final o = await showEditAlbumDialog(context, album);
+    if (o == null || !context.mounted) return;
+    await _run(context, () => api.setAlbumOverride(id: _s.id, overrides: o), '已保存');
+  }
+
   Future<void> _fixCue(BuildContext context) async {
     final bad = _album?.cues.where((c) => !c.isUtf8).length ?? 0;
     if (await confirmCueFix(context, bad) && context.mounted) {
@@ -128,6 +135,11 @@ class _AlbumPageState extends State<AlbumPage> with SingleTickerProviderStateMix
                 icon: const Icon(Icons.more_vert),
               ),
               menuChildren: [
+                MenuItemButton(
+                  leadingIcon: const Icon(Icons.edit_outlined),
+                  onPressed: a != null && !_busy ? () => _edit(context, a) : null,
+                  child: const Text('编辑专辑'),
+                ),
                 MenuItemButton(
                   leadingIcon: const Icon(Icons.translate),
                   onPressed: hasBadCue && !_busy ? () => _fixCue(context) : null,

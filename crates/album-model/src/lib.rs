@@ -104,6 +104,18 @@ pub struct AlbumSummary {
     pub added_at: i64,
     pub modified_at: i64,
     pub issues: Vec<Issue>,
+    /// Values the user set by hand; they take precedence over detection.
+    #[serde(default)]
+    pub overrides: AlbumOverride,
+}
+
+/// Hand-edited album values, kept apart from the scan results so a rescan
+/// re-applies them. `None` = use the detected value.
+#[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct AlbumOverride {
+    pub source: Option<AlbumSource>,
+    /// An image file of the album to use as cover.
+    pub cover_path: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

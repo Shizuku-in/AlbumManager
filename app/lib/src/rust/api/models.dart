@@ -21,7 +21,11 @@ class LibraryInfo {
 
   @override
   bool operator ==(Object other) =>
-      identical(this, other) || other is LibraryInfo && runtimeType == other.runtimeType && root == other.root && albums == other.albums;
+      identical(this, other) ||
+      other is LibraryInfo &&
+          runtimeType == other.runtimeType &&
+          root == other.root &&
+          albums == other.albums;
 }
 
 @freezed
@@ -29,6 +33,14 @@ sealed class ScanEvent with _$ScanEvent {
   const ScanEvent._();
 
   const factory ScanEvent.started({required int total}) = ScanEvent_Started;
-  const factory ScanEvent.progress({required int done, required int total, required String current}) = ScanEvent_Progress;
-  const factory ScanEvent.finished({required List<AlbumSummary> albums, required PlatformInt64 elapsedMs, required int rescanned}) = ScanEvent_Finished;
+  const factory ScanEvent.progress({
+    required int done,
+    required int total,
+    required String current,
+  }) = ScanEvent_Progress;
+  const factory ScanEvent.finished({
+    required List<AlbumSummary> albums,
+    required PlatformInt64 elapsedMs,
+    required int rescanned,
+  }) = ScanEvent_Finished;
 }

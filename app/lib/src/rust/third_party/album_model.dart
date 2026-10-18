@@ -7,7 +7,7 @@ import '../frb_generated.dart';
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`
 
 /// Full album info for the detail page.
 class Album {
@@ -34,7 +34,14 @@ class Album {
   });
 
   @override
-  int get hashCode => summary.hashCode ^ discs.hashCode ^ logs.hashCode ^ cues.hashCode ^ images.hashCode ^ files.hashCode ^ fingerprint.hashCode;
+  int get hashCode =>
+      summary.hashCode ^
+      discs.hashCode ^
+      logs.hashCode ^
+      cues.hashCode ^
+      images.hashCode ^
+      files.hashCode ^
+      fingerprint.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -48,6 +55,31 @@ class Album {
           images == other.images &&
           files == other.files &&
           fingerprint == other.fingerprint;
+}
+
+/// Hand-edited album values, kept apart from the scan results so a rescan
+/// re-applies them. `None` = use the detected value.
+class AlbumOverride {
+  final AlbumSource? source;
+
+  /// An image file of the album to use as cover.
+  final String? coverPath;
+
+  const AlbumOverride({this.source, this.coverPath});
+
+  static Future<AlbumOverride> default_() =>
+      RustLib.instance.api.albumModelAlbumOverrideDefault();
+
+  @override
+  int get hashCode => source.hashCode ^ coverPath.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is AlbumOverride &&
+          runtimeType == other.runtimeType &&
+          source == other.source &&
+          coverPath == other.coverPath;
 }
 
 /// Where an album came from.
@@ -104,6 +136,9 @@ class AlbumSummary {
   final PlatformInt64 modifiedAt;
   final List<Issue> issues;
 
+  /// Values the user set by hand; they take precedence over detection.
+  final AlbumOverride overrides;
+
   const AlbumSummary({
     required this.id,
     required this.path,
@@ -134,6 +169,7 @@ class AlbumSummary {
     required this.addedAt,
     required this.modifiedAt,
     required this.issues,
+    required this.overrides,
   });
 
   @override
@@ -166,7 +202,8 @@ class AlbumSummary {
       accentColor.hashCode ^
       addedAt.hashCode ^
       modifiedAt.hashCode ^
-      issues.hashCode;
+      issues.hashCode ^
+      overrides.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -201,7 +238,8 @@ class AlbumSummary {
           accentColor == other.accentColor &&
           addedAt == other.addedAt &&
           modifiedAt == other.modifiedAt &&
-          issues == other.issues;
+          issues == other.issues &&
+          overrides == other.overrides;
 }
 
 /// Audio quality tier, derived from the best stream in the album.
@@ -223,10 +261,19 @@ class CueInfo {
   final bool isUtf8;
   final List<String> missingFiles;
 
-  const CueInfo({required this.path, required this.encoding, required this.isUtf8, required this.missingFiles});
+  const CueInfo({
+    required this.path,
+    required this.encoding,
+    required this.isUtf8,
+    required this.missingFiles,
+  });
 
   @override
-  int get hashCode => path.hashCode ^ encoding.hashCode ^ isUtf8.hashCode ^ missingFiles.hashCode;
+  int get hashCode =>
+      path.hashCode ^
+      encoding.hashCode ^
+      isUtf8.hashCode ^
+      missingFiles.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -247,15 +294,26 @@ class Disc {
   final String? cuePath;
   final List<Track> tracks;
 
-  const Disc({required this.number, this.label, this.cuePath, required this.tracks});
+  const Disc({
+    required this.number,
+    this.label,
+    this.cuePath,
+    required this.tracks,
+  });
 
   @override
-  int get hashCode => number.hashCode ^ label.hashCode ^ cuePath.hashCode ^ tracks.hashCode;
+  int get hashCode =>
+      number.hashCode ^ label.hashCode ^ cuePath.hashCode ^ tracks.hashCode;
 
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      other is Disc && runtimeType == other.runtimeType && number == other.number && label == other.label && cuePath == other.cuePath && tracks == other.tracks;
+      other is Disc &&
+          runtimeType == other.runtimeType &&
+          number == other.number &&
+          label == other.label &&
+          cuePath == other.cuePath &&
+          tracks == other.tracks;
 }
 
 class FileEntry {
@@ -269,7 +327,11 @@ class FileEntry {
 
   @override
   bool operator ==(Object other) =>
-      identical(this, other) || other is FileEntry && runtimeType == other.runtimeType && relPath == other.relPath && size == other.size;
+      identical(this, other) ||
+      other is FileEntry &&
+          runtimeType == other.runtimeType &&
+          relPath == other.relPath &&
+          size == other.size;
 }
 
 class ImageItem {
@@ -279,14 +341,23 @@ class ImageItem {
   final String group;
   final PlatformInt64 size;
 
-  const ImageItem({required this.path, required this.group, required this.size});
+  const ImageItem({
+    required this.path,
+    required this.group,
+    required this.size,
+  });
 
   @override
   int get hashCode => path.hashCode ^ group.hashCode ^ size.hashCode;
 
   @override
   bool operator ==(Object other) =>
-      identical(this, other) || other is ImageItem && runtimeType == other.runtimeType && path == other.path && group == other.group && size == other.size;
+      identical(this, other) ||
+      other is ImageItem &&
+          runtimeType == other.runtimeType &&
+          path == other.path &&
+          group == other.group &&
+          size == other.size;
 }
 
 class Issue {
@@ -301,7 +372,12 @@ class Issue {
 
   @override
   bool operator ==(Object other) =>
-      identical(this, other) || other is Issue && runtimeType == other.runtimeType && kind == other.kind && message == other.message && path == other.path;
+      identical(this, other) ||
+      other is Issue &&
+          runtimeType == other.runtimeType &&
+          kind == other.kind &&
+          message == other.message &&
+          path == other.path;
 }
 
 enum IssueKind {
@@ -478,10 +554,23 @@ class TrackVerify {
   final String? testCrc;
   final bool? crcMatch;
 
-  const TrackVerify({required this.number, this.accurateRip, this.arOk, this.copyCrc, this.testCrc, this.crcMatch});
+  const TrackVerify({
+    required this.number,
+    this.accurateRip,
+    this.arOk,
+    this.copyCrc,
+    this.testCrc,
+    this.crcMatch,
+  });
 
   @override
-  int get hashCode => number.hashCode ^ accurateRip.hashCode ^ arOk.hashCode ^ copyCrc.hashCode ^ testCrc.hashCode ^ crcMatch.hashCode;
+  int get hashCode =>
+      number.hashCode ^
+      accurateRip.hashCode ^
+      arOk.hashCode ^
+      copyCrc.hashCode ^
+      testCrc.hashCode ^
+      crcMatch.hashCode;
 
   @override
   bool operator ==(Object other) =>

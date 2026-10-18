@@ -12,26 +12,48 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 // These functions are ignored because they are not marked as `pub`: `summaries`
 
 /// Loads config + cached library. Call once at startup.
-Future<LibraryInfo> initLibrary({required String dataDir}) => RustLib.instance.api.crateApiLibraryInitLibrary(dataDir: dataDir);
+Future<LibraryInfo> initLibrary({required String dataDir}) =>
+    RustLib.instance.api.crateApiLibraryInitLibrary(dataDir: dataDir);
 
-Future<void> setLibraryRoot({required String root}) => RustLib.instance.api.crateApiLibrarySetLibraryRoot(root: root);
+Future<void> setLibraryRoot({required String root}) =>
+    RustLib.instance.api.crateApiLibrarySetLibraryRoot(root: root);
 
 /// Scans the library, streaming progress. Unchanged albums come from the cache unless `force`.
-Stream<ScanEvent> scanLibrary({required bool force}) => RustLib.instance.api.crateApiLibraryScanLibrary(force: force);
+Stream<ScanEvent> scanLibrary({required bool force}) =>
+    RustLib.instance.api.crateApiLibraryScanLibrary(force: force);
 
-Future<Album?> getAlbum({required String id}) => RustLib.instance.api.crateApiLibraryGetAlbum(id: id);
+Future<Album?> getAlbum({required String id}) =>
+    RustLib.instance.api.crateApiLibraryGetAlbum(id: id);
 
-Future<Album> rescanAlbum({required String id}) => RustLib.instance.api.crateApiLibraryRescanAlbum(id: id);
+Future<Album> rescanAlbum({required String id}) =>
+    RustLib.instance.api.crateApiLibraryRescanAlbum(id: id);
+
+/// Saves the user's edits for an album (all `None` = back to detection) and
+/// returns the re-analysed album.
+Future<Album> setAlbumOverride({
+  required String id,
+  required AlbumOverride overrides,
+}) => RustLib.instance.api.crateApiLibrarySetAlbumOverride(
+  id: id,
+  overrides: overrides,
+);
 
 /// Cached JPEG thumbnail path for any image (scans can be huge BMP/TIFF).
-Future<String> getThumbnail({required String path, required int maxSize}) => RustLib.instance.api.crateApiLibraryGetThumbnail(path: path, maxSize: maxSize);
+Future<String> getThumbnail({required String path, required int maxSize}) =>
+    RustLib.instance.api.crateApiLibraryGetThumbnail(
+      path: path,
+      maxSize: maxSize,
+    );
 
 /// Reads a text file (log / cue / txt) with encoding detection.
-Future<String> readTextFile({required String path}) => RustLib.instance.api.crateApiLibraryReadTextFile(path: path);
+Future<String> readTextFile({required String path}) =>
+    RustLib.instance.api.crateApiLibraryReadTextFile(path: path);
 
 /// Converts every non-UTF-8 cue sheet of an album to UTF-8 (with BOM).
 /// The original is kept next to it as `*.cue.bak`.
-Future<Album> fixCueEncoding({required String id}) => RustLib.instance.api.crateApiLibraryFixCueEncoding(id: id);
+Future<Album> fixCueEncoding({required String id}) =>
+    RustLib.instance.api.crateApiLibraryFixCueEncoding(id: id);
 
 /// Removes all cached thumbnails (they are regenerated on next scan).
-Future<void> clearThumbnailCache() => RustLib.instance.api.crateApiLibraryClearThumbnailCache();
+Future<void> clearThumbnailCache() =>
+    RustLib.instance.api.crateApiLibraryClearThumbnailCache();

@@ -203,14 +203,6 @@ pub fn analyze_files(root: &Path, dir: &Path, cache_dir: &Path, fingerprint: u64
     } else {
         AlbumSource::Unknown
     };
-    let rip_status = if source != AlbumSource::CdRip {
-        RipStatus::NotApplicable
-    } else if logs.is_empty() {
-        RipStatus::NoLog
-    } else {
-        logs.iter().map(|l| l.status).max_by_key(|s| severity(*s)).unwrap_or(RipStatus::Unknown)
-    };
-
     // ---- cover ----
     let cover = pick_cover(&image_files);
     let mut cover_path = cover.map(|c| c.path.to_string_lossy().into_owned());
@@ -246,16 +238,6 @@ pub fn analyze_files(root: &Path, dir: &Path, cache_dir: &Path, fingerprint: u64
             });
         }
     }
-    for l in &logs {
-        match l.status {
-            RipStatus::Error => issues.push(Issue { kind: IssueKind::RipErrors, message: "抓轨日志报告了读取错误或 CRC 不一致".into(), path: Some(l.path.clone()) }),
-            RipStatus::Warning => issues.push(Issue { kind: IssueKind::RipUnverified, message: "部分音轨未通过 AccurateRip 校验".into(), path: Some(l.path.clone()) }),
-            _ => {}
-        }
-    }
-    if rip_status == RipStatus::NoLog {
-        issues.push(Issue { kind: IssueKind::MissingLog, message: "CD 镜像缺少抓轨日志".into(), path: None });
-    }
     if !standard_name {
         issues.push(Issue { kind: IssueKind::NonStandardName, message: "文件夹名不符合 “[YYMMDD] 标题” 格式".into(), path: None });
     }
@@ -270,7 +252,7 @@ pub fn analyze_files(root: &Path, dir: &Path, cache_dir: &Path, fingerprint: u64
         .collect();
     images.sort_by(|a, b| natural_cmp(&a.group, &b.group).then_with(|| natural_cmp(&a.path, &b.path)));
 
-    let summary = AlbumSummary {
+    let mut summary = AlbumSummary {
         id,
         path: dir.to_string_lossy().into_owned(),
         folder_name,
@@ -303,14 +285,17 @@ pub fn analyze_files(root: &Path, dir: &Path, cache_dir: &Path, fingerprint: u64
         image_count: images.len() as i32,
         has_cue: !cue_files.is_empty(),
         has_log: !logs.is_empty(),
-        rip_status,
+        // Set by apply_source below.
+        rip_status: RipStatus::NotApplicable,
         cover_path,
         cover_thumb: cover_thumb.map(|p| p.to_string_lossy().into_owned()),
         accent_color,
         added_at: std::fs::metadata(dir).map(|m| unix_secs(m.created())).unwrap_or(0),
         modified_at: files.iter().map(|f| f.mtime).max().unwrap_or(0),
         issues,
+        overrides: AlbumOverride::default(),
     };
+    apply_source(&mut summary, &logs, source);
     Album {
         summary,
         discs: built.discs,
@@ -320,4 +305,42 @@ pub fn analyze_files(root: &Path, dir: &Path, cache_dir: &Path, fingerprint: u64
         files: files.iter().map(|f| FileEntry { rel_path: f.rel.clone(), size: f.size as i64 }).collect(),
         fingerprint,
     }
+}
+
+/// Sets the album source and everything derived from it: the rip status and
+/// the rip-related issues (which only apply to CD rips).
+pub fn apply_source(summary: &mut AlbumSummary, logs: &[RipLog], source: AlbumSource) {
+    summary.source = source;
+    summary.rip_status = if source != AlbumSource::CdRip {
+        RipStatus::NotApplicable
+    } else if logs.is_empty() {
+        RipStatus::NoLog
+    } else {
+        logs.iter().map(|l| l.status).max_by_key(|s| severity(*s)).unwrap_or(RipStatus::Unknown)
+    };
+    summary.issues.retain(|i| !matches!(i.kind, IssueKind::RipErrors | IssueKind::RipUnverified | IssueKind::MissingLog));
+    if source != AlbumSource::CdRip {
+        return;
+    }
+    for l in logs {
+        match l.status {
+            RipStatus::Error => summary.issues.push(Issue { kind: IssueKind::RipErrors, message: "抓轨日志报告了读取错误或 CRC 不一致".into(), path: Some(l.path.clone()) }),
+            RipStatus::Warning => summary.issues.push(Issue { kind: IssueKind::RipUnverified, message: "部分音轨未通过 AccurateRip 校验".into(), path: Some(l.path.clone()) }),
+            _ => {}
+        }
+    }
+    if summary.rip_status == RipStatus::NoLog {
+        summary.issues.push(Issue { kind: IssueKind::MissingLog, message: "CD 镜像缺少抓轨日志".into(), path: None });
+    }
+}
+
+/// Uses `image` as the album cover (thumbnail, accent color). Returns false
+/// and leaves the summary untouched if the image can't be read.
+pub fn apply_cover(summary: &mut AlbumSummary, image: &Path, cache_dir: &Path) -> bool {
+    let Ok(thumb) = imaging::thumbnail(image, cache_dir, COVER_THUMB) else { return false };
+    summary.cover_path = Some(image.to_string_lossy().into_owned());
+    summary.accent_color = imaging::accent_color(&thumb);
+    summary.cover_thumb = Some(thumb.to_string_lossy().into_owned());
+    summary.issues.retain(|i| i.kind != IssueKind::MissingCover);
+    true
 }

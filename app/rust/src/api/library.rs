@@ -59,6 +59,12 @@ pub fn rescan_album(id: String) -> Result<Album> {
     library::rescan_album(&id)
 }
 
+/// Saves the user's edits for an album (all `None` = back to detection) and
+/// returns the re-analysed album.
+pub fn set_album_override(id: String, overrides: AlbumOverride) -> Result<Album> {
+    library::set_override(&id, overrides)
+}
+
 /// Cached JPEG thumbnail path for any image (scans can be huge BMP/TIFF).
 pub fn get_thumbnail(path: String, max_size: u32) -> Result<String> {
     let (_, data) = library::dirs()?;
