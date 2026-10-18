@@ -9,6 +9,9 @@ import 'package:album_manager/state/settings_controller.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  // The default 100 MB holds only ~100 decoded grid covers; keep a whole
+  // typical library resident so scrolling back doesn't re-decode from disk.
+  PaintingBinding.instance.imageCache.maximumSizeBytes = 400 << 20;
   await RustLib.init();
   await settings.load();
   browser.load();

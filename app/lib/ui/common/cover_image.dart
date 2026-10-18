@@ -18,19 +18,18 @@ class CoverImage extends StatelessWidget {
       color: cs.surfaceContainerHighest,
       child: Center(child: Icon(Icons.album_outlined, color: cs.onSurfaceVariant, size: 40)),
     );
-    return ClipRRect(
-      borderRadius: BorderRadius.circular(radius),
-      child: path == null
-          ? placeholder
-          : Image.file(
-              File(path!),
-              fit: BoxFit.cover,
-              cacheWidth: cacheWidth,
-              gaplessPlayback: true,
-              filterQuality: FilterQuality.medium,
-              errorBuilder: (_, _, _) => placeholder,
-            ),
-    );
+    final image = path == null
+        ? placeholder
+        : Image.file(
+            File(path!),
+            fit: BoxFit.cover,
+            cacheWidth: cacheWidth,
+            gaplessPlayback: true,
+            filterQuality: FilterQuality.medium,
+            errorBuilder: (_, _, _) => placeholder,
+          );
+    // Square corners need no clip layer (the parent card already clips).
+    return radius == 0 ? image : ClipRRect(borderRadius: BorderRadius.circular(radius), child: image);
   }
 }
 

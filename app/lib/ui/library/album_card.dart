@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import 'package:album_manager/src/rust/third_party/album_model.dart';
@@ -16,6 +18,9 @@ class AlbumCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = Theme.of(context);
     final showRip = album.source == AlbumSource.cdRip && album.ripStatus != RipStatus.noLog;
+    // Decode at display size (grid tiles are at most 220 wide) rather than the
+    // 480px thumbnail, so more covers fit in the image cache.
+    final decodeWidth = math.min(480, (220 * MediaQuery.devicePixelRatioOf(context)).ceil());
     return Card.filled(
       margin: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
@@ -25,7 +30,7 @@ class AlbumCard extends StatelessWidget {
           AspectRatio(
             aspectRatio: 1,
             child: Stack(fit: StackFit.expand, children: [
-              CoverImage(path: album.coverThumb, radius: 0, cacheWidth: 480),
+              CoverImage(path: album.coverThumb, radius: 0, cacheWidth: decodeWidth),
               Positioned(
                 left: 8,
                 bottom: 8,
