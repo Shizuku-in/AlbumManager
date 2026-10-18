@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:album_manager/src/rust/api/library.dart' as api;
 import 'package:album_manager/state/library_controller.dart';
 import 'package:album_manager/state/settings_controller.dart';
+import 'package:album_manager/theme/app_theme.dart';
 import 'package:album_manager/ui/common/app_page.dart';
 import 'package:album_manager/ui/common/section_header.dart';
 import 'package:album_manager/ui/settings/welcome_page.dart';
@@ -88,10 +89,21 @@ class SettingsPage extends StatelessWidget {
                 SwitchListTile(
                   secondary: const Icon(Icons.palette_outlined),
                   title: const Text('使用系统强调色'),
-                  subtitle: const Text('关闭后使用默认配色'),
+                  subtitle: const Text('关闭后可自选强调色'),
                   value: settings.useSystemColor,
                   onChanged: settings.setUseSystemColor,
                 ),
+                if (!settings.useSystemColor)
+                  ListTile(
+                    leading: const Icon(Icons.color_lens_outlined),
+                    title: const Text('强调色'),
+                    subtitle: Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Wrap(spacing: 8, runSpacing: 8, children: [
+                        for (final c in seedPresets) _Swatch(color: c, selected: c == settings.seedColor, onTap: () => settings.setSeedColor(c)),
+                      ]),
+                    ),
+                  ),
               ]),
               group('关于', [
                 const ListTile(
@@ -106,6 +118,33 @@ class SettingsPage extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+class _Swatch extends StatelessWidget {
+  const _Swatch({required this.color, required this.selected, required this.onTap});
+
+  final Color color;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final scheme = Theme.of(context).colorScheme;
+    return InkWell(
+      onTap: onTap,
+      customBorder: const CircleBorder(),
+      child: Container(
+        width: 32,
+        height: 32,
+        decoration: BoxDecoration(
+          color: color,
+          shape: BoxShape.circle,
+          border: selected ? Border.all(color: scheme.onSurface, width: 2) : null,
+        ),
+        child: selected ? const Icon(Icons.check, size: 18, color: Colors.white) : null,
+      ),
     );
   }
 }

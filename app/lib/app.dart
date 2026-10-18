@@ -18,8 +18,8 @@ class AlbumManagerApp extends StatelessWidget {
         listenable: settings,
         builder: (context, _) {
           final useDynamic = settings.useSystemColor && lightDynamic != null && darkDynamic != null;
-          final lightSeed = useDynamic ? lightDynamic.primary : defaultSeed;
-          final darkSeed = useDynamic ? darkDynamic.primary : defaultSeed;
+          final lightSeed = useDynamic ? lightDynamic.primary : settings.seedColor;
+          final darkSeed = useDynamic ? darkDynamic.primary : settings.seedColor;
           return MaterialApp(
             title: 'Album Manager',
             debugShowCheckedModeBanner: false,

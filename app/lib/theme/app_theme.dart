@@ -5,6 +5,20 @@ import 'package:album_manager/theme/app_colors.dart';
 /// Fallback seed when the OS provides no accent color.
 const defaultSeed = Color(0xFF6750A4);
 
+/// Accent colors offered when the system accent color is off.
+const seedPresets = [
+  defaultSeed,
+  Color(0xFF3F51B5), // indigo
+  Color(0xFF1E88E5), // blue
+  Color(0xFF00897B), // teal
+  Color(0xFF43A047), // green
+  Color(0xFFC0A000), // yellow
+  Color(0xFFF57C00), // orange
+  Color(0xFFE53935), // red
+  Color(0xFFD81B60), // pink
+  Color(0xFF795548), // brown
+];
+
 /// Bundled (see pubspec.yaml). Fallbacks cover Japanese-only kanji etc.
 const appFont = 'HarmonyOS Sans SC';
 const appFontFallback = ['Microsoft YaHei UI', 'Yu Gothic UI', 'Segoe UI'];
