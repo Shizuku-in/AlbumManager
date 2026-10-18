@@ -1,0 +1,3 @@
+rust_input: crate::api,album-model
+rust_root: rust/
+dart_output: lib/src/rust

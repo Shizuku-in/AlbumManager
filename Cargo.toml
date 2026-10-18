@@ -1,0 +1,29 @@
+[workspace]
+resolver = "2"
+members = ["crates/*", "app/rust"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[workspace.dependencies]
+album-model = { path = "crates/album-model" }
+album-formats = { path = "crates/album-formats" }
+album-core = { path = "crates/album-core" }
+
+anyhow = "1"
+chardetng = "0.1"
+encoding_rs = "0.8"
+image = { version = "0.25", default-features = false, features = ["jpeg", "png", "bmp", "tiff", "webp", "gif", "rayon"] }
+lofty = "0.22"
+rayon = "1"
+regex = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+unicode-normalization = "0.1"
+walkdir = "2"
+
+# Image decoding / audio probing are painfully slow unoptimised.
+[profile.dev.package."*"]
+opt-level = 3
