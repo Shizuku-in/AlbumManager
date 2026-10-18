@@ -1,0 +1,22 @@
+# Line endings: LF in the repository and in the working tree, regardless of
+# core.autocrlf (dart format and rustfmt both write LF).
+* text=auto eol=lf
+
+# cmd.exe misparses labels / goto in LF batch files.
+*.cmd text eol=crlf
+*.bat text eol=crlf
+
+# Binary assets
+*.ico binary
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+
+# Generated code: collapsed in diffs, excluded from language statistics.
+app/lib/src/rust/** linguist-generated=true
+app/rust/src/frb_generated.rs linguist-generated=true
+*.freezed.dart linguist-generated=true
+app/windows/flutter/generated_* linguist-generated=true
+Cargo.lock linguist-generated=true
+pubspec.lock linguist-generated=true
