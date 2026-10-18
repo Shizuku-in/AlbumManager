@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:album_manager/src/rust/third_party/album_model.dart';
+import 'package:album_manager/state/library_browser.dart';
 import 'package:album_manager/state/library_controller.dart';
 import 'package:album_manager/ui/common/app_page.dart';
 import 'package:album_manager/ui/common/cover_image.dart';
@@ -54,10 +55,7 @@ class _YearCard extends StatelessWidget {
       margin: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
       child: InkWell(
-        onTap: () {
-          library.setYear(year == 0 ? null : year);
-          library.setNav(0);
-        },
+        onTap: () => browser.showYear(year == 0 ? null : year),
         child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
           Expanded(
             child: GridView.count(

@@ -7,7 +7,54 @@ import 'package:album_manager/ui/common/app_page.dart';
 import 'package:album_manager/ui/common/section_header.dart';
 import 'package:album_manager/ui/stats/stats_charts.dart';
 import 'package:album_manager/util/format.dart';
+import 'package:album_manager/util/memo.dart';
 import 'package:album_manager/util/labels.dart';
+
+/// Aggregates over the whole library; recomputed only when the albums change.
+class _Stats {
+  final int tracks, size, images, cdRips;
+  final double duration;
+  final Map<AlbumSource, int> sources;
+  final Map<AudioQuality, int> qualities;
+  final Map<RipStatus, int> rips;
+  final List<MapEntry<String, int>> formats;
+  final List<MapEntry<String, int>> artists;
+
+  _Stats._(this.tracks, this.size, this.images, this.cdRips, this.duration, this.sources, this.qualities, this.rips, this.formats, this.artists);
+
+  factory _Stats(List<AlbumSummary> albums) {
+    Map<K, int> count<K>(K Function(AlbumSummary) key) {
+      final m = <K, int>{};
+      for (final a in albums) {
+        m[key(a)] = (m[key(a)] ?? 0) + 1;
+      }
+      return m;
+    }
+
+    final formats = <String, int>{};
+    for (final a in albums) {
+      if (a.formats.isNotEmpty) formats[a.formats.first] = (formats[a.formats.first] ?? 0) + 1;
+    }
+    final artists = <String, int>{};
+    for (final a in albums) {
+      if (a.artist != null) artists[a.artist!] = (artists[a.artist!] ?? 0) + 1;
+    }
+    return _Stats._(
+      albums.fold<int>(0, (n, a) => n + a.trackCount),
+      albums.fold<int>(0, (n, a) => n + a.totalSize),
+      albums.fold<int>(0, (n, a) => n + a.imageCount),
+      albums.where((a) => a.source == AlbumSource.cdRip).length,
+      albums.fold<double>(0, (n, a) => n + a.durationSecs),
+      count((a) => a.source),
+      count((a) => a.quality),
+      count((a) => a.ripStatus)..remove(RipStatus.notApplicable),
+      formats.entries.toList()..sort((a, b) => b.value.compareTo(a.value)),
+      artists.entries.toList()..sort((a, b) => b.value.compareTo(a.value)),
+    );
+  }
+}
+
+final _stats = Memo<List<AlbumSummary>, _Stats>();
 
 class StatsPage extends StatelessWidget {
   const StatsPage({super.key});
@@ -20,26 +67,8 @@ class StatsPage extends StatelessWidget {
         final cs = Theme.of(context).colorScheme;
         final app = AppColors.of(context);
         final albums = library.albums;
-        final tracks = albums.fold<int>(0, (n, a) => n + a.trackCount);
-        final dur = albums.fold<double>(0, (n, a) => n + a.durationSecs);
-        final size = albums.fold<int>(0, (n, a) => n + a.totalSize);
-        final images = albums.fold<int>(0, (n, a) => n + a.imageCount);
-
-        Map<K, int> count<K>(K Function(AlbumSummary) key) {
-          final m = <K, int>{};
-          for (final a in albums) {
-            m[key(a)] = (m[key(a)] ?? 0) + 1;
-          }
-          return m;
-        }
-
-        final formats = <String, int>{};
-        for (final a in albums) {
-          if (a.formats.isNotEmpty) formats[a.formats.first] = (formats[a.formats.first] ?? 0) + 1;
-        }
+        final st = _stats(albums, () => _Stats(albums));
         final palette = [cs.primary, cs.tertiary, cs.secondary, app.cd.color, app.digital.color, app.dsd.color, app.disc.color, cs.outline];
-        final artists = count((a) => a.artist).entries.where((e) => e.key != null).toList()..sort((a, b) => b.value.compareTo(a.value));
-        final rips = albums.where((a) => a.source == AlbumSource.cdRip).length;
 
         Widget card(String title, Widget child, {Widget? trailing}) => Card.outlined(
               margin: EdgeInsets.zero,
@@ -61,10 +90,10 @@ class StatsPage extends StatelessWidget {
                   return Wrap(spacing: 16, runSpacing: 16, children: [
                     for (final k in [
                       KpiCard('专辑', '${albums.length}', Icons.album_outlined),
-                      KpiCard('曲目', '$tracks', Icons.music_note_outlined),
-                      KpiCard('总时长', formatHours(dur), Icons.schedule),
-                      KpiCard('占用空间', formatSize(size), Icons.storage),
-                      KpiCard('图片 / 扫图', '$images', Icons.photo_library_outlined),
+                      KpiCard('曲目', '${st.tracks}', Icons.music_note_outlined),
+                      KpiCard('总时长', formatHours(st.duration), Icons.schedule),
+                      KpiCard('占用空间', formatSize(st.size), Icons.storage),
+                      KpiCard('图片 / 扫图', '${st.images}', Icons.photo_library_outlined),
                     ])
                       SizedBox(width: w, child: k),
                   ]);
@@ -76,21 +105,21 @@ class StatsPage extends StatelessWidget {
                   final left = card(
                     '来源与音质',
                     Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      BreakdownBar(entries: [for (final e in count((a) => a.source).entries) (e.key.label, e.value, e.key.tone(context).color)]),
+                      BreakdownBar(entries: [for (final e in st.sources.entries) (e.key.label, e.value, e.key.tone(context).color)]),
                       const SizedBox(height: 24),
-                      BreakdownBar(entries: [for (final e in count((a) => a.quality).entries) (e.key.label, e.value, e.key.tone(context).color)]),
+                      BreakdownBar(entries: [for (final e in st.qualities.entries) (e.key.label, e.value, e.key.tone(context).color)]),
                     ]),
                   );
                   final right = card(
                     '抓轨质量与格式',
-                    trailing: Text('$rips 张 CD', style: Theme.of(context).textTheme.bodySmall),
+                    trailing: Text('${st.cdRips} 张 CD', style: Theme.of(context).textTheme.bodySmall),
                     Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                       BreakdownBar(entries: [
-                        for (final e in (count((a) => a.ripStatus)..remove(RipStatus.notApplicable)).entries) (e.key.label, e.value, e.key.tone(context).color),
+                        for (final e in st.rips.entries) (e.key.label, e.value, e.key.tone(context).color),
                       ]),
                       const SizedBox(height: 24),
                       BreakdownBar(entries: [
-                        for (final (i, e) in (formats.entries.toList()..sort((a, b) => b.value.compareTo(a.value))).indexed)
+                        for (final (i, e) in st.formats.indexed)
                           (e.key, e.value, palette[i % palette.length]),
                       ]),
                     ]),
@@ -107,12 +136,12 @@ class StatsPage extends StatelessWidget {
                   margin: EdgeInsets.zero,
                   child: Column(children: [
                     const SectionHeader('专辑最多的艺术家 / 品牌'),
-                    for (final e in artists.take(12))
+                    for (final e in st.artists.take(12))
                       ListTile(
-                        title: Text(e.key!, maxLines: 1, overflow: TextOverflow.ellipsis),
+                        title: Text(e.key, maxLines: 1, overflow: TextOverflow.ellipsis),
                         subtitle: Padding(
                           padding: const EdgeInsets.only(top: 8),
-                          child: LinearProgressIndicator(value: e.value / artists.first.value),
+                          child: LinearProgressIndicator(value: e.value / st.artists.first.value),
                         ),
                         trailing: Text('${e.value}', style: Theme.of(context).textTheme.labelLarge),
                       ),

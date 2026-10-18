@@ -17,18 +17,24 @@ ThemeData buildTheme(ColorScheme scheme) {
     visualDensity: VisualDensity.standard,
     extensions: [AppColors.forScheme(scheme)],
     snackBarTheme: const SnackBarThemeData(behavior: SnackBarBehavior.floating, width: 480),
+    // Standard (non-modal) navigation drawer: flush with the window edge.
+    drawerTheme: const DrawerThemeData(shape: RoundedRectangleBorder(), width: 280),
   );
 }
 
-ColorScheme schemeFor(Color seed, Brightness b) => ColorScheme.fromSeed(seedColor: seed, brightness: b);
+// Generating a theme runs ColorScheme.fromSeed for the scheme and for every
+// custom color, so themes are cached per seed + brightness.
+final _themes = <(int, Brightness), ThemeData>{};
 
-/// Scheme derived from album content (cover color), per M3 content-based color.
+/// Theme generated from a seed color (tonal spot scheme), cached.
+ThemeData themeFor(Color seed, Brightness brightness) {
+  if (_themes.length > 128) _themes.clear();
+  return _themes.putIfAbsent((seed.toARGB32(), brightness), () => buildTheme(ColorScheme.fromSeed(seedColor: seed, brightness: brightness)));
+}
+
+/// Theme derived from album content (cover color), per M3 content-based color.
 ThemeData contentTheme(BuildContext context, Color? seed) {
   final base = Theme.of(context);
   if (seed == null) return base;
-  return buildTheme(ColorScheme.fromSeed(
-    seedColor: seed,
-    brightness: base.brightness,
-    dynamicSchemeVariant: DynamicSchemeVariant.tonalSpot,
-  ));
+  return themeFor(seed, base.brightness);
 }

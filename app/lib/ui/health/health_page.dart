@@ -7,7 +7,21 @@ import 'package:album_manager/ui/album/cue_fix_dialog.dart';
 import 'package:album_manager/ui/common/app_page.dart';
 import 'package:album_manager/ui/common/cover_image.dart';
 import 'package:album_manager/util/labels.dart';
+import 'package:album_manager/util/memo.dart';
 import 'package:album_manager/util/system.dart';
+
+/// Albums affected per issue kind (each album counted once per kind).
+final _byKind = Memo<List<AlbumSummary>, Map<IssueKind, List<AlbumSummary>>>();
+
+Map<IssueKind, List<AlbumSummary>> _group(List<AlbumSummary> albums) {
+  final m = <IssueKind, List<AlbumSummary>>{};
+  for (final a in albums) {
+    for (final k in a.issues.map((i) => i.kind).toSet()) {
+      m.putIfAbsent(k, () => []).add(a);
+    }
+  }
+  return m;
+}
 
 class HealthPage extends StatefulWidget {
   const HealthPage({super.key});
@@ -42,16 +56,12 @@ class _HealthPageState extends State<HealthPage> {
       listenable: library,
       builder: (context, _) {
         final t = Theme.of(context);
-        final counts = <IssueKind, int>{};
-        for (final a in library.albums) {
-          for (final k in a.issues.map((i) => i.kind).toSet()) {
-            counts[k] = (counts[k] ?? 0) + 1;
-          }
-        }
-        final kinds = IssueKind.values.where((k) => (counts[k] ?? 0) > 0).toList();
+        final albums = library.albums;
+        final byKind = _byKind(albums, () => _group(albums));
+        final kinds = IssueKind.values.where(byKind.containsKey).toList();
         final kind = (_kind != null && kinds.contains(_kind)) ? _kind : (kinds.isEmpty ? null : kinds.first);
-        final affected = kind == null ? <AlbumSummary>[] : library.albums.where((a) => a.issues.any((i) => i.kind == kind)).toList();
-        final total = counts.values.fold(0, (a, b) => a + b);
+        final affected = byKind[kind] ?? const <AlbumSummary>[];
+        final total = byKind.values.fold(0, (n, l) => n + l.length);
         return AppPage(
           title: '健康检查',
           actions: [
@@ -76,7 +86,7 @@ class _HealthPageState extends State<HealthPage> {
                     for (final k in kinds)
                       ChoiceChip(
                         avatar: Icon(k.icon, color: k.tone(context).color),
-                        label: Text('${k.label}  ${counts[k]}'),
+                        label: Text('${k.label}  ${byKind[k]!.length}'),
                         selected: k == kind,
                         onSelected: (_) => setState(() => _kind = k),
                       ),

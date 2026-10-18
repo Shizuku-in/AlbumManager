@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:album_manager/src/rust/api/library.dart' as api;
 import 'package:album_manager/state/library_controller.dart';
+import 'package:album_manager/state/settings_controller.dart';
 import 'package:album_manager/ui/common/app_page.dart';
 import 'package:album_manager/ui/common/section_header.dart';
 import 'package:album_manager/ui/settings/welcome_page.dart';
@@ -13,7 +14,7 @@ class SettingsPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: library,
+      listenable: Listenable.merge([library, settings]),
       builder: (context, _) {
         final t = Theme.of(context);
         Widget group(String title, List<Widget> children) => Padding(
@@ -81,16 +82,16 @@ class SettingsPage extends StatelessWidget {
                       ButtonSegment(value: ThemeMode.light, label: Text('浅色'), icon: Icon(Icons.light_mode_outlined)),
                       ButtonSegment(value: ThemeMode.dark, label: Text('深色'), icon: Icon(Icons.dark_mode_outlined)),
                     ],
-                    selected: {library.themeMode},
-                    onSelectionChanged: (s) => library.setThemeMode(s.first),
+                    selected: {settings.themeMode},
+                    onSelectionChanged: (s) => settings.setThemeMode(s.first),
                   ),
                 ),
                 SwitchListTile(
                   secondary: const Icon(Icons.palette_outlined),
                   title: const Text('使用系统强调色'),
                   subtitle: const Text('关闭后使用默认配色'),
-                  value: library.useSystemColor,
-                  onChanged: library.setUseSystemColor,
+                  value: settings.useSystemColor,
+                  onChanged: settings.setUseSystemColor,
                 ),
               ]),
               group('关于', [

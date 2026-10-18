@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:window_manager/window_manager.dart';
 
-import 'package:album_manager/state/library_controller.dart';
+import 'package:album_manager/state/settings_controller.dart';
 import 'package:album_manager/theme/app_theme.dart';
 import 'package:album_manager/ui/shell/shell.dart';
 
@@ -52,17 +52,15 @@ class AlbumManagerApp extends StatelessWidget {
     // On Windows, dynamic_color provides the system accent color.
     return DynamicColorBuilder(
       builder: (lightDynamic, darkDynamic) => ListenableBuilder(
-        listenable: library,
+        listenable: settings,
         builder: (context, _) {
-          final useDynamic = library.useSystemColor && lightDynamic != null && darkDynamic != null;
-          final light = useDynamic ? schemeFor(lightDynamic.primary, Brightness.light) : schemeFor(defaultSeed, Brightness.light);
-          final dark = useDynamic ? schemeFor(darkDynamic.primary, Brightness.dark) : schemeFor(defaultSeed, Brightness.dark);
+          final useDynamic = settings.useSystemColor && lightDynamic != null && darkDynamic != null;
           return MaterialApp(
             title: 'Album Manager',
             debugShowCheckedModeBanner: false,
-            theme: buildTheme(light),
-            darkTheme: buildTheme(dark),
-            themeMode: library.themeMode,
+            theme: themeFor(useDynamic ? lightDynamic.primary : defaultSeed, Brightness.light),
+            darkTheme: themeFor(useDynamic ? darkDynamic.primary : defaultSeed, Brightness.dark),
+            themeMode: settings.themeMode,
             locale: const Locale('zh', 'CN'),
             supportedLocales: const [Locale('zh', 'CN'), Locale('en')],
             localizationsDelegates: GlobalMaterialLocalizations.delegates,

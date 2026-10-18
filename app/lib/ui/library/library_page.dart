@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:album_manager/src/rust/third_party/album_model.dart';
+import 'package:album_manager/state/library_browser.dart';
 import 'package:album_manager/state/library_controller.dart';
 import 'package:album_manager/ui/album/album_page.dart';
 import 'package:album_manager/ui/library/album_card.dart';
@@ -14,7 +15,7 @@ class LibraryPage extends StatefulWidget {
 }
 
 class _LibraryPageState extends State<LibraryPage> {
-  final _search = TextEditingController(text: library.query);
+  final _search = TextEditingController(text: browser.query);
 
   @override
   void dispose() {
@@ -28,16 +29,17 @@ class _LibraryPageState extends State<LibraryPage> {
   Widget build(BuildContext context) {
     final t = Theme.of(context);
     return ListenableBuilder(
-      listenable: library,
+      listenable: Listenable.merge([library, browser]),
       builder: (context, _) {
-        final albums = library.visible;
+        final albums = browser.visible(library.albums);
+        final counts = browser.counts(library.albums);
         final totalSize = albums.fold<int>(0, (n, a) => n + a.totalSize);
         final totalDur = albums.fold<double>(0, (n, a) => n + a.durationSecs);
         return Scaffold(
           body: Scrollbar(
             child: CustomScrollView(slivers: [
               SliverAppBar.medium(
-                title: Text(library.yearFilter == null ? '专辑库' : '${library.yearFilter} 年'),
+                title: Text(browser.yearFilter == null ? '专辑库' : '${browser.yearFilter} 年'),
                 actions: [
                   _SortMenu(),
                   const SizedBox(width: 8),
@@ -47,8 +49,8 @@ class _LibraryPageState extends State<LibraryPage> {
                       ButtonSegment(value: true, icon: Icon(Icons.grid_view), tooltip: '网格'),
                       ButtonSegment(value: false, icon: Icon(Icons.view_list), tooltip: '列表'),
                     ],
-                    selected: {library.gridView},
-                    onSelectionChanged: (s) => library.setGridView(s.first),
+                    selected: {browser.gridView},
+                    onSelectionChanged: (s) => browser.setGridView(s.first),
                   ),
                   const SizedBox(width: 16),
                 ],
@@ -63,32 +65,32 @@ class _LibraryPageState extends State<LibraryPage> {
                       leading: const Icon(Icons.search),
                       elevation: const WidgetStatePropertyAll(0),
                       padding: const WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 16)),
-                      onChanged: library.setQuery,
+                      onChanged: browser.setQuery,
                       trailing: [
-                        if (library.query.isNotEmpty)
+                        if (browser.query.isNotEmpty)
                           IconButton(
                             tooltip: '清除',
                             icon: const Icon(Icons.close),
                             onPressed: () {
                               _search.clear();
-                              library.setQuery('');
+                              browser.setQuery('');
                             },
                           ),
                       ],
                     ),
                     const SizedBox(height: 12),
                     Wrap(spacing: 8, runSpacing: 8, children: [
-                      if (library.yearFilter != null)
+                      if (browser.yearFilter != null)
                         InputChip(
                           avatar: const Icon(Icons.calendar_today_outlined),
-                          label: Text('${library.yearFilter} 年'),
-                          onDeleted: () => library.setYear(null),
+                          label: Text('${browser.yearFilter} 年'),
+                          onDeleted: () => browser.setYear(null),
                         ),
                       for (final f in SourceFilter.values)
                         ChoiceChip(
-                          label: Text('${f.label}  ${library.albums.where(f.matches).length}'),
-                          selected: library.filter == f,
-                          onSelected: (_) => library.setFilter(f),
+                          label: Text('${f.label}  ${counts[f]}'),
+                          selected: browser.filter == f,
+                          onSelected: (_) => browser.setFilter(f),
                         ),
                     ]),
                     const SizedBox(height: 12),
@@ -101,7 +103,7 @@ class _LibraryPageState extends State<LibraryPage> {
               ),
               if (albums.isEmpty)
                 SliverFillRemaining(hasScrollBody: false, child: _Empty(scanning: library.scanning))
-              else if (library.gridView)
+              else if (browser.gridView)
                 ..._gridSlivers(context, albums)
               else
                 SliverList.builder(
@@ -132,7 +134,7 @@ class _LibraryPageState extends State<LibraryPage> {
             itemBuilder: (context, i) => AlbumCard(album: items[i], onTap: () => _open(items[i])),
           ),
         );
-    if (!library.sort.groupsByYear || library.yearFilter != null) {
+    if (!browser.sort.groupsByYear || browser.yearFilter != null) {
       return [const SliverToBoxAdapter(child: SizedBox(height: 8)), grid(albums)];
     }
     final groups = <int, List<AlbumSummary>>{};
@@ -165,13 +167,13 @@ class _SortMenu extends StatelessWidget {
       builder: (context, controller, _) => TextButton.icon(
         onPressed: () => controller.isOpen ? controller.close() : controller.open(),
         icon: const Icon(Icons.sort),
-        label: Text(library.sort.label),
+        label: Text(browser.sort.label),
       ),
       menuChildren: [
         for (final s in SortMode.values)
           MenuItemButton(
-            leadingIcon: Icon(library.sort == s ? Icons.check : null),
-            onPressed: () => library.setSort(s),
+            leadingIcon: Icon(browser.sort == s ? Icons.check : null),
+            onPressed: () => browser.setSort(s),
             child: Text(s.label),
           ),
       ],

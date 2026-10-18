@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:album_manager/state/library_controller.dart';
+import 'package:album_manager/state/library_browser.dart';
 
 class KpiCard extends StatelessWidget {
   final String label, value;
@@ -53,10 +53,7 @@ class YearBarChart extends StatelessWidget {
               message: '${e.key} 年：${e.value} 张',
               child: InkWell(
                 borderRadius: BorderRadius.circular(4),
-                onTap: () {
-                  library.setYear(e.key);
-                  library.setNav(0);
-                },
+                onTap: () => browser.showYear(e.key),
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 2),
                   child: Column(mainAxisAlignment: MainAxisAlignment.end, children: [

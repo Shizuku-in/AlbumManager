@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:album_manager/state/library_controller.dart';
+import 'package:album_manager/state/navigation.dart';
 import 'package:album_manager/ui/health/health_page.dart';
 import 'package:album_manager/ui/library/library_page.dart';
 import 'package:album_manager/ui/settings/settings_page.dart';
@@ -39,10 +40,20 @@ class Shell extends StatefulWidget {
 class _ShellState extends State<Shell> {
   final _navKeys = List.generate(_dests.length, (_) => GlobalKey<NavigatorState>());
 
+  // Built once: switching destinations must not rebuild the pages.
+  late final List<Widget> _pages = [
+    for (var i = 0; i < _dests.length; i++)
+      Navigator(
+        key: _navKeys[i],
+        observers: [HeroController()],
+        onGenerateRoute: (_) => MaterialPageRoute(builder: (_) => _dests[i].page),
+      ),
+  ];
+
   void _select(int i) {
     // Re-selecting the current destination returns to its root page.
-    if (i == library.navIndex) _navKeys[i].currentState?.popUntil((r) => r.isFirst);
-    library.setNav(i);
+    if (i == navIndex.value) _navKeys[i].currentState?.popUntil((r) => r.isFirst);
+    navIndex.value = i;
   }
 
   Widget _icon(int i, {required bool selected}) {
@@ -53,85 +64,76 @@ class _ShellState extends State<Shell> {
 
   @override
   Widget build(BuildContext context) {
-    return ListenableBuilder(
-      listenable: library,
-      builder: (context, _) {
-        final wide = MediaQuery.sizeOf(context).width >= 1200;
-        final body = !library.ready
-            ? const Center(child: CircularProgressIndicator())
-            : library.root == null
-                ? const WelcomePage()
-                : IndexedStack(
-                    index: library.navIndex,
-                    children: [
-                      for (var i = 0; i < _dests.length; i++)
-                        Navigator(
-                          key: _navKeys[i],
-                          observers: [HeroController()],
-                          onGenerateRoute: (_) => MaterialPageRoute(builder: (_) => _dests[i].page),
-                        ),
-                    ],
-                  );
-        return Scaffold(
-          body: Row(children: [
-            if (wide) _drawer(context) else _rail(context),
+    final wide = MediaQuery.sizeOf(context).width >= 1200;
+    return Scaffold(
+      body: Row(children: [
+        ListenableBuilder(
+          listenable: Listenable.merge([library, navIndex]),
+          builder: (context, _) => wide ? _drawer(context) : _rail(context),
+        ),
+        Expanded(
+          child: Column(children: [
+            ValueListenableBuilder(
+              valueListenable: library.scanProgress,
+              builder: (context, scan, _) => scan == null
+                  ? const SizedBox(height: 4)
+                  : LinearProgressIndicator(value: scan.total == 0 ? null : scan.fraction),
+            ),
             Expanded(
-              child: Column(children: [
-                if (library.scanning)
-                  LinearProgressIndicator(value: (library.scan!.total == 0) ? null : library.scan!.fraction)
-                else
-                  const SizedBox(height: 4),
-                Expanded(child: body),
-              ]),
+              child: ListenableBuilder(
+                listenable: Listenable.merge([library, navIndex]),
+                builder: (context, _) {
+                  if (!library.ready) return const Center(child: CircularProgressIndicator());
+                  if (library.root == null) return const WelcomePage();
+                  return IndexedStack(index: navIndex.value, children: [
+                    for (var i = 0; i < _pages.length; i++) _PageHost(active: i == navIndex.value, child: _pages[i]),
+                  ]);
+                },
+              ),
             ),
           ]),
-        );
-      },
+        ),
+      ]),
     );
   }
 
   Widget _drawer(BuildContext context) {
     final tt = Theme.of(context).textTheme;
     final cs = Theme.of(context).colorScheme;
-    // Standard (non-modal) drawer: flush with the window, no rounded edge.
-    return Theme(
-      data: Theme.of(context).copyWith(drawerTheme: const DrawerThemeData(shape: RoundedRectangleBorder(), width: 280)),
-      child: NavigationDrawer(
-        backgroundColor: cs.surfaceContainerLow,
-        selectedIndex: library.navIndex,
-        onDestinationSelected: _select,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(28, 20, 16, 16),
-            child: Row(children: [
-              Icon(Icons.album, color: cs.primary, size: 28),
-              const SizedBox(width: 12),
-              Text('Album Manager', style: tt.titleMedium),
-            ]),
-          ),
-          for (var i = 0; i < _dests.length; i++)
-            NavigationDrawerDestination(
-              icon: Icon(_dests[i].icon),
-              selectedIcon: Icon(_dests[i].selectedIcon),
-              // M3 drawer: counts are shown as trailing badge label text.
-              label: SizedBox(
-                width: 176,
-                child: Row(children: [
-                  Expanded(child: Text(_dests[i].label)),
-                  if (i == _healthIndex && library.issueCount > 0) Text('${library.issueCount}', style: tt.labelLarge),
-                ]),
-              ),
+    return NavigationDrawer(
+      backgroundColor: cs.surfaceContainerLow,
+      selectedIndex: navIndex.value,
+      onDestinationSelected: _select,
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(28, 20, 16, 16),
+          child: Row(children: [
+            Icon(Icons.album, color: cs.primary, size: 28),
+            const SizedBox(width: 12),
+            Text('Album Manager', style: tt.titleMedium),
+          ]),
+        ),
+        for (var i = 0; i < _dests.length; i++)
+          NavigationDrawerDestination(
+            icon: Icon(_dests[i].icon),
+            selectedIcon: Icon(_dests[i].selectedIcon),
+            // M3 drawer: counts are shown as trailing badge label text.
+            label: SizedBox(
+              width: 176,
+              child: Row(children: [
+                Expanded(child: Text(_dests[i].label)),
+                if (i == _healthIndex && library.issueCount > 0) Text('${library.issueCount}', style: tt.labelLarge),
+              ]),
             ),
-          const Padding(padding: EdgeInsets.fromLTRB(28, 16, 28, 16), child: Divider()),
-          Padding(padding: const EdgeInsets.symmetric(horizontal: 28), child: const ScanStatus()),
-        ],
-      ),
+          ),
+        const ScanStatus(),
+      ],
     );
   }
 
   Widget _rail(BuildContext context) {
     return NavigationRail(
-      selectedIndex: library.navIndex,
+      selectedIndex: navIndex.value,
       onDestinationSelected: _select,
       labelType: NavigationRailLabelType.all,
       leading: Padding(
@@ -147,5 +149,29 @@ class _ShellState extends State<Shell> {
           ),
       ],
     );
+  }
+}
+
+/// Hosts one destination inside the IndexedStack. Hidden destinations keep
+/// the theme they were last shown with, so a theme change (which animates
+/// frame by frame) only rebuilds the visible page; a hidden page catches up
+/// once when it is shown again.
+class _PageHost extends StatefulWidget {
+  final bool active;
+  final Widget child;
+  const _PageHost({required this.active, required this.child});
+
+  @override
+  State<_PageHost> createState() => _PageHostState();
+}
+
+class _PageHostState extends State<_PageHost> {
+  ThemeData? _theme;
+
+  @override
+  Widget build(BuildContext context) {
+    final live = Theme.of(context);
+    if (widget.active || _theme == null) _theme = live;
+    return Theme(data: _theme!, child: widget.child);
   }
 }
