@@ -79,10 +79,17 @@ class ScrolledUnderBackground extends StatelessWidget {
     final scheme = Theme.of(context).colorScheme;
     final s = context.dependOnInheritedWidgetOfExactType<FlexibleSpaceBarSettings>();
     final scrolledUnder = s?.isScrolledUnder ?? false;
-    return AnimatedContainer(
+    // Animate the scrolled-under amount, not the color: the colors are read
+    // from the theme on every frame, so theme / accent changes (which the app
+    // already animates) apply in lockstep instead of chasing a moving target.
+    return TweenAnimationBuilder<double>(
+      tween: Tween(end: scrolledUnder ? 1 : 0),
       duration: const Duration(milliseconds: 150),
       curve: Curves.easeInOut,
-      color: scrolledUnder ? scheme.surfaceContainer : scheme.surface,
+      // SizedBox.expand: a childless ColoredBox would size itself to zero.
+      builder: (context, t, child) => SizedBox.expand(
+        child: ColoredBox(color: Color.lerp(scheme.surface, scheme.surfaceContainer, t)!, child: child),
+      ),
       child: child,
     );
   }
