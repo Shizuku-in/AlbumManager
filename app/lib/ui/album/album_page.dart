@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:album_manager/src/rust/api/library.dart' as api;
 import 'package:album_manager/src/rust/third_party/album_model.dart';
+import 'package:album_manager/state/favorites.dart';
 import 'package:album_manager/state/library_controller.dart';
 import 'package:album_manager/state/settings_controller.dart';
 import 'package:album_manager/theme/app_theme.dart';
@@ -172,6 +173,19 @@ class _AlbumPageState extends State<AlbumPage> with TickerProviderStateMixin {
               ),
             ),
             actions: [
+              ListenableBuilder(
+                listenable: favorites,
+                builder: (context, _) {
+                  final starred = favorites.contains(_s);
+                  return IconButton(
+                    tooltip: starred ? '取消收藏' : '收藏',
+                    isSelected: starred,
+                    onPressed: () => favorites.toggle(_s),
+                    icon: const Icon(Icons.favorite_border),
+                    selectedIcon: const Icon(Icons.favorite),
+                  );
+                },
+              ),
               IconButton(
                 tooltip: '重新扫描此专辑',
                 onPressed: _busy

@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 
 import 'package:album_manager/src/rust/third_party/album_model.dart';
+import 'package:album_manager/state/favorites.dart';
 import 'package:album_manager/state/settings_controller.dart';
 import 'package:album_manager/ui/common/cover_image.dart';
 import 'package:album_manager/ui/common/tone_label.dart';
@@ -42,6 +43,18 @@ class _AlbumContextMenuState extends State<AlbumContextMenu> {
           onPressed: widget.onOpen,
           child: const Text('查看详情'),
         ),
+        if (favorites.contains(a))
+          MenuItemButton(
+            leadingIcon: const Icon(Icons.favorite),
+            onPressed: () => favorites.toggle(a),
+            child: const Text('取消收藏'),
+          )
+        else
+          MenuItemButton(
+            leadingIcon: const Icon(Icons.favorite_border),
+            onPressed: () => favorites.toggle(a),
+            child: const Text('收藏'),
+          ),
         MenuItemButton(
           leadingIcon: const Icon(Icons.folder_open_outlined),
           onPressed: () => openPath(a.path),
@@ -130,6 +143,29 @@ class AlbumCard extends StatelessWidget {
                     radius: 0,
                     cacheWidth: decodeWidth,
                   ),
+                  if (favorites.contains(album))
+                    Positioned(
+                      top: 8,
+                      right: 8,
+                      child: Tooltip(
+                        message: '已收藏',
+                        child: DecoratedBox(
+                          decoration: BoxDecoration(
+                            color: t.colorScheme.surfaceContainerHighest
+                                .withValues(alpha: 0.9),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(5),
+                            child: Icon(
+                              Icons.favorite,
+                              size: 16,
+                              color: t.colorScheme.primary,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
                   Positioned(
                     left: 8,
                     bottom: 8,
@@ -261,6 +297,19 @@ class AlbumTile extends StatelessWidget {
       trailing: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
+          SizedBox(
+            width: 32,
+            child: favorites.contains(album)
+                ? Tooltip(
+                    message: '已收藏',
+                    child: Icon(
+                      Icons.favorite,
+                      size: 20,
+                      color: t.colorScheme.primary,
+                    ),
+                  )
+                : null,
+          ),
           ToneLabel(album.source.short, tone: album.source.tone(context)),
           const SizedBox(width: 16),
           SizedBox(

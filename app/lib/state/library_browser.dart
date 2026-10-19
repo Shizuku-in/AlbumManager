@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 
 import 'package:album_manager/src/rust/third_party/album_model.dart';
+import 'package:album_manager/state/favorites.dart';
 import 'package:album_manager/state/navigation.dart';
 import 'package:album_manager/state/settings_controller.dart';
 import 'package:album_manager/util/memo.dart';
@@ -22,6 +23,7 @@ extension SortModeX on SortMode {
 
 /// Yes/no properties of an album.
 enum ContentFlag {
+  favorite,
   hasIssues,
   missingCover,
   hasScans,
@@ -32,6 +34,7 @@ enum ContentFlag {
 
 extension ContentFlagX on ContentFlag {
   String get label => switch (this) {
+    ContentFlag.favorite => '已收藏',
     ContentFlag.hasIssues => '有问题',
     ContentFlag.missingCover => '缺少封面',
     ContentFlag.hasScans => '有扫图',
@@ -40,6 +43,7 @@ extension ContentFlagX on ContentFlag {
     ContentFlag.edited => '手动编辑过',
   };
   bool matches(AlbumSummary a) => switch (this) {
+    ContentFlag.favorite => favorites.contains(a),
     ContentFlag.hasIssues => settings.issuesOf(a).isNotEmpty,
     ContentFlag.missingCover => a.coverThumb == null,
     ContentFlag.hasScans => a.hasScans,
@@ -299,6 +303,8 @@ class LibraryBrowser extends ChangeNotifier {
     if (settings.rememberFilters) {
       filters = AlbumFilters.decode(prefs.getStringList('filters') ?? const []);
     }
+    // The "favorite" filter follows starring / unstarring.
+    favorites.addListener(notifyListeners);
     var hidden = settings.hiddenIssues;
     var remember = settings.rememberFilters;
     settings.addListener(() {
@@ -375,14 +381,24 @@ class LibraryBrowser extends ChangeNotifier {
           SortMode,
           int?,
           Set<IssueKind>,
+          Set<String>,
         ),
         List<AlbumSummary>
       >();
-  final _counts = Memo<(List<AlbumSummary>, Set<IssueKind>), FilterCounts>();
+  final _counts =
+      Memo<(List<AlbumSummary>, Set<IssueKind>, Set<String>), FilterCounts>();
 
   /// Albums after search / filters / sort.
   List<AlbumSummary> visible(List<AlbumSummary> albums) => _visible(
-    (albums, query, filters, sort, yearFilter, settings.hiddenIssues),
+    (
+      albums,
+      query,
+      filters,
+      sort,
+      yearFilter,
+      settings.hiddenIssues,
+      favorites.ids,
+    ),
     () {
       final q = query.trim().toLowerCase();
       final list = albums.where((a) {
@@ -417,8 +433,11 @@ class LibraryBrowser extends ChangeNotifier {
   );
 
   /// Album counts per filter option (for the filter panel).
-  FilterCounts counts(List<AlbumSummary> albums) =>
-      _counts((albums, settings.hiddenIssues), () => FilterCounts(albums));
+  FilterCounts counts(List<AlbumSummary> albums) => _counts((
+    albums,
+    settings.hiddenIssues,
+    favorites.ids,
+  ), () => FilterCounts(albums));
 }
 
 final browser = LibraryBrowser();
