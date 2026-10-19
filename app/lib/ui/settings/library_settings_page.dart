@@ -17,6 +17,8 @@ class LibrarySettingsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return SettingsSubpage(
       title: '位置与扫描',
+      onReset: settings.resetScanning,
+      resetNote: '专辑库位置不受影响。',
       groups: (context) => [
         SettingsGroup(
           title: '位置',

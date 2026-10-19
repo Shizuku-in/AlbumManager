@@ -19,6 +19,7 @@ class DisplaySettingsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return SettingsSubpage(
       title: '专辑显示',
+      onReset: settings.resetDisplay,
       groups: (context) => [
         SettingsGroup(
           title: '封面卡片',

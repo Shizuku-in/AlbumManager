@@ -23,6 +23,7 @@ class HealthSettingsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return SettingsSubpage(
       title: '健康检查',
+      onReset: settings.resetHealthChecks,
       groups: (context) => [
         SettingsGroup(
           title: '检查项',

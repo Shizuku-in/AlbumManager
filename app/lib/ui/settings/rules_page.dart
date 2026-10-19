@@ -80,14 +80,6 @@ class _RulesPageState extends State<RulesPage> {
   }
 
   Future<void> _resetDefaults() async {
-    final ok = await confirmSetting(
-      context,
-      icon: Icons.settings_backup_restore,
-      title: '恢复默认规则？',
-      body: '自定义的封面关键词、扫图关键词和文件夹命名格式都会被替换为默认值。',
-      confirm: '恢复默认',
-    );
-    if (!ok) return;
     final d = await api.defaultScanRules();
     await _save(
       coverKeywords: d.coverKeywords,
@@ -149,6 +141,8 @@ class _RulesPageState extends State<RulesPage> {
         );
     return SettingsSubpage(
       title: '识别规则',
+      onReset: _resetDefaults,
+      resetNote: '自定义的封面关键词、扫图关键词和文件夹命名格式都会被替换，完整重新扫描后生效。',
       groups: (context) => rules == null
           ? const [
               SettingsGroup(children: [ListTile(title: Text('正在读取…'))]),
@@ -164,33 +158,22 @@ class _RulesPageState extends State<RulesPage> {
                     title: Text(
                       _pending ? '规则已保存，完整重新扫描后生效' : '修改后需要完整重新扫描才会生效',
                     ),
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        TextButton(
-                          onPressed: _resetDefaults,
-                          child: const Text('恢复默认'),
-                        ),
-                        const SizedBox(width: 8),
-                        // Becomes the emphasized action while changes are waiting.
-                        FilledButton(
-                          style: _pending
-                              ? null
-                              : FilledButton.styleFrom(
-                                  backgroundColor:
-                                      t.colorScheme.secondaryContainer,
-                                  foregroundColor:
-                                      t.colorScheme.onSecondaryContainer,
-                                ),
-                          onPressed: library.scanning
-                              ? null
-                              : () {
-                                  setState(() => _pending = false);
-                                  library.rescan(force: true);
-                                },
-                          child: const Text('立即重新扫描'),
-                        ),
-                      ],
+                    // Becomes the emphasized action while changes are waiting.
+                    trailing: FilledButton(
+                      style: _pending
+                          ? null
+                          : FilledButton.styleFrom(
+                              backgroundColor: t.colorScheme.secondaryContainer,
+                              foregroundColor:
+                                  t.colorScheme.onSecondaryContainer,
+                            ),
+                      onPressed: library.scanning
+                          ? null
+                          : () {
+                              setState(() => _pending = false);
+                              library.rescan(force: true);
+                            },
+                      child: const Text('立即重新扫描'),
                     ),
                   ),
                 ],

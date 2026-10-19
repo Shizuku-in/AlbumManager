@@ -56,14 +56,8 @@ class _RipLogSettingsPageState extends State<RipLogSettingsPage> {
   }
 
   Future<void> _resetDefaults() async {
-    final ok = await confirmSetting(
-      context,
-      icon: Icons.settings_backup_restore,
-      title: '恢复默认规则？',
-      body: '抓轨日志的判定规则会恢复为默认值，显示评分的开关不受影响。',
-      confirm: '恢复默认',
-    );
-    if (ok) await _apply(await api.defaultRipRules());
+    await settings.resetLogDisplay();
+    await _apply(await api.defaultRipRules());
   }
 
   Widget _kindTile(DeductionKind k) {
@@ -87,23 +81,12 @@ class _RipLogSettingsPageState extends State<RipLogSettingsPage> {
     final rules = _rules;
     return SettingsSubpage(
       title: '抓轨日志',
+      onReset: _resetDefaults,
       groups: (context) => rules == null
           ? const [
               SettingsGroup(children: [ListTile(title: Text('正在读取…'))]),
             ]
           : [
-              SettingsGroup(
-                children: [
-                  ListTile(
-                    leading: const Icon(Icons.info_outline),
-                    title: const Text('修改后立即重新判定所有专辑，无需重新扫描'),
-                    trailing: TextButton(
-                      onPressed: _resetDefaults,
-                      child: const Text('恢复默认'),
-                    ),
-                  ),
-                ],
-              ),
               SettingsGroup(
                 title: '显示',
                 children: [

@@ -110,6 +110,11 @@ class SettingsController extends ChangeNotifier {
 
   Future<void> load() async {
     prefs = await SharedPreferences.getInstance();
+    _read();
+  }
+
+  /// Every value falls back to its default when its key is absent.
+  void _read() {
     themeMode =
         ThemeMode.values[prefs.getInt('themeMode') ?? ThemeMode.system.index];
     useSystemColor = prefs.getBool('useSystemColor') ?? true;
@@ -123,6 +128,24 @@ class SettingsController extends ChangeNotifier {
     rememberFilters = prefs.getBool('rememberFilters') ?? false;
     showLogScore = prefs.getBool('showLogScore') ?? false;
   }
+
+  /// Restores the preferences stored under [keys] to their defaults.
+  Future<void> _reset(List<String> keys) async {
+    for (final k in keys) {
+      await prefs.remove(k);
+    }
+    _read();
+    notifyListeners();
+  }
+
+  // One per settings page ("恢复默认" restores that page).
+  Future<void> resetAppearance() =>
+      _reset(['themeMode', 'useSystemColor', 'seedColor', 'hiddenPages']);
+  Future<void> resetDisplay() =>
+      _reset(['cardSize', 'hiddenCardFields', 'dateStyle', 'rememberFilters']);
+  Future<void> resetHealthChecks() => _reset(['hiddenIssues']);
+  Future<void> resetScanning() => _reset(['scanOnStartup']);
+  Future<void> resetLogDisplay() => _reset(['showLogScore']);
 
   void setThemeMode(ThemeMode m) {
     if (m == themeMode) return;

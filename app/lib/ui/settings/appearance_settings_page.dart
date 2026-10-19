@@ -20,6 +20,7 @@ class AppearanceSettingsPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return SettingsSubpage(
       title: '外观',
+      onReset: settings.resetAppearance,
       groups: (context) => [
         SettingsGroup(
           title: '主题',

@@ -100,10 +100,33 @@ Widget settingsChips(List<Widget> chips) => Padding(
 );
 
 /// A second-level settings page: rebuilt when the library or settings change.
+///
+/// With [onReset], the top app bar gets a "恢复默认" action (the same on
+/// every page) that restores this page's settings after a confirmation;
+/// [resetNote] adds what the dialog should mention beyond that.
 class SettingsSubpage extends StatelessWidget {
   final String title;
   final List<Widget> Function(BuildContext context) groups;
-  const SettingsSubpage({super.key, required this.title, required this.groups});
+  final Future<void> Function()? onReset;
+  final String? resetNote;
+  const SettingsSubpage({
+    super.key,
+    required this.title,
+    required this.groups,
+    this.onReset,
+    this.resetNote,
+  });
+
+  Future<void> _confirmReset(BuildContext context) async {
+    final ok = await confirmSetting(
+      context,
+      icon: Icons.settings_backup_restore,
+      title: '恢复默认设置？',
+      body: '“$title”中的设置将恢复为默认值。${resetNote ?? ''}',
+      confirm: '恢复默认',
+    );
+    if (ok) await onReset!();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -111,6 +134,14 @@ class SettingsSubpage extends StatelessWidget {
       listenable: Listenable.merge([library, settings]),
       builder: (context, _) => AppPage(
         title: title,
+        actions: [
+          if (onReset != null)
+            IconButton(
+              tooltip: '恢复默认',
+              onPressed: () => _confirmReset(context),
+              icon: const Icon(Icons.settings_backup_restore),
+            ),
+        ],
         slivers: [SliverList.list(children: groups(context))],
       ),
     );
