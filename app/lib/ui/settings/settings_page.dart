@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import 'package:album_manager/src/rust/third_party/album_model.dart';
 import 'package:album_manager/state/library_controller.dart';
@@ -11,6 +13,11 @@ import 'package:album_manager/ui/settings/library_settings_page.dart';
 import 'package:album_manager/ui/settings/rip_log_settings_page.dart';
 import 'package:album_manager/ui/settings/rules_page.dart';
 import 'package:album_manager/ui/settings/settings_widgets.dart';
+import 'package:album_manager/util/system.dart';
+
+const _repoUrl = 'https://github.com/Shizuku-in/AlbumManager';
+
+final _packageInfo = PackageInfo.fromPlatform();
 
 /// Settings home: categories that open their own pages.
 class SettingsPage extends StatelessWidget {
@@ -89,15 +96,37 @@ class SettingsPage extends StatelessWidget {
                     ),
                   ],
                 ),
-                const SettingsGroup(
+                SettingsGroup(
                   title: '关于',
                   children: [
                     ListTile(
-                      leading: Icon(Icons.album_outlined),
-                      title: Text('Album Manager'),
-                      subtitle: Text(
-                        'Flutter + Rust。解析 EAC / XLD 抓轨日志（AccurateRip、CTDB、CRC）、CUE（自动识别 Shift-JIS / GBK 等编码）、FLAC / WAV / APE / TAK / TTA / DSF 等格式。',
+                      leading: const Icon(Icons.album_outlined),
+                      title: const Text('Album Manager'),
+                      subtitle: FutureBuilder(
+                        future: _packageInfo,
+                        builder: (context, snap) =>
+                            Text('版本 ${snap.data?.version ?? ''}'),
                       ),
+                    ),
+                    ListTile(
+                      leading: Builder(
+                        builder: (context) {
+                          final icon = IconTheme.of(context);
+                          return SvgPicture.asset(
+                            'assets/icons/github.svg',
+                            width: icon.size,
+                            height: icon.size,
+                            colorFilter: ColorFilter.mode(
+                              icon.color!,
+                              BlendMode.srcIn,
+                            ),
+                          );
+                        },
+                      ),
+                      title: const Text('GitHub'),
+                      subtitle: const Text(_repoUrl),
+                      trailing: const Icon(Icons.open_in_new),
+                      onTap: () => openUrl(_repoUrl),
                     ),
                   ],
                 ),

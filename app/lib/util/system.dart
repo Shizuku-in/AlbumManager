@@ -9,3 +9,8 @@ Future<void> openPath(String path) async {
 Future<void> revealInExplorer(String path) async {
   await Process.run('explorer.exe', ['/select,', path]);
 }
+
+/// Opens a web link in the default browser.
+Future<void> openUrl(String url) async {
+  await Process.run('explorer.exe', [url]);
+}
