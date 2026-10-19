@@ -406,7 +406,7 @@ class _Empty extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = Theme.of(context);
     final (icon, title, body, action) = scanning
-        ? (Icons.radar, '正在扫描专辑库…', '找到的专辑会显示在这里', null)
+        ? (Icons.search, '正在扫描专辑库…', '找到的专辑会显示在这里', null)
         : libraryEmpty
         ? (
             Icons.library_music_outlined,

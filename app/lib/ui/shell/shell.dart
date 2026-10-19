@@ -177,6 +177,11 @@ class _ShellState extends State<Shell> with SingleTickerProviderStateMixin {
           ListenableBuilder(
             listenable: Listenable.merge([library, navIndex, settings]),
             builder: (context, _) {
+              // First run: the welcome page alone until a library is chosen.
+              // Shown while loading, so normal launches don't flash without it.
+              if (library.ready && library.root == null) {
+                return const SizedBox.shrink();
+              }
               // Indices into _dests of the destinations shown.
               final shown = [
                 for (var i = 0; i < _dests.length; i++)
