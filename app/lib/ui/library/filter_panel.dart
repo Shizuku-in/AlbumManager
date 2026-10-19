@@ -3,9 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:album_manager/src/rust/third_party/album_model.dart';
 import 'package:album_manager/state/library_browser.dart';
 import 'package:album_manager/state/library_controller.dart';
+import 'package:album_manager/ui/common/smooth_scroll.dart';
 import 'package:album_manager/util/labels.dart';
 
-/// M3 modal side sheet with all library filters. Filters apply live.
+/// M3 modal side sheet (detached, rounded) with all library filters.
+/// Filters apply live.
 Future<void> showFilterPanel(BuildContext context) {
   return showGeneralDialog(
     context: context,
@@ -13,7 +15,10 @@ Future<void> showFilterPanel(BuildContext context) {
     barrierLabel: '关闭筛选',
     barrierColor: Colors.black26,
     transitionDuration: const Duration(milliseconds: 250),
-    pageBuilder: (context, _, _) => const Align(alignment: Alignment.centerRight, child: _FilterPanel()),
+    pageBuilder: (context, _, _) => const Align(
+      alignment: Alignment.centerRight,
+      child: Padding(padding: EdgeInsets.all(16), child: _FilterPanel()),
+    ),
     transitionBuilder: (context, anim, _, child) => SlideTransition(
       position: Tween(
         begin: const Offset(1, 0),
@@ -24,16 +29,30 @@ Future<void> showFilterPanel(BuildContext context) {
   );
 }
 
-class _FilterPanel extends StatelessWidget {
+class _FilterPanel extends StatefulWidget {
   const _FilterPanel();
+
+  @override
+  State<_FilterPanel> createState() => _FilterPanelState();
+}
+
+class _FilterPanelState extends State<_FilterPanel> {
+  final _scroll = SmoothScrollController();
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context);
+    final cs = t.colorScheme;
     return Material(
-      color: t.colorScheme.surfaceContainerLow,
+      color: cs.surfaceContainerLow,
       elevation: 1,
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.horizontal(left: Radius.circular(16))),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       clipBehavior: Clip.antiAlias,
       child: SizedBox(
         width: 360,
@@ -45,10 +64,24 @@ class _FilterPanel extends StatelessWidget {
             final c = browser.counts(library.albums);
             final shown = browser.visible(library.albums).length;
             // Options nobody has are hidden unless selected (so they can be cleared).
-            Iterable<T> present<T>(Iterable<T> options, Map<T, int> counts, Set<T> selected) =>
-                options.where((o) => (counts[o] ?? 0) > 0 || selected.contains(o));
-            Widget chip(String label, int? count, bool selected, VoidCallback onTap) =>
-                FilterChip(label: Text(count == null ? label : '$label  $count'), selected: selected, onSelected: (_) => onTap());
+            Iterable<T> present<T>(Iterable<T> options, Map<T, int> counts, TriFilter<T> selected) =>
+                options.where((o) => (counts[o] ?? 0) > 0 || selected[o] != null);
+            Widget chip(String label, int? count, FilterMode? mode, VoidCallback onTap) {
+              final exclude = mode == FilterMode.exclude;
+              final fg = exclude ? cs.onErrorContainer : cs.onSecondaryContainer;
+              return FilterChip(
+                selected: mode != null,
+                showCheckmark: false,
+                avatar: mode == null ? null : Icon(exclude ? Icons.block : Icons.check, size: 18, color: fg),
+                selectedColor: exclude ? cs.errorContainer : null,
+                label: Text(
+                  count == null ? label : '$label  $count',
+                  style: exclude ? TextStyle(color: fg, decoration: TextDecoration.lineThrough, decorationColor: fg) : null,
+                ),
+                onSelected: (_) => onTap(),
+              );
+            }
+
             return Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
@@ -63,6 +96,7 @@ class _FilterPanel extends StatelessWidget {
                 ),
                 Expanded(
                   child: ListView(
+                    controller: _scroll,
                     padding: const EdgeInsets.only(bottom: 16),
                     children: [
                       if (browser.yearFilter != null)
@@ -73,7 +107,7 @@ class _FilterPanel extends StatelessWidget {
                           c.sources,
                           f.sources,
                         ))
-                          chip(s.label, c.sources[s], f.sources.contains(s), () => browser.setFilters(f.toggleSource(s))),
+                          chip(s.label, c.sources[s], f.sources[s], () => browser.setFilters(f.cycleSource(s))),
                       ]),
                       _Section('音质', [
                         for (final q in present(
@@ -81,19 +115,18 @@ class _FilterPanel extends StatelessWidget {
                           c.qualities,
                           f.qualities,
                         ))
-                          chip(q.label, c.qualities[q], f.qualities.contains(q), () => browser.setFilters(f.toggleQuality(q))),
+                          chip(q.label, c.qualities[q], f.qualities[q], () => browser.setFilters(f.cycleQuality(q))),
                       ]),
                       _Section('格式', [
                         for (final fmt in present(c.formats.keys, c.formats, f.formats))
-                          chip(fmt, c.formats[fmt], f.formats.contains(fmt), () => browser.setFilters(f.toggleFormat(fmt))),
+                          chip(fmt, c.formats[fmt], f.formats[fmt], () => browser.setFilters(f.cycleFormat(fmt))),
                       ]),
                       _Section('抓轨状态', hint: '仅 CD 抓轨', [
                         for (final r in present(ripStatusFilters, c.ripStatuses, f.ripStatuses))
-                          chip(r.label, c.ripStatuses[r], f.ripStatuses.contains(r), () => browser.setFilters(f.toggleRipStatus(r))),
+                          chip(r.label, c.ripStatuses[r], f.ripStatuses[r], () => browser.setFilters(f.cycleRipStatus(r))),
                       ]),
-                      _Section('内容', hint: '需同时满足', [
-                        for (final flag in ContentFlag.values)
-                          chip(flag.label, c.flags[flag], f.flags.contains(flag), () => browser.setFilters(f.toggleFlag(flag))),
+                      _Section('内容', [
+                        for (final flag in ContentFlag.values) chip(flag.label, c.flags[flag], f.flags[flag], () => browser.setFilters(f.cycleFlag(flag))),
                       ]),
                     ],
                   ),

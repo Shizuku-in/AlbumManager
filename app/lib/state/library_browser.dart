@@ -19,7 +19,7 @@ extension SortModeX on SortMode {
   bool get groupsByYear => this == SortMode.dateDesc || this == SortMode.dateAsc;
 }
 
-/// Yes/no properties of an album; selected flags must all hold.
+/// Yes/no properties of an album.
 enum ContentFlag { hasIssues, missingCover, hasScans, hasCue, multiDisc, edited }
 
 extension ContentFlagX on ContentFlag {
@@ -45,38 +45,84 @@ extension ContentFlagX on ContentFlag {
 /// Rip statuses offered as filters (CD rips only).
 const ripStatusFilters = [RipStatus.perfect, RipStatus.good, RipStatus.warning, RipStatus.error, RipStatus.noLog, RipStatus.unknown];
 
-/// Filter selection. Within a group any selected value matches (empty = no
-/// constraint); groups combine with AND, and so do content flags. Immutable:
-/// every change makes a new instance, so derived lists memoize by identity.
+enum FilterMode { include, exclude }
+
+/// Tri-state selection of one filter group's options: an option is absent
+/// (no constraint), included or excluded. Immutable.
+class TriFilter<T> {
+  final Map<T, FilterMode> modes;
+  const TriFilter([this.modes = const {}]);
+
+  int get length => modes.length;
+  FilterMode? operator [](T option) => modes[option];
+
+  /// Click cycle: none → include → exclude → none.
+  TriFilter<T> cycle(T option) {
+    final m = {...modes};
+    switch (m[option]) {
+      case null:
+        m[option] = FilterMode.include;
+      case FilterMode.include:
+        m[option] = FilterMode.exclude;
+      case FilterMode.exclude:
+        m.remove(option);
+    }
+    return TriFilter(m);
+  }
+
+  /// Some included option is among [values] (if any are included) and no
+  /// excluded one is.
+  bool matchesAny(Iterable<T> values) {
+    var anyIncluded = false, hit = false;
+    for (final e in modes.entries) {
+      final present = values.contains(e.key);
+      if (e.value == FilterMode.exclude) {
+        if (present) return false;
+      } else {
+        anyIncluded = true;
+        hit |= present;
+      }
+    }
+    return !anyIncluded || hit;
+  }
+}
+
+/// Filter selection. Within a group any included option matches and no
+/// excluded one may; groups combine with AND. Content flags are each a
+/// condition: included = must hold, excluded = must not. Immutable: every
+/// change makes a new instance, so derived lists memoize by identity.
 class AlbumFilters {
-  final Set<AlbumSource> sources;
-  final Set<AudioQuality> qualities;
-  final Set<String> formats;
-  final Set<RipStatus> ripStatuses;
-  final Set<ContentFlag> flags;
-  const AlbumFilters({this.sources = const {}, this.qualities = const {}, this.formats = const {}, this.ripStatuses = const {}, this.flags = const {}});
+  final TriFilter<AlbumSource> sources;
+  final TriFilter<AudioQuality> qualities;
+  final TriFilter<String> formats;
+  final TriFilter<RipStatus> ripStatuses;
+  final TriFilter<ContentFlag> flags;
+  const AlbumFilters({
+    this.sources = const TriFilter(),
+    this.qualities = const TriFilter(),
+    this.formats = const TriFilter(),
+    this.ripStatuses = const TriFilter(),
+    this.flags = const TriFilter(),
+  });
 
   int get count => sources.length + qualities.length + formats.length + ripStatuses.length + flags.length;
 
   bool matches(AlbumSummary a) =>
-      (sources.isEmpty || sources.contains(a.source)) &&
-      (qualities.isEmpty || qualities.contains(a.quality)) &&
-      (formats.isEmpty || a.formats.any(formats.contains)) &&
-      (ripStatuses.isEmpty || ripStatuses.contains(a.ripStatus)) &&
-      flags.every((f) => f.matches(a));
+      sources.matchesAny([a.source]) &&
+      qualities.matchesAny([a.quality]) &&
+      formats.matchesAny(a.formats) &&
+      ripStatuses.matchesAny([a.ripStatus]) &&
+      flags.modes.entries.every((e) => e.key.matches(a) == (e.value == FilterMode.include));
 
-  static Set<T> _toggle<T>(Set<T> s, T v) => s.contains(v) ? ({...s}..remove(v)) : {...s, v};
-
-  AlbumFilters toggleSource(AlbumSource v) =>
-      AlbumFilters(sources: _toggle(sources, v), qualities: qualities, formats: formats, ripStatuses: ripStatuses, flags: flags);
-  AlbumFilters toggleQuality(AudioQuality v) =>
-      AlbumFilters(sources: sources, qualities: _toggle(qualities, v), formats: formats, ripStatuses: ripStatuses, flags: flags);
-  AlbumFilters toggleFormat(String v) =>
-      AlbumFilters(sources: sources, qualities: qualities, formats: _toggle(formats, v), ripStatuses: ripStatuses, flags: flags);
-  AlbumFilters toggleRipStatus(RipStatus v) =>
-      AlbumFilters(sources: sources, qualities: qualities, formats: formats, ripStatuses: _toggle(ripStatuses, v), flags: flags);
-  AlbumFilters toggleFlag(ContentFlag v) =>
-      AlbumFilters(sources: sources, qualities: qualities, formats: formats, ripStatuses: ripStatuses, flags: _toggle(flags, v));
+  AlbumFilters cycleSource(AlbumSource v) =>
+      AlbumFilters(sources: sources.cycle(v), qualities: qualities, formats: formats, ripStatuses: ripStatuses, flags: flags);
+  AlbumFilters cycleQuality(AudioQuality v) =>
+      AlbumFilters(sources: sources, qualities: qualities.cycle(v), formats: formats, ripStatuses: ripStatuses, flags: flags);
+  AlbumFilters cycleFormat(String v) => AlbumFilters(sources: sources, qualities: qualities, formats: formats.cycle(v), ripStatuses: ripStatuses, flags: flags);
+  AlbumFilters cycleRipStatus(RipStatus v) =>
+      AlbumFilters(sources: sources, qualities: qualities, formats: formats, ripStatuses: ripStatuses.cycle(v), flags: flags);
+  AlbumFilters cycleFlag(ContentFlag v) =>
+      AlbumFilters(sources: sources, qualities: qualities, formats: formats, ripStatuses: ripStatuses, flags: flags.cycle(v));
 }
 
 /// Album counts per filter option, over the whole library.
