@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:album_manager/state/settings_controller.dart';
 import 'package:album_manager/theme/app_theme.dart';
+import 'package:album_manager/ui/settings/font_picker_dialog.dart';
 import 'package:album_manager/ui/settings/settings_widgets.dart';
 
 extension ThemeModeLabel on ThemeMode {
@@ -89,6 +90,24 @@ class AppearanceSettingsPage extends StatelessWidget {
                           ),
                       ]),
                     ),
+            ),
+          ],
+        ),
+        SettingsGroup(
+          title: '字体',
+          children: [
+            ListTile(
+              leading: const Icon(Icons.font_download_outlined),
+              title: const Text('界面字体'),
+              subtitle: Text(
+                settings.fontFamily ?? '$appFont（内置，默认）',
+                style: TextStyle(
+                  fontFamily: settings.fontFamily ?? appFont,
+                  fontFamilyFallback: const [appFont],
+                ),
+              ),
+              trailing: const Icon(Icons.chevron_right),
+              onTap: () => showFontPicker(context),
             ),
           ],
         ),

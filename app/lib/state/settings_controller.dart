@@ -72,6 +72,9 @@ class SettingsController extends ChangeNotifier {
   /// Seed used when the system accent color is off (or unavailable).
   Color seedColor = defaultSeed;
 
+  /// UI font family; null = the bundled [appFont].
+  String? fontFamily;
+
   bool scanOnStartup = true;
 
   /// Issue kinds the user turned off.
@@ -119,6 +122,7 @@ class SettingsController extends ChangeNotifier {
         ThemeMode.values[prefs.getInt('themeMode') ?? ThemeMode.system.index];
     useSystemColor = prefs.getBool('useSystemColor') ?? true;
     seedColor = Color(prefs.getInt('seedColor') ?? defaultSeed.toARGB32());
+    fontFamily = prefs.getString('fontFamily');
     scanOnStartup = prefs.getBool('scanOnStartup') ?? true;
     hiddenIssues = _loadSet('hiddenIssues', IssueKind.values);
     cardSize = _loadEnum('cardSize', CardSize.values, CardSize.medium);
@@ -139,13 +143,25 @@ class SettingsController extends ChangeNotifier {
   }
 
   // One per settings page ("恢复默认" restores that page).
-  Future<void> resetAppearance() =>
-      _reset(['themeMode', 'useSystemColor', 'seedColor', 'hiddenPages']);
+  Future<void> resetAppearance() => _reset([
+    'themeMode',
+    'useSystemColor',
+    'seedColor',
+    'fontFamily',
+    'hiddenPages',
+  ]);
   Future<void> resetDisplay() =>
       _reset(['cardSize', 'hiddenCardFields', 'dateStyle', 'rememberFilters']);
   Future<void> resetHealthChecks() => _reset(['hiddenIssues']);
   Future<void> resetScanning() => _reset(['scanOnStartup']);
   Future<void> resetLogDisplay() => _reset(['showLogScore']);
+
+  void setFontFamily(String? f) {
+    if (f == fontFamily) return;
+    fontFamily = f;
+    f == null ? prefs.remove('fontFamily') : prefs.setString('fontFamily', f);
+    notifyListeners();
+  }
 
   void setThemeMode(ThemeMode m) {
     if (m == themeMode) return;

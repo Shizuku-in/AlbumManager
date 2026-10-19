@@ -1413,6 +1413,7 @@ dependencies = [
  "album-model",
  "anyhow",
  "flutter_rust_bridge",
+ "windows-sys",
 ]
 
 [[package]]

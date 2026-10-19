@@ -3,6 +3,7 @@
 
 // ignore_for_file: unused_import, unused_element, unnecessary_import, duplicate_ignore, invalid_use_of_internal_member, annotate_overrides, non_constant_identifier_names, curly_braces_in_flow_control_structures, prefer_const_literals_to_create_immutables, unused_field
 
+import 'api/fonts.dart';
 import 'api/library.dart';
 import 'api/models.dart';
 
@@ -72,7 +73,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.13.0';
 
   @override
-  int get rustContentHash => 1169207117;
+  int get rustContentHash => -585964288;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -133,6 +134,8 @@ abstract class RustLibApi extends BaseApi {
   });
 
   Future<void> crateApiLibrarySetScanRules({required ScanRules rules});
+
+  Future<List<String>> crateApiFontsSystemFontFamilies();
 
   Future<String?> crateApiLibraryTranslateLog({required String path});
 }
@@ -747,6 +750,33 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "set_scan_rules", argNames: ["rules"]);
 
   @override
+  Future<List<String>> crateApiFontsSystemFontFamilies() {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 22,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_String,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiFontsSystemFontFamiliesConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiFontsSystemFontFamiliesConstMeta =>
+      const TaskConstMeta(debugName: "system_font_families", argNames: []);
+
+  @override
   Future<String?> crateApiLibraryTranslateLog({required String path}) {
     return handler.executeNormal(
       NormalTask(
@@ -756,7 +786,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 22,
+            funcId: 23,
             port: port_,
           );
         },

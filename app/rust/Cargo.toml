@@ -15,5 +15,9 @@ album-model.workspace = true
 anyhow.workspace = true
 flutter_rust_bridge = "=2.13.0"
 
+# Installed font list (already in the dependency tree via other crates).
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61", features = ["Win32_System_Registry"] }
+
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(frb_expand)'] }

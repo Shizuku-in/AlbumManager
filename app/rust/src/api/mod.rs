@@ -1,3 +1,4 @@
+pub mod fonts;
 pub mod library;
 pub mod models;
 

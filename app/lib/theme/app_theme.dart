@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import 'package:album_manager/state/settings_controller.dart';
 import 'package:album_manager/theme/app_colors.dart';
 
 /// Fallback seed when the OS provides no accent color.
@@ -23,12 +24,15 @@ const seedPresets = [
 const appFont = 'HarmonyOS Sans SC';
 const appFontFallback = ['Microsoft YaHei UI', 'Yu Gothic UI', 'Segoe UI'];
 
-ThemeData buildTheme(ColorScheme scheme) {
+ThemeData buildTheme(ColorScheme scheme, {String? font}) {
   return ThemeData(
     useMaterial3: true,
     colorScheme: scheme,
-    fontFamily: appFont,
-    fontFamilyFallback: appFontFallback,
+    fontFamily: font ?? appFont,
+    // A chosen font may lack CJK characters; the bundled font fills those in.
+    fontFamilyFallback: font == null
+        ? appFontFallback
+        : const [appFont, ...appFontFallback],
     visualDensity: VisualDensity.standard,
     extensions: [AppColors.forScheme(scheme)],
     snackBarTheme: const SnackBarThemeData(
@@ -52,16 +56,19 @@ ThemeData buildTheme(ColorScheme scheme) {
 }
 
 // Generating a theme runs ColorScheme.fromSeed for the scheme and for every
-// custom color, so themes are cached per seed + brightness.
-final _themes = <(int, Brightness), ThemeData>{};
+// custom color, so themes are cached per seed + brightness + font.
+final _themes = <(int, Brightness, String?), ThemeData>{};
 
-/// Theme generated from a seed color (tonal spot scheme), cached.
+/// Theme generated from a seed color (tonal spot scheme) in the user's
+/// font, cached.
 ThemeData themeFor(Color seed, Brightness brightness) {
   if (_themes.length > 128) _themes.clear();
+  final font = settings.fontFamily;
   return _themes.putIfAbsent(
-    (seed.toARGB32(), brightness),
+    (seed.toARGB32(), brightness, font),
     () => buildTheme(
       ColorScheme.fromSeed(seedColor: seed, brightness: brightness),
+      font: font,
     ),
   );
 }
