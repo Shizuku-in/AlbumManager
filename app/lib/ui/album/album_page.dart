@@ -13,6 +13,7 @@ import 'package:album_manager/ui/album/tabs/scans_tab.dart';
 import 'package:album_manager/ui/album/tabs/tracks_tab.dart';
 import 'package:album_manager/ui/common/collapsing_app_bar.dart';
 import 'package:album_manager/ui/common/cover_image.dart';
+import 'package:album_manager/ui/common/sliver_translate.dart';
 import 'package:album_manager/ui/common/smooth_scroll.dart';
 import 'package:album_manager/util/format.dart';
 import 'package:album_manager/util/labels.dart';
@@ -28,10 +29,27 @@ class AlbumPage extends StatefulWidget {
   State<AlbumPage> createState() => _AlbumPageState();
 }
 
-class _AlbumPageState extends State<AlbumPage> with SingleTickerProviderStateMixin {
+class _AlbumPageState extends State<AlbumPage> with TickerProviderStateMixin {
   late AlbumSummary _s = widget.summary;
   Album? _album;
-  late final _tabs = TabController(length: 4, vsync: this)..addListener(() => setState(() {}));
+  late final _tabs = TabController(length: 4, vsync: this)..addListener(_onTab);
+
+  /// Tab whose content is on screen; trails [_tabs] by the exit half of the
+  /// switch animation.
+  int _shownTab = 0;
+  int _targetTab = 0;
+
+  /// +1 when moving to a tab on the right, -1 to the left.
+  int _tabDirection = 1;
+
+  /// M3 shared axis X: the old content fades out sliding away (first third),
+  /// then the new one fades in from the side it comes from.
+  late final AnimationController _tabSwitch = AnimationController(vsync: this, duration: const Duration(milliseconds: 300), value: 1)
+    ..addListener(() {
+      if (_tabSwitch.value >= _exitEnd && _shownTab != _tabs.index) setState(() => _shownTab = _tabs.index);
+    });
+  static const _exitEnd = 1 / 3;
+  static const _slide = 30.0;
   bool _busy = false;
   final _scroll = SmoothScrollController();
 
@@ -46,8 +64,22 @@ class _AlbumPageState extends State<AlbumPage> with SingleTickerProviderStateMix
   void dispose() {
     library.albumChanged.removeListener(_onChanged);
     _tabs.dispose();
+    _tabSwitch.dispose();
     _scroll.dispose();
     super.dispose();
+  }
+
+  void _onTab() {
+    // The controller also notifies when its indicator animation ends.
+    final target = _tabs.index;
+    if (target == _targetTab) return;
+    _targetTab = target;
+    setState(() {}); // Tab labels / indicator.
+    // Still fading the old content out: keep going, the new target is
+    // picked up at the midpoint.
+    if (_tabSwitch.isAnimating && _tabSwitch.value < _exitEnd) return;
+    _tabDirection = target > _shownTab ? 1 : -1;
+    _tabSwitch.forward(from: 0);
   }
 
   void _onChanged() {
@@ -189,12 +221,31 @@ class _AlbumPageState extends State<AlbumPage> with SingleTickerProviderStateMix
         if (a == null)
           const SliverFillRemaining(hasScrollBody: false, child: Center(child: CircularProgressIndicator()))
         else
-          ...switch (_tabs.index) {
-            0 => tracksSlivers(context, a),
-            1 => logsSlivers(context, a),
-            2 => scansSlivers(context, a),
-            _ => filesSlivers(context, a),
-          },
+          AnimatedBuilder(
+            animation: _tabSwitch,
+            builder: (context, child) {
+              final v = _tabSwitch.value;
+              final double opacity, dx;
+              if (v < _exitEnd) {
+                final p = Easing.emphasizedAccelerate.transform(v / _exitEnd);
+                opacity = 1 - p;
+                dx = -_tabDirection * _slide * p;
+              } else {
+                final p = Easing.emphasizedDecelerate.transform((v - _exitEnd) / (1 - _exitEnd));
+                opacity = p;
+                dx = _tabDirection * _slide * (1 - p);
+              }
+              return SliverOpacity(opacity: opacity, sliver: SliverTranslateX(dx: dx, sliver: child!));
+            },
+            child: SliverMainAxisGroup(
+              slivers: switch (_shownTab) {
+                0 => tracksSlivers(context, a),
+                1 => logsSlivers(context, a),
+                2 => scansSlivers(context, a),
+                _ => filesSlivers(context, a),
+              },
+            ),
+          ),
         const SliverToBoxAdapter(child: SizedBox(height: 24)),
       ]),
     );
