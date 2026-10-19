@@ -6,6 +6,8 @@ pub struct Decoded {
     pub encoding: String,
     /// True for UTF-8 (with or without BOM) — the "good" state for cue sheets.
     pub is_utf8: bool,
+    /// Started with a byte order mark.
+    pub has_bom: bool,
 }
 
 pub fn decode(bytes: &[u8]) -> Decoded {
@@ -20,6 +22,7 @@ pub fn decode(bytes: &[u8]) -> Decoded {
             text: text.into_owned(),
             encoding: name,
             is_utf8: enc == encoding_rs::UTF_8,
+            has_bom: true,
         };
     }
     // UTF-16 LE without BOM (some XLD/EAC logs): lots of zero bytes at odd positions.
@@ -38,6 +41,7 @@ pub fn decode(bytes: &[u8]) -> Decoded {
                 text: text.into_owned(),
                 encoding: "UTF-16LE".into(),
                 is_utf8: false,
+                has_bom: false,
             };
         }
     }
@@ -51,6 +55,7 @@ pub fn decode(bytes: &[u8]) -> Decoded {
                 "UTF-8".into()
             },
             is_utf8: true,
+            has_bom: false,
         };
     }
     let mut det = chardetng::EncodingDetector::new();
@@ -62,6 +67,7 @@ pub fn decode(bytes: &[u8]) -> Decoded {
         text: text.into_owned(),
         encoding: enc.name().to_string(),
         is_utf8: false,
+        has_bom: false,
     }
 }
 

@@ -300,7 +300,13 @@ pub fn analyze_files(
         if !c.is_utf8 {
             issues.push(Issue {
                 kind: IssueKind::CueEncoding,
-                message: format!("CUE 编码为 {}，建议转换为 UTF-8", c.encoding),
+                message: format!("CUE 编码为 {}，建议转换为带 BOM 的 UTF-8", c.encoding),
+                path: Some(c.path.clone()),
+            });
+        } else if c.missing_bom {
+            issues.push(Issue {
+                kind: IssueKind::CueMissingBom,
+                message: "CUE 为不带 BOM 的 UTF-8，部分播放器会按系统编码读取而乱码".into(),
                 path: Some(c.path.clone()),
             });
         }

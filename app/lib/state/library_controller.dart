@@ -104,7 +104,13 @@ class LibraryController extends ChangeNotifier {
   }
 
   Future<Album> fixCue(String id) async {
-    final album = await api.fixCueEncoding(id: id);
+    final album = await api.fixCueEncoding(
+      id: id,
+      includeMissingBom: !settings.hiddenIssues.contains(
+        IssueKind.cueMissingBom,
+      ),
+      keepBackup: !settings.overwriteCue,
+    );
     replaceAlbum(album.summary);
     return album;
   }

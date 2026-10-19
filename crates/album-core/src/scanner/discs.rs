@@ -151,6 +151,7 @@ pub fn build(audio_files: &[&FileRec], audio: &[AudioInfo], cue_files: &[&FileRe
             path: cf.path.to_string_lossy().into_owned(),
             encoding: decoded.encoding.clone(),
             is_utf8: decoded.is_utf8,
+            missing_bom: decoded.is_utf8 && !decoded.has_bom && !decoded.text.is_ascii(),
             missing_files: missing,
         });
         let used: Vec<usize> = resolved.iter().flatten().copied().collect();

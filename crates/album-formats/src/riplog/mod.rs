@@ -209,6 +209,7 @@ pub fn read(path: &std::path::Path) -> std::io::Result<crate::text::Decoded> {
                 text: text.into_owned(),
                 encoding: enc.name().to_string(),
                 is_utf8: false,
+                has_bom: false,
             });
         }
     }

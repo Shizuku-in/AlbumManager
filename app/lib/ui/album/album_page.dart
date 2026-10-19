@@ -108,12 +108,12 @@ class _AlbumPageState extends State<AlbumPage> with TickerProviderStateMixin {
   }
 
   Future<void> _fixCue(BuildContext context) async {
-    final bad = _album?.cues.where((c) => !c.isUtf8).length ?? 0;
+    final bad = _album?.cues.where(settings.cueNeedsFix).length ?? 0;
     if (await confirmCueFix(context, bad) && context.mounted) {
       await _run(
         context,
         () => library.fixCue(_s.id),
-        '已将 $bad 个 CUE 转换为 UTF-8',
+        '已将 $bad 个 CUE 转换为带 BOM 的 UTF-8',
       );
     }
   }
@@ -141,7 +141,7 @@ class _AlbumPageState extends State<AlbumPage> with TickerProviderStateMixin {
 
   Widget _buildPage(BuildContext context) {
     final a = _album;
-    final hasBadCue = a?.cues.any((c) => !c.isUtf8) ?? false;
+    final hasBadCue = a?.cues.any(settings.cueNeedsFix) ?? false;
     final issues = settings
         .issuesOf(_s)
         .where((i) => i.kind != IssueKind.nonStandardName)

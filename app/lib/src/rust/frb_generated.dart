@@ -95,7 +95,11 @@ abstract class RustLibApi extends BaseApi {
 
   Future<ScanRules> crateApiLibraryDefaultScanRules();
 
-  Future<Album> crateApiLibraryFixCueEncoding({required String id});
+  Future<Album> crateApiLibraryFixCueEncoding({
+    required String id,
+    required bool includeMissingBom,
+    required bool keepBackup,
+  });
 
   Future<Album?> crateApiLibraryGetAlbum({required String id});
 
@@ -284,12 +288,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "default_scan_rules", argNames: []);
 
   @override
-  Future<Album> crateApiLibraryFixCueEncoding({required String id}) {
+  Future<Album> crateApiLibraryFixCueEncoding({
+    required String id,
+    required bool includeMissingBom,
+    required bool keepBackup,
+  }) {
     return handler.executeNormal(
       NormalTask(
         callFfi: (port_) {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(id, serializer);
+          sse_encode_bool(includeMissingBom, serializer);
+          sse_encode_bool(keepBackup, serializer);
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
@@ -302,14 +312,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeErrorData: sse_decode_AnyhowException,
         ),
         constMeta: kCrateApiLibraryFixCueEncodingConstMeta,
-        argValues: [id],
+        argValues: [id, includeMissingBom, keepBackup],
         apiImpl: this,
       ),
     );
   }
 
   TaskConstMeta get kCrateApiLibraryFixCueEncodingConstMeta =>
-      const TaskConstMeta(debugName: "fix_cue_encoding", argNames: ["id"]);
+      const TaskConstMeta(
+        debugName: "fix_cue_encoding",
+        argNames: ["id", "includeMissingBom", "keepBackup"],
+      );
 
   @override
   Future<Album?> crateApiLibraryGetAlbum({required String id}) {
@@ -982,13 +995,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   CueInfo dco_decode_cue_info(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 4)
-      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
     return CueInfo(
       path: dco_decode_String(arr[0]),
       encoding: dco_decode_String(arr[1]),
       isUtf8: dco_decode_bool(arr[2]),
-      missingFiles: dco_decode_list_String(arr[3]),
+      missingBom: dco_decode_bool(arr[3]),
+      missingFiles: dco_decode_list_String(arr[4]),
     );
   }
 
@@ -1612,11 +1626,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_path = sse_decode_String(deserializer);
     var var_encoding = sse_decode_String(deserializer);
     var var_isUtf8 = sse_decode_bool(deserializer);
+    var var_missingBom = sse_decode_bool(deserializer);
     var var_missingFiles = sse_decode_list_String(deserializer);
     return CueInfo(
       path: var_path,
       encoding: var_encoding,
       isUtf8: var_isUtf8,
+      missingBom: var_missingBom,
       missingFiles: var_missingFiles,
     );
   }
@@ -2352,6 +2368,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_String(self.path, serializer);
     sse_encode_String(self.encoding, serializer);
     sse_encode_bool(self.isUtf8, serializer);
+    sse_encode_bool(self.missingBom, serializer);
     sse_encode_list_String(self.missingFiles, serializer);
   }
 

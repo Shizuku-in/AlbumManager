@@ -54,10 +54,18 @@ Future<String> readTextFile({required String path}) =>
 Future<String?> translateLog({required String path}) =>
     RustLib.instance.api.crateApiLibraryTranslateLog(path: path);
 
-/// Converts every non-UTF-8 cue sheet of an album to UTF-8 (with BOM).
-/// The original is kept next to it as `*.cue.bak`.
-Future<Album> fixCueEncoding({required String id}) =>
-    RustLib.instance.api.crateApiLibraryFixCueEncoding(id: id);
+/// Rewrites an album's non-UTF-8 cue sheets as UTF-8 with BOM, and with
+/// `include_missing_bom` also UTF-8 ones that lack the BOM. With
+/// `keep_backup` the original is kept next to it as `*.cue.bak`.
+Future<Album> fixCueEncoding({
+  required String id,
+  required bool includeMissingBom,
+  required bool keepBackup,
+}) => RustLib.instance.api.crateApiLibraryFixCueEncoding(
+  id: id,
+  includeMissingBom: includeMissingBom,
+  keepBackup: keepBackup,
+);
 
 /// Removes all cached thumbnails (they are regenerated on next scan).
 Future<void> clearThumbnailCache() =>

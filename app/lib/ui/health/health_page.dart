@@ -32,6 +32,9 @@ Map<IssueKind, List<AlbumSummary>> _group(List<AlbumSummary> albums) {
 
 const _coverWidth = 120;
 
+/// Issues fixed by converting the album's cue sheets.
+const _cueKinds = {IssueKind.cueEncoding, IssueKind.cueMissingBom};
+
 /// One album's issues of a kind, each message once: the same problem in
 /// several files (e.g. every disc's log) reads "…（3 个文件）".
 String _describe(List<Issue> issues) {
@@ -77,7 +80,8 @@ class _HealthPageState extends State<HealthPage>
     final n = targets.fold(
       0,
       (n, a) =>
-          n + a.issues.where((i) => i.kind == IssueKind.cueEncoding).length,
+          n +
+          settings.issuesOf(a).where((i) => _cueKinds.contains(i.kind)).length,
     );
     if (!await confirmCueFix(context, n)) return;
     setState(() => _fixing = true);
@@ -157,11 +161,11 @@ class _HealthPageState extends State<HealthPage>
           // Bulk fix for the selected kind. In the app bar rather than above
           // the list, so it doesn't push the list around while switching.
           actions: [
-            if (kind == IssueKind.cueEncoding && affected.isNotEmpty)
+            if (_cueKinds.contains(kind) && affected.isNotEmpty)
               FilledButton.icon(
                 onPressed: _fixing ? null : () => _fixAll(affected),
                 icon: const Icon(Icons.auto_fix_high),
-                label: Text('全部转换为 UTF-8（${affected.length}）'),
+                label: Text('全部转换为带 BOM 的 UTF-8（${affected.length}）'),
               ),
           ],
           slivers: [

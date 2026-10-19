@@ -10,6 +10,6 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 // These functions are ignored because they are not marked as `pub`: `families`, `registry_value_names`
 
 /// Family names of the installed fonts (machine-wide and per-user), sorted.
-/// Flutter resolves these names through DirectWrite.
+/// Uses the platform's installed font database.
 Future<List<String>> systemFontFamilies() =>
     RustLib.instance.api.crateApiFontsSystemFontFamilies();

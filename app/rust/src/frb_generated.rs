@@ -234,11 +234,17 @@ fn wire__crate__api__library__fix_cue_encoding_impl(
             let mut deserializer =
                 flutter_rust_bridge::for_generated::SseDeserializer::new(message);
             let api_id = <String>::sse_decode(&mut deserializer);
+            let api_include_missing_bom = <bool>::sse_decode(&mut deserializer);
+            let api_keep_backup = <bool>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| {
                 transform_result_sse::<_, flutter_rust_bridge::for_generated::anyhow::Error>(
                     (move || {
-                        let output_ok = crate::api::library::fix_cue_encoding(api_id)?;
+                        let output_ok = crate::api::library::fix_cue_encoding(
+                            api_id,
+                            api_include_missing_bom,
+                            api_keep_backup,
+                        )?;
                         std::result::Result::Ok(output_ok)
                     })(),
                 )
@@ -890,6 +896,7 @@ const _: fn() = || {
         let _: String = CueInfo.path;
         let _: String = CueInfo.encoding;
         let _: bool = CueInfo.is_utf8;
+        let _: bool = CueInfo.missing_bom;
         let _: Vec<String> = CueInfo.missing_files;
     }
     {
@@ -1184,11 +1191,13 @@ impl SseDecode for album_model::CueInfo {
         let mut var_path = <String>::sse_decode(deserializer);
         let mut var_encoding = <String>::sse_decode(deserializer);
         let mut var_isUtf8 = <bool>::sse_decode(deserializer);
+        let mut var_missingBom = <bool>::sse_decode(deserializer);
         let mut var_missingFiles = <Vec<String>>::sse_decode(deserializer);
         return album_model::CueInfo {
             path: var_path,
             encoding: var_encoding,
             is_utf8: var_isUtf8,
+            missing_bom: var_missingBom,
             missing_files: var_missingFiles,
         };
     }
@@ -1294,11 +1303,12 @@ impl SseDecode for album_model::IssueKind {
         return match inner {
             0 => album_model::IssueKind::MissingCover,
             1 => album_model::IssueKind::CueEncoding,
-            2 => album_model::IssueKind::CueMissingFile,
-            3 => album_model::IssueKind::RipErrors,
-            4 => album_model::IssueKind::RipUnverified,
-            5 => album_model::IssueKind::MissingLog,
-            6 => album_model::IssueKind::NonStandardName,
+            2 => album_model::IssueKind::CueMissingBom,
+            3 => album_model::IssueKind::CueMissingFile,
+            4 => album_model::IssueKind::RipErrors,
+            5 => album_model::IssueKind::RipUnverified,
+            6 => album_model::IssueKind::MissingLog,
+            7 => album_model::IssueKind::NonStandardName,
             _ => unreachable!("Invalid variant for IssueKind: {}", inner),
         };
     }
@@ -2027,6 +2037,7 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<album_model::CueInfo> {
             self.0.path.into_into_dart().into_dart(),
             self.0.encoding.into_into_dart().into_dart(),
             self.0.is_utf8.into_into_dart().into_dart(),
+            self.0.missing_bom.into_into_dart().into_dart(),
             self.0.missing_files.into_into_dart().into_dart(),
         ]
         .into_dart()
@@ -2151,11 +2162,12 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<album_model::IssueKind> {
         match self.0 {
             album_model::IssueKind::MissingCover => 0.into_dart(),
             album_model::IssueKind::CueEncoding => 1.into_dart(),
-            album_model::IssueKind::CueMissingFile => 2.into_dart(),
-            album_model::IssueKind::RipErrors => 3.into_dart(),
-            album_model::IssueKind::RipUnverified => 4.into_dart(),
-            album_model::IssueKind::MissingLog => 5.into_dart(),
-            album_model::IssueKind::NonStandardName => 6.into_dart(),
+            album_model::IssueKind::CueMissingBom => 2.into_dart(),
+            album_model::IssueKind::CueMissingFile => 3.into_dart(),
+            album_model::IssueKind::RipErrors => 4.into_dart(),
+            album_model::IssueKind::RipUnverified => 5.into_dart(),
+            album_model::IssueKind::MissingLog => 6.into_dart(),
+            album_model::IssueKind::NonStandardName => 7.into_dart(),
             _ => unreachable!(),
         }
     }
@@ -2593,6 +2605,7 @@ impl SseEncode for album_model::CueInfo {
         <String>::sse_encode(self.path, serializer);
         <String>::sse_encode(self.encoding, serializer);
         <bool>::sse_encode(self.is_utf8, serializer);
+        <bool>::sse_encode(self.missing_bom, serializer);
         <Vec<String>>::sse_encode(self.missing_files, serializer);
     }
 }
@@ -2671,11 +2684,12 @@ impl SseEncode for album_model::IssueKind {
             match self {
                 album_model::IssueKind::MissingCover => 0,
                 album_model::IssueKind::CueEncoding => 1,
-                album_model::IssueKind::CueMissingFile => 2,
-                album_model::IssueKind::RipErrors => 3,
-                album_model::IssueKind::RipUnverified => 4,
-                album_model::IssueKind::MissingLog => 5,
-                album_model::IssueKind::NonStandardName => 6,
+                album_model::IssueKind::CueMissingBom => 2,
+                album_model::IssueKind::CueMissingFile => 3,
+                album_model::IssueKind::RipErrors => 4,
+                album_model::IssueKind::RipUnverified => 5,
+                album_model::IssueKind::MissingLog => 6,
+                album_model::IssueKind::NonStandardName => 7,
                 _ => {
                     unimplemented!("");
                 }

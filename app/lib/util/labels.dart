@@ -131,6 +131,7 @@ extension IssueKindX on IssueKind {
   String get label => switch (this) {
     IssueKind.missingCover => '缺少封面',
     IssueKind.cueEncoding => 'CUE 非 UTF-8',
+    IssueKind.cueMissingBom => 'CUE 缺少 BOM',
     IssueKind.cueMissingFile => 'CUE 引用失效',
     IssueKind.ripErrors => '抓轨错误',
     IssueKind.ripUnverified => '抓轨设置问题',
@@ -140,6 +141,7 @@ extension IssueKindX on IssueKind {
   IconData get icon => switch (this) {
     IssueKind.missingCover => Icons.hide_image_outlined,
     IssueKind.cueEncoding => Icons.translate,
+    IssueKind.cueMissingBom => Icons.text_snippet_outlined,
     IssueKind.cueMissingFile => Icons.link_off,
     IssueKind.ripErrors => Icons.report_outlined,
     IssueKind.ripUnverified => Icons.gpp_maybe_outlined,
@@ -152,7 +154,7 @@ extension IssueKindX on IssueKind {
     return switch (this) {
       IssueKind.ripErrors => _error(s),
       IssueKind.ripUnverified || IssueKind.cueMissingFile => a.warning,
-      IssueKind.cueEncoding => _primary(s),
+      IssueKind.cueEncoding || IssueKind.cueMissingBom => _primary(s),
       _ => _neutral(s),
     };
   }

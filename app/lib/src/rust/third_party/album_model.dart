@@ -267,12 +267,17 @@ class CueInfo {
   final String path;
   final String encoding;
   final bool isUtf8;
+
+  /// UTF-8 with non-ASCII text but no BOM (pure ASCII reads the same in
+  /// any code page, so it doesn't need one).
+  final bool missingBom;
   final List<String> missingFiles;
 
   const CueInfo({
     required this.path,
     required this.encoding,
     required this.isUtf8,
+    required this.missingBom,
     required this.missingFiles,
   });
 
@@ -281,6 +286,7 @@ class CueInfo {
       path.hashCode ^
       encoding.hashCode ^
       isUtf8.hashCode ^
+      missingBom.hashCode ^
       missingFiles.hashCode;
 
   @override
@@ -291,6 +297,7 @@ class CueInfo {
           path == other.path &&
           encoding == other.encoding &&
           isUtf8 == other.isUtf8 &&
+          missingBom == other.missingBom &&
           missingFiles == other.missingFiles;
 }
 
@@ -425,6 +432,10 @@ enum IssueKind {
 
   /// CUE sheet is not UTF-8 (Shift-JIS / GBK ...) — fixable.
   cueEncoding,
+
+  /// CUE sheet is UTF-8 without a BOM, which some players read in the
+  /// system code page — fixable.
+  cueMissingBom,
 
   /// CUE references a file that does not exist.
   cueMissingFile,

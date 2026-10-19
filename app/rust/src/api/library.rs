@@ -110,16 +110,21 @@ pub fn translate_log(path: String) -> Result<Option<String>> {
     Ok(riplog::translate(&text).map(|(_, english)| english))
 }
 
-/// Converts every non-UTF-8 cue sheet of an album to UTF-8 (with BOM).
-/// The original is kept next to it as `*.cue.bak`.
-pub fn fix_cue_encoding(id: String) -> Result<Album> {
+/// Rewrites an album's non-UTF-8 cue sheets as UTF-8 with BOM, and with
+/// `include_missing_bom` also UTF-8 ones that lack the BOM. With
+/// `keep_backup` the original is kept next to it as `*.cue.bak`.
+pub fn fix_cue_encoding(id: String, include_missing_bom: bool, keep_backup: bool) -> Result<Album> {
     let album = library::get(&id).ok_or_else(|| anyhow!("album not found"))?;
-    for cue in album.cues.iter().filter(|c| !c.is_utf8) {
+    for cue in album
+        .cues
+        .iter()
+        .filter(|c| !c.is_utf8 || (include_missing_bom && c.missing_bom))
+    {
         let path = PathBuf::from(&cue.path);
         let bytes = std::fs::read(&path)?;
         let decoded = text::decode(&bytes);
         let backup = PathBuf::from(format!("{}.bak", cue.path));
-        if !backup.exists() {
+        if keep_backup && !backup.exists() {
             std::fs::write(&backup, &bytes)?;
         }
         let mut out = vec![0xEF, 0xBB, 0xBF];

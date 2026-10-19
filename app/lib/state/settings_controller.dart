@@ -80,6 +80,10 @@ class SettingsController extends ChangeNotifier {
   /// Issue kinds the user turned off.
   Set<IssueKind> hiddenIssues = const {};
 
+  /// Converting a cue sheet's encoding overwrites it without keeping a
+  /// `*.cue.bak` copy.
+  bool overwriteCue = false;
+
   CardSize cardSize = CardSize.medium;
   Set<CardField> hiddenCardFields = const {};
   DateStyle dateStyle = DateStyle.iso;
@@ -125,6 +129,7 @@ class SettingsController extends ChangeNotifier {
     fontFamily = prefs.getString('fontFamily');
     scanOnStartup = prefs.getBool('scanOnStartup') ?? true;
     hiddenIssues = _loadSet('hiddenIssues', IssueKind.values);
+    overwriteCue = prefs.getBool('overwriteCue') ?? false;
     cardSize = _loadEnum('cardSize', CardSize.values, CardSize.medium);
     hiddenCardFields = _loadSet('hiddenCardFields', CardField.values);
     dateStyle = _loadEnum('dateStyle', DateStyle.values, DateStyle.iso);
@@ -152,7 +157,7 @@ class SettingsController extends ChangeNotifier {
   ]);
   Future<void> resetDisplay() =>
       _reset(['cardSize', 'hiddenCardFields', 'dateStyle', 'rememberFilters']);
-  Future<void> resetHealthChecks() => _reset(['hiddenIssues']);
+  Future<void> resetHealthChecks() => _reset(['hiddenIssues', 'overwriteCue']);
   Future<void> resetScanning() => _reset(['scanOnStartup']);
   Future<void> resetLogDisplay() => _reset(['showLogScore']);
 
@@ -194,6 +199,19 @@ class SettingsController extends ChangeNotifier {
   void setIssueEnabled(IssueKind k, bool enabled) {
     if (enabled != hiddenIssues.contains(k)) return;
     hiddenIssues = _toggle('hiddenIssues', hiddenIssues, k, !enabled);
+    notifyListeners();
+  }
+
+  /// A cue sheet that converting rewrites: not UTF-8, or (while that check
+  /// is on) UTF-8 without a BOM.
+  bool cueNeedsFix(CueInfo c) =>
+      !c.isUtf8 ||
+      (c.missingBom && !hiddenIssues.contains(IssueKind.cueMissingBom));
+
+  void setOverwriteCue(bool v) {
+    if (v == overwriteCue) return;
+    overwriteCue = v;
+    prefs.setBool('overwriteCue', v);
     notifyListeners();
   }
 

@@ -51,6 +51,9 @@ pub enum IssueKind {
     MissingCover,
     /// CUE sheet is not UTF-8 (Shift-JIS / GBK ...) — fixable.
     CueEncoding,
+    /// CUE sheet is UTF-8 without a BOM, which some players read in the
+    /// system code page — fixable.
+    CueMissingBom,
     /// CUE references a file that does not exist.
     CueMissingFile,
     RipErrors,
@@ -308,6 +311,10 @@ pub struct CueInfo {
     pub path: String,
     pub encoding: String,
     pub is_utf8: bool,
+    /// UTF-8 with non-ASCII text but no BOM (pure ASCII reads the same in
+    /// any code page, so it doesn't need one).
+    #[serde(default)]
+    pub missing_bom: bool,
     pub missing_files: Vec<String>,
 }
 
