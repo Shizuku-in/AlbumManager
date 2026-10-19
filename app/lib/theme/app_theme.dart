@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:album_manager/state/settings_controller.dart';
 import 'package:album_manager/theme/app_colors.dart';
+import 'package:album_manager/ui/common/shared_axis.dart';
 
 /// Fallback seed when the OS provides no accent color.
 const defaultSeed = Color(0xFF6750A4);
@@ -44,12 +45,12 @@ ThemeData buildTheme(ColorScheme scheme, {String? font}) {
       shape: RoundedRectangleBorder(),
       width: 280,
     ),
-    // Current M3 page transition (slide + fade). The Windows default zooms,
-    // and any scale that is not exactly identity renders text blurry.
+    // M3 shared axis X (slide + fade). The Windows default zooms, and any
+    // scale that is not exactly identity renders text blurry.
     pageTransitionsTheme: PageTransitionsTheme(
       builders: {
         for (final p in TargetPlatform.values)
-          p: const FadeForwardsPageTransitionsBuilder(),
+          p: const SharedAxisPageTransitionsBuilder(),
       },
     ),
   );
