@@ -1,23 +1,37 @@
 //! Functions exposed to Dart (see flutter_rust_bridge codegen).
 
 use crate::api::models::*;
-use album_formats::text;
-use album_core::{imaging, library, rules};
 use crate::frb_generated::StreamSink;
+use album_core::{imaging, library, rules};
+use album_formats::text;
 use anyhow::{anyhow, Result};
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
 use std::time::Instant;
 
 fn summaries() -> Vec<AlbumSummary> {
-    library::STATE.read().unwrap().albums.iter().map(|a| a.summary.clone()).collect()
+    library::STATE
+        .read()
+        .unwrap()
+        .albums
+        .iter()
+        .map(|a| a.summary.clone())
+        .collect()
 }
 
 /// Loads config + cached library. Call once at startup.
 pub fn init_library(data_dir: String) -> Result<LibraryInfo> {
     library::init(Path::new(&data_dir))?;
-    let root = library::STATE.read().unwrap().root.as_ref().map(|r| r.to_string_lossy().into_owned());
-    Ok(LibraryInfo { root, albums: summaries() })
+    let root = library::STATE
+        .read()
+        .unwrap()
+        .root
+        .as_ref()
+        .map(|r| r.to_string_lossy().into_owned());
+    Ok(LibraryInfo {
+        root,
+        albums: summaries(),
+    })
 }
 
 pub fn set_library_root(root: String) -> Result<()> {
@@ -33,7 +47,9 @@ pub fn scan_library(force: bool, sink: StreamSink<ScanEvent>) -> Result<()> {
         // Throttle UI updates to ~30/s.
         let mut l = last.lock().unwrap();
         if done == 0 {
-            let _ = sink.lock().unwrap().add(ScanEvent::Started { total: total as i32 });
+            let _ = sink.lock().unwrap().add(ScanEvent::Started {
+                total: total as i32,
+            });
         } else if done == total || l.elapsed().as_millis() >= 33 {
             *l = Instant::now();
             let _ = sink.lock().unwrap().add(ScanEvent::Progress {
@@ -68,7 +84,9 @@ pub fn set_album_override(id: String, overrides: AlbumOverride) -> Result<Album>
 /// Cached JPEG thumbnail path for any image (scans can be huge BMP/TIFF).
 pub fn get_thumbnail(path: String, max_size: u32) -> Result<String> {
     let (_, data) = library::dirs()?;
-    Ok(imaging::thumbnail(Path::new(&path), &data, max_size)?.to_string_lossy().into_owned())
+    Ok(imaging::thumbnail(Path::new(&path), &data, max_size)?
+        .to_string_lossy()
+        .into_owned())
 }
 
 /// Reads a text file (log / cue / txt) with encoding detection.
@@ -107,15 +125,28 @@ pub fn clear_thumbnail_cache() -> Result<()> {
 
 /// Where the app keeps its data and how much the thumbnail cache takes.
 pub fn cache_info() -> Result<CacheInfo> {
-    let data = library::STATE.read().unwrap().data_dir.clone().ok_or_else(|| anyhow!("library not initialised"))?;
+    let data = library::STATE
+        .read()
+        .unwrap()
+        .data_dir
+        .clone()
+        .ok_or_else(|| anyhow!("library not initialised"))?;
     let (mut count, mut bytes) = (0, 0);
     if let Ok(entries) = std::fs::read_dir(data.join("thumbs")) {
-        for m in entries.flatten().filter_map(|e| e.metadata().ok()).filter(|m| m.is_file()) {
+        for m in entries
+            .flatten()
+            .filter_map(|e| e.metadata().ok())
+            .filter(|m| m.is_file())
+        {
             count += 1;
             bytes += m.len() as i64;
         }
     }
-    Ok(CacheInfo { data_dir: data.to_string_lossy().into_owned(), thumb_count: count, thumb_bytes: bytes })
+    Ok(CacheInfo {
+        data_dir: data.to_string_lossy().into_owned(),
+        thumb_count: count,
+        thumb_bytes: bytes,
+    })
 }
 
 pub fn get_scan_rules() -> ScanRules {

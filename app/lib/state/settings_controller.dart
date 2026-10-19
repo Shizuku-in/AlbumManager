@@ -43,7 +43,8 @@ enum DateStyle {
     return switch (this) {
       DateStyle.iso => date,
       DateStyle.slash => p.join('/'),
-      DateStyle.chinese => '${p[0]}年${p.length > 1 ? '${int.parse(p[1])}月' : ''}${p.length > 2 ? '${int.parse(p[2])}日' : ''}',
+      DateStyle.chinese =>
+        '${p[0]}年${p.length > 1 ? '${int.parse(p[1])}月' : ''}${p.length > 2 ? '${int.parse(p[2])}日' : ''}',
       DateStyle.year => p[0],
     };
   }
@@ -86,11 +87,15 @@ class SettingsController extends ChangeNotifier {
 
   Set<T> _loadSet<T extends Enum>(String key, List<T> values) {
     final names = prefs.getStringList(key) ?? const [];
-    return {for (final v in values) if (names.contains(v.name)) v};
+    return {
+      for (final v in values)
+        if (names.contains(v.name)) v,
+    };
   }
 
   T _loadEnum<T extends Enum>(String key, List<T> values, T fallback) =>
-      values.where((v) => v.name == prefs.getString(key)).firstOrNull ?? fallback;
+      values.where((v) => v.name == prefs.getString(key)).firstOrNull ??
+      fallback;
 
   /// Returns [set] with [v] added or removed, persisted under [key].
   Set<T> _toggle<T extends Enum>(String key, Set<T> set, T v, bool include) {
@@ -101,7 +106,8 @@ class SettingsController extends ChangeNotifier {
 
   Future<void> load() async {
     prefs = await SharedPreferences.getInstance();
-    themeMode = ThemeMode.values[prefs.getInt('themeMode') ?? ThemeMode.system.index];
+    themeMode =
+        ThemeMode.values[prefs.getInt('themeMode') ?? ThemeMode.system.index];
     useSystemColor = prefs.getBool('useSystemColor') ?? true;
     seedColor = Color(prefs.getInt('seedColor') ?? defaultSeed.toARGB32());
     scanOnStartup = prefs.getBool('scanOnStartup') ?? true;
@@ -148,8 +154,9 @@ class SettingsController extends ChangeNotifier {
   }
 
   /// The album's issues minus the kinds turned off.
-  List<Issue> issuesOf(AlbumSummary a) =>
-      hiddenIssues.isEmpty ? a.issues : a.issues.where((i) => !hiddenIssues.contains(i.kind)).toList();
+  List<Issue> issuesOf(AlbumSummary a) => hiddenIssues.isEmpty
+      ? a.issues
+      : a.issues.where((i) => !hiddenIssues.contains(i.kind)).toList();
 
   void setCardSize(CardSize s) {
     if (s == cardSize) return;

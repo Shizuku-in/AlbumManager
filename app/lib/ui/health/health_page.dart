@@ -15,7 +15,11 @@ import 'package:album_manager/util/memo.dart';
 import 'package:album_manager/util/system.dart';
 
 /// Albums affected per issue kind (each album counted once per kind).
-final _byKind = Memo<(List<AlbumSummary>, Set<IssueKind>), Map<IssueKind, List<AlbumSummary>>>();
+final _byKind =
+    Memo<
+      (List<AlbumSummary>, Set<IssueKind>),
+      Map<IssueKind, List<AlbumSummary>>
+    >();
 
 Map<IssueKind, List<AlbumSummary>> _group(List<AlbumSummary> albums) {
   final m = <IssueKind, List<AlbumSummary>>{};
@@ -34,13 +38,17 @@ class HealthPage extends StatefulWidget {
   State<HealthPage> createState() => _HealthPageState();
 }
 
-class _HealthPageState extends State<HealthPage> with SingleTickerProviderStateMixin {
+class _HealthPageState extends State<HealthPage>
+    with SingleTickerProviderStateMixin {
   IssueKind? _kind;
   bool _fixing = false;
 
   /// Switches the album list between issue kinds (by [IssueKind.index], the
   /// chip order) with the same transition as the album tabs.
-  late final _kindSwitch = SharedAxisSwitch(vsync: this, onShownChanged: () => setState(() {}));
+  late final _kindSwitch = SharedAxisSwitch(
+    vsync: this,
+    onShownChanged: () => setState(() {}),
+  );
 
   @override
   void dispose() {
@@ -49,7 +57,11 @@ class _HealthPageState extends State<HealthPage> with SingleTickerProviderStateM
   }
 
   Future<void> _fixAll(List<AlbumSummary> targets) async {
-    final n = targets.fold(0, (n, a) => n + a.issues.where((i) => i.kind == IssueKind.cueEncoding).length);
+    final n = targets.fold(
+      0,
+      (n, a) =>
+          n + a.issues.where((i) => i.kind == IssueKind.cueEncoding).length,
+    );
     if (!await confirmCueFix(context, n)) return;
     setState(() => _fixing = true);
     var done = 0;
@@ -61,7 +73,9 @@ class _HealthPageState extends State<HealthPage> with SingleTickerProviderStateM
     }
     if (!mounted) return;
     setState(() => _fixing = false);
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('已修复 $done / ${targets.length} 张专辑的 CUE 编码')));
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('已修复 $done / ${targets.length} 张专辑的 CUE 编码')),
+    );
   }
 
   @override
@@ -71,29 +85,44 @@ class _HealthPageState extends State<HealthPage> with SingleTickerProviderStateM
       builder: (context, _) {
         final t = Theme.of(context);
         final albums = library.albums;
-        final byKind = _byKind((albums, settings.hiddenIssues), () => _group(albums));
+        final byKind = _byKind((
+          albums,
+          settings.hiddenIssues,
+        ), () => _group(albums));
         final kinds = IssueKind.values.where(byKind.containsKey).toList();
-        final kind = (_kind != null && kinds.contains(_kind)) ? _kind : (kinds.isEmpty ? null : kinds.first);
+        final kind = (_kind != null && kinds.contains(_kind))
+            ? _kind
+            : (kinds.isEmpty ? null : kinds.first);
         final affected = byKind[kind] ?? const <AlbumSummary>[];
         final total = byKind.values.fold(0, (n, l) => n + l.length);
         if (kinds.isEmpty) {
-          final enabled = IssueKind.values.length - settings.hiddenIssues.length;
+          final enabled =
+              IssueKind.values.length - settings.hiddenIssues.length;
           return AppPage(
             title: '健康检查',
             slivers: [
               SliverFillRemaining(
                 hasScrollBody: false,
                 child: Center(
-                  child: Column(mainAxisSize: MainAxisSize.min, children: [
-                    Icon(Icons.check_circle_outline, size: 48, color: AppColors.of(context).success.color),
-                    const SizedBox(height: 16),
-                    Text('没有发现问题', style: t.textTheme.titleMedium),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${albums.length} 张专辑通过了已启用的 $enabled 项检查',
-                      style: t.textTheme.bodyMedium?.copyWith(color: t.colorScheme.onSurfaceVariant),
-                    ),
-                  ]),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.check_circle_outline,
+                        size: 48,
+                        color: AppColors.of(context).success.color,
+                      ),
+                      const SizedBox(height: 16),
+                      Text('没有发现问题', style: t.textTheme.titleMedium),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${albums.length} 张专辑通过了已启用的 $enabled 项检查',
+                        style: t.textTheme.bodyMedium?.copyWith(
+                          color: t.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -102,7 +131,9 @@ class _HealthPageState extends State<HealthPage> with SingleTickerProviderStateM
         // Follow the selection when it changes on its own (e.g. the selected
         // kind's issues were all fixed); a chip tap animates instead.
         _kindSwitch.jump(kind!.index);
-        final shownKind = kinds.contains(IssueKind.values[_kindSwitch.shown]) ? IssueKind.values[_kindSwitch.shown] : kind;
+        final shownKind = kinds.contains(IssueKind.values[_kindSwitch.shown])
+            ? IssueKind.values[_kindSwitch.shown]
+            : kind;
         final listed = byKind[shownKind]!;
         return AppPage(
           title: '健康检查',
@@ -120,27 +151,39 @@ class _HealthPageState extends State<HealthPage> with SingleTickerProviderStateM
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                  Text(
-                    '$total 项问题，涉及 ${library.albums.where((a) => settings.issuesOf(a).isNotEmpty).length} 张专辑',
-                    style: t.textTheme.bodyMedium?.copyWith(color: t.colorScheme.onSurfaceVariant),
-                  ),
-                  const SizedBox(height: 12),
-                  Wrap(spacing: 8, runSpacing: 8, children: [
-                    for (final k in kinds)
-                      ChoiceChip(
-                        showCheckmark: false,
-                        avatar: Icon(k.icon, color: k.tone(context).color),
-                        label: Text('${k.label}  ${byKind[k]!.length}'),
-                        selected: k == kind,
-                        onSelected: (_) {
-                          _kindSwitch.select(k.index);
-                          setState(() => _kind = k);
-                        },
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      '$total 项问题，涉及 ${library.albums.where((a) => settings.issuesOf(a).isNotEmpty).length} 张专辑',
+                      style: t.textTheme.bodyMedium?.copyWith(
+                        color: t.colorScheme.onSurfaceVariant,
                       ),
-                  ]),
-                  if (_fixing) ...[const SizedBox(height: 12), const LinearProgressIndicator()],
-                ]),
+                    ),
+                    const SizedBox(height: 12),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        for (final k in kinds)
+                          ChoiceChip(
+                            showCheckmark: false,
+                            avatar: Icon(k.icon, color: k.tone(context).color),
+                            label: Text('${k.label}  ${byKind[k]!.length}'),
+                            selected: k == kind,
+                            onSelected: (_) {
+                              _kindSwitch.select(k.index);
+                              setState(() => _kind = k);
+                            },
+                          ),
+                      ],
+                    ),
+                    if (_fixing) ...[
+                      const SizedBox(height: 12),
+                      const LinearProgressIndicator(),
+                    ],
+                  ],
+                ),
               ),
             ),
             AnimatedBuilder(
@@ -153,21 +196,47 @@ class _HealthPageState extends State<HealthPage> with SingleTickerProviderStateM
                 itemCount: listed.length,
                 itemBuilder: (context, i) {
                   final a = listed[i];
-                  final msgs = a.issues.where((x) => x.kind == shownKind).toList();
+                  final msgs = a.issues
+                      .where((x) => x.kind == shownKind)
+                      .toList();
                   return ListTile(
                     onTap: () => Navigator.of(context).push(AlbumPage.route(a)),
-                    leading: SizedBox(width: 56, height: 56, child: CoverImage(path: a.coverThumb, radius: 8, cacheWidth: 120)),
-                    title: Text(a.title, maxLines: 1, overflow: TextOverflow.ellipsis),
-                    subtitle: Text(msgs.map((m) => m.message).join('；'), maxLines: 2, overflow: TextOverflow.ellipsis),
-                    trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-                      Text(a.id.split('/').first, style: t.textTheme.labelMedium),
-                      const SizedBox(width: 8),
-                      IconButton(
-                        tooltip: '在资源管理器中显示',
-                        onPressed: () => msgs.first.path != null ? revealInExplorer(msgs.first.path!) : openPath(a.path),
-                        icon: const Icon(Icons.folder_open_outlined),
+                    leading: SizedBox(
+                      width: 56,
+                      height: 56,
+                      child: CoverImage(
+                        path: a.coverThumb,
+                        radius: 8,
+                        cacheWidth: 120,
                       ),
-                    ]),
+                    ),
+                    title: Text(
+                      a.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    subtitle: Text(
+                      msgs.map((m) => m.message).join('；'),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          a.id.split('/').first,
+                          style: t.textTheme.labelMedium,
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          tooltip: '在资源管理器中显示',
+                          onPressed: () => msgs.first.path != null
+                              ? revealInExplorer(msgs.first.path!)
+                              : openPath(a.path),
+                          icon: const Icon(Icons.folder_open_outlined),
+                        ),
+                      ],
+                    ),
                   );
                 },
               ),

@@ -21,14 +21,43 @@ class _Dest {
   final String label;
   final Widget page;
   final HideablePage? hideable;
-  const _Dest(this.icon, this.selectedIcon, this.label, this.page, [this.hideable]);
+  const _Dest(
+    this.icon,
+    this.selectedIcon,
+    this.label,
+    this.page, [
+    this.hideable,
+  ]);
 }
 
 const _dests = [
-  _Dest(Icons.library_music_outlined, Icons.library_music, '专辑库', LibraryPage()),
-  _Dest(Icons.view_timeline_outlined, Icons.view_timeline, '时间线', TimelinePage(), HideablePage.timeline),
-  _Dest(Icons.insights_outlined, Icons.insights, '统计', StatsPage(), HideablePage.stats),
-  _Dest(Icons.health_and_safety_outlined, Icons.health_and_safety, '健康检查', HealthPage(), HideablePage.health),
+  _Dest(
+    Icons.library_music_outlined,
+    Icons.library_music,
+    '专辑库',
+    LibraryPage(),
+  ),
+  _Dest(
+    Icons.view_timeline_outlined,
+    Icons.view_timeline,
+    '时间线',
+    TimelinePage(),
+    HideablePage.timeline,
+  ),
+  _Dest(
+    Icons.insights_outlined,
+    Icons.insights,
+    '统计',
+    StatsPage(),
+    HideablePage.stats,
+  ),
+  _Dest(
+    Icons.health_and_safety_outlined,
+    Icons.health_and_safety,
+    '健康检查',
+    HealthPage(),
+    HideablePage.health,
+  ),
   _Dest(Icons.settings_outlined, Icons.settings, '设置', SettingsPage()),
 ];
 
@@ -44,20 +73,28 @@ class Shell extends StatefulWidget {
 }
 
 class _ShellState extends State<Shell> with SingleTickerProviderStateMixin {
-  final _navKeys = List.generate(_dests.length, (_) => GlobalKey<NavigatorState>());
+  final _navKeys = List.generate(
+    _dests.length,
+    (_) => GlobalKey<NavigatorState>(),
+  );
 
   // Built once: switching destinations must not rebuild the pages.
   late final List<Widget> _pages = [
     for (var i = 0; i < _dests.length; i++)
       Navigator(
         key: _navKeys[i],
-        onGenerateRoute: (_) => MaterialPageRoute(builder: (_) => _dests[i].page),
+        onGenerateRoute: (_) =>
+            MaterialPageRoute(builder: (_) => _dests[i].page),
       ),
   ];
 
   /// Shared axis Y, matching the vertical rail: a destination further down
   /// comes up from below. Content follows the selection.
-  late final _pageSwitch = SharedAxisSwitch(vsync: this, initial: navIndex.value, onShownChanged: _onPageShown);
+  late final _pageSwitch = SharedAxisSwitch(
+    vsync: this,
+    initial: navIndex.value,
+    onShownChanged: _onPageShown,
+  );
 
   /// Ctrl+F was pressed while another destination was showing.
   bool _focusSearch = false;
@@ -86,12 +123,16 @@ class _ShellState extends State<Shell> with SingleTickerProviderStateMixin {
     _focusSearch = false;
     // After the frame that makes the library page focusable again (hidden
     // IndexedStack children exclude focus).
-    WidgetsBinding.instance.addPostFrameCallback((_) => librarySearchFocus.requestFocus());
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => librarySearchFocus.requestFocus(),
+    );
   }
 
   void _select(int i) {
     // Re-selecting the current destination returns to its root page.
-    if (i == navIndex.value) _navKeys[i].currentState?.popUntil((r) => r.isFirst);
+    if (i == navIndex.value) {
+      _navKeys[i].currentState?.popUntil((r) => r.isFirst);
+    }
     navIndex.value = i;
   }
 
@@ -131,63 +172,78 @@ class _ShellState extends State<Shell> with SingleTickerProviderStateMixin {
 
   Widget _scaffold(bool wide) {
     return Scaffold(
-      body: Row(children: [
-        ListenableBuilder(
-          listenable: Listenable.merge([library, navIndex, settings]),
-          builder: (context, _) {
-            // Indices into _dests of the destinations shown.
-            final shown = [
-              for (var i = 0; i < _dests.length; i++)
-                if (!settings.hiddenPages.contains(_dests[i].hideable)) i,
-            ];
-            return NavPanel(
-              wide: wide,
-              selectedIndex: shown.indexOf(navIndex.value),
-              onSelected: (i) => _select(shown[i]),
-              items: [
-                for (final i in shown)
-                  NavItem(
-                    icon: _dests[i].icon,
-                    selectedIcon: _dests[i].selectedIcon,
-                    label: _dests[i].label,
-                    count: i == _healthIndex ? library.issueCount : 0,
-                  ),
-              ],
-              footer: const ScanStatus(),
-            );
-          },
-        ),
-        Expanded(
-          child: Column(children: [
-            ValueListenableBuilder(
-              valueListenable: library.scanProgress,
-              builder: (context, scan, _) => scan == null
-                  ? const SizedBox.shrink()
-                  : LinearProgressIndicator(value: scan.total == 0 ? null : scan.fraction),
-            ),
-            Expanded(
-              child: ListenableBuilder(
-                listenable: library,
-                builder: (context, _) {
-                  if (!library.ready) return const Center(child: CircularProgressIndicator());
-                  if (library.root == null) return const WelcomePage();
-                  final shown = _pageSwitch.shown;
-                  return AnimatedBuilder(
-                    animation: _pageSwitch.controller,
-                    builder: (context, child) => Opacity(
-                      opacity: _pageSwitch.opacity,
-                      child: Transform.translate(offset: Offset(0, _pageSwitch.shift), child: child),
+      body: Row(
+        children: [
+          ListenableBuilder(
+            listenable: Listenable.merge([library, navIndex, settings]),
+            builder: (context, _) {
+              // Indices into _dests of the destinations shown.
+              final shown = [
+                for (var i = 0; i < _dests.length; i++)
+                  if (!settings.hiddenPages.contains(_dests[i].hideable)) i,
+              ];
+              return NavPanel(
+                wide: wide,
+                selectedIndex: shown.indexOf(navIndex.value),
+                onSelected: (i) => _select(shown[i]),
+                items: [
+                  for (final i in shown)
+                    NavItem(
+                      icon: _dests[i].icon,
+                      selectedIcon: _dests[i].selectedIcon,
+                      label: _dests[i].label,
+                      count: i == _healthIndex ? library.issueCount : 0,
                     ),
-                    child: IndexedStack(index: shown, children: [
-                      for (var i = 0; i < _pages.length; i++) _PageHost(active: i == shown, child: _pages[i]),
-                    ]),
-                  );
-                },
-              ),
+                ],
+                footer: const ScanStatus(),
+              );
+            },
+          ),
+          Expanded(
+            child: Column(
+              children: [
+                ValueListenableBuilder(
+                  valueListenable: library.scanProgress,
+                  builder: (context, scan, _) => scan == null
+                      ? const SizedBox.shrink()
+                      : LinearProgressIndicator(
+                          value: scan.total == 0 ? null : scan.fraction,
+                        ),
+                ),
+                Expanded(
+                  child: ListenableBuilder(
+                    listenable: library,
+                    builder: (context, _) {
+                      if (!library.ready) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      if (library.root == null) return const WelcomePage();
+                      final shown = _pageSwitch.shown;
+                      return AnimatedBuilder(
+                        animation: _pageSwitch.controller,
+                        builder: (context, child) => Opacity(
+                          opacity: _pageSwitch.opacity,
+                          child: Transform.translate(
+                            offset: Offset(0, _pageSwitch.shift),
+                            child: child,
+                          ),
+                        ),
+                        child: IndexedStack(
+                          index: shown,
+                          children: [
+                            for (var i = 0; i < _pages.length; i++)
+                              _PageHost(active: i == shown, child: _pages[i]),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
-          ]),
-        ),
-      ]),
+          ),
+        ],
+      ),
     );
   }
 }

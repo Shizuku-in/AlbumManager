@@ -36,7 +36,11 @@ pub fn natural_cmp(a: &str, b: &str) -> Ordering {
                     nb.push(c);
                     bi.next();
                 }
-                let o = na.trim_start_matches('0').len().cmp(&nb.trim_start_matches('0').len()).then(na.trim_start_matches('0').cmp(nb.trim_start_matches('0')));
+                let o = na
+                    .trim_start_matches('0')
+                    .len()
+                    .cmp(&nb.trim_start_matches('0').len())
+                    .then(na.trim_start_matches('0').cmp(nb.trim_start_matches('0')));
                 if o != Ordering::Equal {
                     return o;
                 }
@@ -55,6 +59,10 @@ pub fn natural_cmp(a: &str, b: &str) -> Ordering {
 
 /// First integer in a string ("Disc 2 - CD" -> 2).
 pub fn first_number(s: &str) -> Option<i32> {
-    let digits: String = s.chars().skip_while(|c| !c.is_ascii_digit()).take_while(|c| c.is_ascii_digit()).collect();
+    let digits: String = s
+        .chars()
+        .skip_while(|c| !c.is_ascii_digit())
+        .take_while(|c| c.is_ascii_digit())
+        .collect();
     digits.parse().ok()
 }

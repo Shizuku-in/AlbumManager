@@ -20,44 +20,60 @@ class DisplaySettingsPage extends StatelessWidget {
     return SettingsSubpage(
       title: '专辑显示',
       groups: (context) => [
-        SettingsGroup(title: '封面卡片', children: [
-          ListTile(
-            leading: const Icon(Icons.photo_size_select_large_outlined),
-            title: const Text('卡片大小'),
-            trailing: SegmentedButton<CardSize>(
-              showSelectedIcon: false,
-              segments: [for (final s in CardSize.values) ButtonSegment(value: s, label: Text(s.label))],
-              selected: {settings.cardSize},
-              onSelectionChanged: (s) => settings.setCardSize(s.first),
+        SettingsGroup(
+          title: '封面卡片',
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_size_select_large_outlined),
+              title: const Text('卡片大小'),
+              trailing: SegmentedButton<CardSize>(
+                showSelectedIcon: false,
+                segments: [
+                  for (final s in CardSize.values)
+                    ButtonSegment(value: s, label: Text(s.label)),
+                ],
+                selected: {settings.cardSize},
+                onSelectionChanged: (s) => settings.setCardSize(s.first),
+              ),
             ),
-          ),
-          for (final f in CardField.values)
+            for (final f in CardField.values)
+              SwitchListTile(
+                secondary: Icon(_fieldIcon(f)),
+                title: Text('显示${f.label}'),
+                value: settings.showsOnCard(f),
+                onChanged: (v) => settings.setCardField(f, v),
+              ),
+          ],
+        ),
+        SettingsGroup(
+          title: '格式',
+          children: [
+            ListTile(
+              leading: const Icon(Icons.calendar_today_outlined),
+              title: const Text('日期格式'),
+              subtitle: settingsChips([
+                for (final s in DateStyle.values)
+                  ChoiceChip(
+                    label: Text(s.label),
+                    selected: settings.dateStyle == s,
+                    onSelected: (_) => settings.setDateStyle(s),
+                  ),
+              ]),
+            ),
+          ],
+        ),
+        SettingsGroup(
+          title: '浏览',
+          children: [
             SwitchListTile(
-              secondary: Icon(_fieldIcon(f)),
-              title: Text('显示${f.label}'),
-              value: settings.showsOnCard(f),
-              onChanged: (v) => settings.setCardField(f, v),
+              secondary: const Icon(Icons.filter_list),
+              title: const Text('记住筛选条件'),
+              subtitle: const Text('下次打开时恢复专辑库的筛选（排序方式总是会记住）'),
+              value: settings.rememberFilters,
+              onChanged: settings.setRememberFilters,
             ),
-        ]),
-        SettingsGroup(title: '格式', children: [
-          ListTile(
-            leading: const Icon(Icons.calendar_today_outlined),
-            title: const Text('日期格式'),
-            subtitle: settingsChips([
-              for (final s in DateStyle.values)
-                ChoiceChip(label: Text(s.label), selected: settings.dateStyle == s, onSelected: (_) => settings.setDateStyle(s)),
-            ]),
-          ),
-        ]),
-        SettingsGroup(title: '浏览', children: [
-          SwitchListTile(
-            secondary: const Icon(Icons.filter_list),
-            title: const Text('记住筛选条件'),
-            subtitle: const Text('下次打开时恢复专辑库的筛选（排序方式总是会记住）'),
-            value: settings.rememberFilters,
-            onChanged: settings.setRememberFilters,
-          ),
-        ]),
+          ],
+        ),
       ],
     );
   }

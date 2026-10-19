@@ -25,7 +25,8 @@ class LibraryPage extends StatefulWidget {
   State<LibraryPage> createState() => _LibraryPageState();
 }
 
-class _LibraryPageState extends State<LibraryPage> with SingleTickerProviderStateMixin {
+class _LibraryPageState extends State<LibraryPage>
+    with SingleTickerProviderStateMixin {
   final _search = TextEditingController(text: browser.query);
   final _scroll = SmoothScrollController();
 
@@ -82,11 +83,28 @@ class _LibraryPageState extends State<LibraryPage> with SingleTickerProviderStat
           deleteButtonTooltipMessage: '移除此筛选',
           onDeleted: () => browser.setYear(null),
         ),
-      for (final e in f.sources.modes.entries) chip(e.key.label, e.value, f.copyWith(sources: f.sources.without(e.key))),
-      for (final e in f.qualities.modes.entries) chip(e.key.label, e.value, f.copyWith(qualities: f.qualities.without(e.key))),
-      for (final e in f.formats.modes.entries) chip(e.key, e.value, f.copyWith(formats: f.formats.without(e.key))),
-      for (final e in f.ripStatuses.modes.entries) chip('抓轨${e.key.label}', e.value, f.copyWith(ripStatuses: f.ripStatuses.without(e.key))),
-      for (final e in f.flags.modes.entries) chip(e.key.label, e.value, f.copyWith(flags: f.flags.without(e.key))),
+      for (final e in f.sources.modes.entries)
+        chip(
+          e.key.label,
+          e.value,
+          f.copyWith(sources: f.sources.without(e.key)),
+        ),
+      for (final e in f.qualities.modes.entries)
+        chip(
+          e.key.label,
+          e.value,
+          f.copyWith(qualities: f.qualities.without(e.key)),
+        ),
+      for (final e in f.formats.modes.entries)
+        chip(e.key, e.value, f.copyWith(formats: f.formats.without(e.key))),
+      for (final e in f.ripStatuses.modes.entries)
+        chip(
+          '抓轨${e.key.label}',
+          e.value,
+          f.copyWith(ripStatuses: f.ripStatuses.without(e.key)),
+        ),
+      for (final e in f.flags.modes.entries)
+        chip(e.key.label, e.value, f.copyWith(flags: f.flags.without(e.key))),
     ];
   }
 
@@ -108,15 +126,27 @@ class _LibraryPageState extends State<LibraryPage> with SingleTickerProviderStat
               controller: _scroll,
               slivers: [
                 collapsingAppBar(
-                  title: Text(browser.yearFilter == null ? '专辑库' : '${browser.yearFilter} 年'),
+                  title: Text(
+                    browser.yearFilter == null
+                        ? '专辑库'
+                        : '${browser.yearFilter} 年',
+                  ),
                   actions: [
                     _SortMenu(),
                     const SizedBox(width: 8),
                     SegmentedButton<bool>(
                       showSelectedIcon: false,
                       segments: const [
-                        ButtonSegment(value: true, icon: Icon(Icons.grid_view), tooltip: '网格'),
-                        ButtonSegment(value: false, icon: Icon(Icons.view_list), tooltip: '列表'),
+                        ButtonSegment(
+                          value: true,
+                          icon: Icon(Icons.grid_view),
+                          tooltip: '网格',
+                        ),
+                        ButtonSegment(
+                          value: false,
+                          icon: Icon(Icons.view_list),
+                          tooltip: '列表',
+                        ),
                       ],
                       selected: {browser.gridView},
                       onSelectionChanged: (s) {
@@ -134,22 +164,36 @@ class _LibraryPageState extends State<LibraryPage> with SingleTickerProviderStat
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         CallbackShortcuts(
-                          bindings: {const SingleActivator(LogicalKeyboardKey.escape): _clearSearch},
+                          bindings: {
+                            const SingleActivator(LogicalKeyboardKey.escape):
+                                _clearSearch,
+                          },
                           child: SearchBar(
                             controller: _search,
                             focusNode: librarySearchFocus,
                             hintText: '搜索标题、艺术家、文件夹（Ctrl+F）',
                             leading: const Icon(Icons.search),
                             elevation: const WidgetStatePropertyAll(0),
-                            padding: const WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 16)),
+                            padding: const WidgetStatePropertyAll(
+                              EdgeInsets.symmetric(horizontal: 16),
+                            ),
                             onChanged: browser.setQuery,
                             trailing: [
-                              if (browser.query.isNotEmpty) IconButton(tooltip: '清除搜索', icon: const Icon(Icons.close), onPressed: _clearSearch),
+                              if (browser.query.isNotEmpty)
+                                IconButton(
+                                  tooltip: '清除搜索',
+                                  icon: const Icon(Icons.close),
+                                  onPressed: _clearSearch,
+                                ),
                               IconButton(
                                 tooltip: '筛选',
                                 isSelected: filterCount > 0,
                                 onPressed: () => showFilterPanel(context),
-                                icon: Badge.count(count: filterCount, isLabelVisible: filterCount > 0, child: const Icon(Icons.filter_list)),
+                                icon: Badge.count(
+                                  count: filterCount,
+                                  isLabelVisible: filterCount > 0,
+                                  child: const Icon(Icons.filter_list),
+                                ),
                               ),
                             ],
                           ),
@@ -162,14 +206,20 @@ class _LibraryPageState extends State<LibraryPage> with SingleTickerProviderStat
                             crossAxisAlignment: WrapCrossAlignment.center,
                             children: [
                               ..._filterChips(),
-                              if (filterCount > 1) TextButton(onPressed: browser.clearFilters, child: const Text('全部清除')),
+                              if (filterCount > 1)
+                                TextButton(
+                                  onPressed: browser.clearFilters,
+                                  child: const Text('全部清除'),
+                                ),
                             ],
                           ),
                         ],
                         const SizedBox(height: 12),
                         Text(
                           '${albums.length} 张专辑 · ${formatHours(totalDur)} · ${formatSize(totalSize)}',
-                          style: t.textTheme.bodyMedium?.copyWith(color: t.colorScheme.onSurfaceVariant),
+                          style: t.textTheme.bodyMedium?.copyWith(
+                            color: t.colorScheme.onSurfaceVariant,
+                          ),
                         ),
                       ],
                     ),
@@ -187,14 +237,26 @@ class _LibraryPageState extends State<LibraryPage> with SingleTickerProviderStat
                 else
                   AnimatedBuilder(
                     animation: _layoutSwitch.controller,
-                    builder: (context, child) => SliverOpacity(opacity: _layoutSwitch.opacity, sliver: child!),
+                    builder: (context, child) => SliverOpacity(
+                      opacity: _layoutSwitch.opacity,
+                      sliver: child!,
+                    ),
                     child: SliverMainAxisGroup(
                       slivers: _layoutSwitch.shown == _gridIndex
                           ? _gridSlivers(context, albums)
                           : [
                               SliverList.builder(
                                 itemCount: albums.length,
-                                itemBuilder: (context, i) => _marked(albums[i], _item(albums[i], AlbumTile(album: albums[i], onTap: () => _open(albums[i])))),
+                                itemBuilder: (context, i) => _marked(
+                                  albums[i],
+                                  _item(
+                                    albums[i],
+                                    AlbumTile(
+                                      album: albums[i],
+                                      onTap: () => _open(albums[i]),
+                                    ),
+                                  ),
+                                ),
                               ),
                             ],
                     ),
@@ -209,21 +271,37 @@ class _LibraryPageState extends State<LibraryPage> with SingleTickerProviderStat
   }
 
   /// Tags an item so [ScrollLabel] can tell which album is at the top.
-  static Widget _marked(AlbumSummary a, Widget child) => MetaData(metaData: a, behavior: HitTestBehavior.translucent, child: child);
+  static Widget _marked(AlbumSummary a, Widget child) => MetaData(
+    metaData: a,
+    behavior: HitTestBehavior.translucent,
+    child: child,
+  );
 
-  Widget _item(AlbumSummary a, Widget child) => AlbumContextMenu(album: a, onOpen: () => _open(a), child: child);
+  Widget _item(AlbumSummary a, Widget child) =>
+      AlbumContextMenu(album: a, onOpen: () => _open(a), child: child);
 
   /// Fast-scroll bubble text, matching the current sort order.
   static ScrollLabelText? _scrollLabel(AlbumSummary a) {
-    ScrollLabelText month(int year, int? m) => (main: '$year', sub: m == null ? null : '$m 月');
+    ScrollLabelText month(int year, int? m) =>
+        (main: '$year', sub: m == null ? null : '$m 月');
     return switch (browser.sort) {
-      SortMode.dateDesc ||
-      SortMode.dateAsc => a.year == null ? (main: '未知', sub: '年份') : month(a.year!, (a.date?.length ?? 0) >= 7 ? int.tryParse(a.date!.substring(5, 7)) : null),
+      SortMode.dateDesc || SortMode.dateAsc =>
+        a.year == null
+            ? (main: '未知', sub: '年份')
+            : month(
+                a.year!,
+                (a.date?.length ?? 0) >= 7
+                    ? int.tryParse(a.date!.substring(5, 7))
+                    : null,
+              ),
       SortMode.addedDesc => () {
         final d = DateTime.fromMillisecondsSinceEpoch(a.addedAt * 1000);
         return month(d.year, d.month);
       }(),
-      SortMode.title => a.title.isEmpty ? null : (main: a.title.characters.first.toUpperCase(), sub: null),
+      SortMode.title =>
+        a.title.isEmpty
+            ? null
+            : (main: a.title.characters.first.toUpperCase(), sub: null),
       SortMode.artist => (main: a.artist ?? '未知艺术家', sub: null),
       SortMode.size => (main: formatSize(a.totalSize), sub: null),
     };
@@ -236,11 +314,20 @@ class _LibraryPageState extends State<LibraryPage> with SingleTickerProviderStat
       sliver: SliverGrid.builder(
         gridDelegate: gridDelegate,
         itemCount: items.length,
-        itemBuilder: (context, i) => _marked(items[i], _item(items[i], AlbumCard(album: items[i], onTap: () => _open(items[i])))),
+        itemBuilder: (context, i) => _marked(
+          items[i],
+          _item(
+            items[i],
+            AlbumCard(album: items[i], onTap: () => _open(items[i])),
+          ),
+        ),
       ),
     );
     if (!browser.sort.groupsByYear || browser.yearFilter != null) {
-      return [const SliverToBoxAdapter(child: SizedBox(height: 8)), grid(albums)];
+      return [
+        const SliverToBoxAdapter(child: SizedBox(height: 8)),
+        grid(albums),
+      ];
     }
     final groups = <int, List<AlbumSummary>>{};
     for (final a in albums) {
@@ -258,9 +345,17 @@ class _LibraryPageState extends State<LibraryPage> with SingleTickerProviderStat
                 crossAxisAlignment: CrossAxisAlignment.baseline,
                 textBaseline: TextBaseline.alphabetic,
                 children: [
-                  Text(e.key == 0 ? '未知年份' : '${e.key}', style: t.textTheme.headlineSmall),
+                  Text(
+                    e.key == 0 ? '未知年份' : '${e.key}',
+                    style: t.textTheme.headlineSmall,
+                  ),
                   const SizedBox(width: 12),
-                  Text('${e.value.length} 张', style: t.textTheme.bodyMedium?.copyWith(color: t.colorScheme.onSurfaceVariant)),
+                  Text(
+                    '${e.value.length} 张',
+                    style: t.textTheme.bodyMedium?.copyWith(
+                      color: t.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -277,13 +372,18 @@ class _SortMenu extends StatelessWidget {
   Widget build(BuildContext context) {
     return MenuAnchor(
       builder: (context, controller, _) => TextButton.icon(
-        onPressed: () => controller.isOpen ? controller.close() : controller.open(),
+        onPressed: () =>
+            controller.isOpen ? controller.close() : controller.open(),
         icon: const Icon(Icons.sort),
         label: Text(browser.sort.label),
       ),
       menuChildren: [
         for (final s in SortMode.values)
-          MenuItemButton(leadingIcon: Icon(browser.sort == s ? Icons.check : null), onPressed: () => browser.setSort(s), child: Text(s.label)),
+          MenuItemButton(
+            leadingIcon: Icon(browser.sort == s ? Icons.check : null),
+            onPressed: () => browser.setSort(s),
+            child: Text(s.label),
+          ),
       ],
     );
   }
@@ -296,7 +396,11 @@ class _Empty extends StatelessWidget {
   /// No albums at all (as opposed to none matching the search / filters).
   final bool libraryEmpty;
   final VoidCallback onClear;
-  const _Empty({required this.scanning, required this.libraryEmpty, required this.onClear});
+  const _Empty({
+    required this.scanning,
+    required this.libraryEmpty,
+    required this.onClear,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -308,13 +412,21 @@ class _Empty extends StatelessWidget {
             Icons.library_music_outlined,
             '专辑库中还没有专辑',
             '确认专辑库位置是否正确，然后重新扫描',
-            FilledButton.tonalIcon(onPressed: () => library.rescan(), icon: const Icon(Icons.sync), label: const Text('重新扫描')),
+            FilledButton.tonalIcon(
+              onPressed: () => library.rescan(),
+              icon: const Icon(Icons.sync),
+              label: const Text('重新扫描'),
+            ),
           )
         : (
             Icons.search_off,
             '没有符合条件的专辑',
             '试试其它关键词，或放宽筛选条件',
-            FilledButton.tonalIcon(onPressed: onClear, icon: const Icon(Icons.filter_list_off), label: const Text('清除搜索和筛选')),
+            FilledButton.tonalIcon(
+              onPressed: onClear,
+              icon: const Icon(Icons.filter_list_off),
+              label: const Text('清除搜索和筛选'),
+            ),
           );
     return Center(
       child: Column(
@@ -324,7 +436,12 @@ class _Empty extends StatelessWidget {
           const SizedBox(height: 16),
           Text(title, style: t.textTheme.titleMedium),
           const SizedBox(height: 4),
-          Text(body, style: t.textTheme.bodyMedium?.copyWith(color: t.colorScheme.onSurfaceVariant)),
+          Text(
+            body,
+            style: t.textTheme.bodyMedium?.copyWith(
+              color: t.colorScheme.onSurfaceVariant,
+            ),
+          ),
           if (action != null) ...[const SizedBox(height: 24), action],
         ],
       ),
@@ -345,7 +462,11 @@ class _BackToTop extends StatelessWidget {
     // of covers would decode them all on the way.
     final near = p.viewportDimension * 2;
     if (p.pixels > near) controller.jumpTo(near);
-    controller.animateTo(0, duration: const Duration(milliseconds: 400), curve: Curves.easeInOutCubicEmphasized);
+    controller.animateTo(
+      0,
+      duration: const Duration(milliseconds: 400),
+      curve: Curves.easeInOutCubicEmphasized,
+    );
   }
 
   @override
@@ -355,14 +476,24 @@ class _BackToTop extends StatelessWidget {
       builder: (context, child) {
         // Before the first layout the position has no viewport size yet.
         final p = controller.hasClients ? controller.position : null;
-        final shown = p != null && p.hasPixels && p.hasViewportDimension && p.pixels > p.viewportDimension;
+        final shown =
+            p != null &&
+            p.hasPixels &&
+            p.hasViewportDimension &&
+            p.pixels > p.viewportDimension;
         return IgnorePointer(
           ignoring: !shown,
           child: AnimatedSlide(
             offset: shown ? Offset.zero : const Offset(0, 0.5),
             duration: const Duration(milliseconds: 200),
-            curve: shown ? Easing.emphasizedDecelerate : Easing.emphasizedAccelerate,
-            child: AnimatedOpacity(opacity: shown ? 1 : 0, duration: const Duration(milliseconds: 200), child: child),
+            curve: shown
+                ? Easing.emphasizedDecelerate
+                : Easing.emphasizedAccelerate,
+            child: AnimatedOpacity(
+              opacity: shown ? 1 : 0,
+              duration: const Duration(milliseconds: 200),
+              child: child,
+            ),
           ),
         );
       },

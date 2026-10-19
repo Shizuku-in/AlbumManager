@@ -12,11 +12,20 @@ class CustomColor {
   const CustomColor(this.color, this.onColor, this.container, this.onContainer);
 
   factory CustomColor.from(Color seed, ColorScheme scheme) {
-    final s = ColorScheme.fromSeed(seedColor: seed.harmonizeWith(scheme.primary), brightness: scheme.brightness);
-    return CustomColor(s.primary, s.onPrimary, s.primaryContainer, s.onPrimaryContainer);
+    final s = ColorScheme.fromSeed(
+      seedColor: seed.harmonizeWith(scheme.primary),
+      brightness: scheme.brightness,
+    );
+    return CustomColor(
+      s.primary,
+      s.onPrimary,
+      s.primaryContainer,
+      s.onPrimaryContainer,
+    );
   }
 
-  static CustomColor lerp(CustomColor a, CustomColor b, double t) => CustomColor(
+  static CustomColor lerp(CustomColor a, CustomColor b, double t) =>
+      CustomColor(
         Color.lerp(a.color, b.color, t)!,
         Color.lerp(a.onColor, b.onColor, t)!,
         Color.lerp(a.container, b.container, t)!,
@@ -46,16 +55,17 @@ class AppColors extends ThemeExtension<AppColors> {
   });
 
   factory AppColors.forScheme(ColorScheme s) => AppColors(
-        success: CustomColor.from(const Color(0xFF2E7D32), s),
-        warning: CustomColor.from(const Color(0xFFF9A825), s),
-        cd: CustomColor.from(const Color(0xFFEF8F00), s),
-        digital: CustomColor.from(const Color(0xFF0277BD), s),
-        hiRes: CustomColor.from(const Color(0xFFC8A400), s),
-        dsd: CustomColor.from(const Color(0xFF8E24AA), s),
-        disc: CustomColor.from(const Color(0xFF00897B), s),
-      );
+    success: CustomColor.from(const Color(0xFF2E7D32), s),
+    warning: CustomColor.from(const Color(0xFFF9A825), s),
+    cd: CustomColor.from(const Color(0xFFEF8F00), s),
+    digital: CustomColor.from(const Color(0xFF0277BD), s),
+    hiRes: CustomColor.from(const Color(0xFFC8A400), s),
+    dsd: CustomColor.from(const Color(0xFF8E24AA), s),
+    disc: CustomColor.from(const Color(0xFF00897B), s),
+  );
 
-  static AppColors of(BuildContext context) => Theme.of(context).extension<AppColors>()!;
+  static AppColors of(BuildContext context) =>
+      Theme.of(context).extension<AppColors>()!;
 
   @override
   AppColors copyWith() => this;

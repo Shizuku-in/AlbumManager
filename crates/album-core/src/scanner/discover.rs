@@ -1,8 +1,8 @@
 //! Finding album folders inside the library root and fingerprinting them.
 
-use album_formats::audio::{ext_of, is_audio_ext};
 use crate::rules::{self, Rules};
 use crate::util::{fnv1a, unix_secs};
+use album_formats::audio::{ext_of, is_audio_ext};
 use regex::Regex;
 use std::path::{Path, PathBuf};
 use std::sync::LazyLock;
@@ -15,16 +15,23 @@ pub static DISC_LIKE: LazyLock<Regex> = LazyLock::new(|| {
 const DISC_IMAGE_EXTS: &[&str] = &["iso", "mds", "mdf", "m2ts"];
 
 fn is_hidden(p: &Path) -> bool {
-    p.file_name().and_then(|n| n.to_str()).map(|n| n.starts_with('.') || n.starts_with('$')).unwrap_or(true)
+    p.file_name()
+        .and_then(|n| n.to_str())
+        .map(|n| n.starts_with('.') || n.starts_with('$'))
+        .unwrap_or(true)
 }
 
 fn subtree_has_media(dir: &Path) -> bool {
-    walkdir::WalkDir::new(dir).max_depth(4).into_iter().filter_map(|e| e.ok()).any(|e| {
-        e.file_type().is_file() && {
-            let ext = ext_of(e.path());
-            is_audio_ext(&ext) || DISC_IMAGE_EXTS.contains(&ext.as_str())
-        }
-    })
+    walkdir::WalkDir::new(dir)
+        .max_depth(4)
+        .into_iter()
+        .filter_map(|e| e.ok())
+        .any(|e| {
+            e.file_type().is_file() && {
+                let ext = ext_of(e.path());
+                is_audio_ext(&ext) || DISC_IMAGE_EXTS.contains(&ext.as_str())
+            }
+        })
 }
 
 /// Walks the library and returns album folders.
@@ -36,7 +43,9 @@ pub fn discover(root: &Path) -> Vec<PathBuf> {
 }
 
 fn visit(dir: &Path, depth: usize, rules: &Rules, out: &mut Vec<PathBuf>) {
-    let Ok(rd) = std::fs::read_dir(dir) else { return };
+    let Ok(rd) = std::fs::read_dir(dir) else {
+        return;
+    };
     let mut subdirs = Vec::new();
     let mut direct_media = false;
     for e in rd.filter_map(|e| e.ok()) {
@@ -46,7 +55,10 @@ fn visit(dir: &Path, depth: usize, rules: &Rules, out: &mut Vec<PathBuf>) {
         }
         let Ok(ft) = e.file_type() else { continue };
         if ft.is_dir() {
-            if p.file_name().map(|n| n.eq_ignore_ascii_case("BDMV")).unwrap_or(false) {
+            if p.file_name()
+                .map(|n| n.eq_ignore_ascii_case("BDMV"))
+                .unwrap_or(false)
+            {
                 direct_media = true;
             }
             subdirs.push(p);
@@ -68,7 +80,10 @@ fn visit(dir: &Path, depth: usize, rules: &Rules, out: &mut Vec<PathBuf>) {
             return;
         }
         let all_disc_like = media_subdirs.iter().all(|d| {
-            d.file_name().and_then(|n| n.to_str()).map(|n| DISC_LIKE.is_match(n)).unwrap_or(false)
+            d.file_name()
+                .and_then(|n| n.to_str())
+                .map(|n| DISC_LIKE.is_match(n))
+                .unwrap_or(false)
         });
         if all_disc_like || depth >= 2 {
             out.push(dir.to_path_buf());
@@ -94,17 +109,30 @@ pub struct FileRec {
 /// Lists all files of an album and returns a content fingerprint.
 pub fn list_files(dir: &Path) -> (u64, Vec<FileRec>) {
     let mut files = Vec::new();
-    for e in walkdir::WalkDir::new(dir).into_iter().filter_map(|e| e.ok()) {
+    for e in walkdir::WalkDir::new(dir)
+        .into_iter()
+        .filter_map(|e| e.ok())
+    {
         if !e.file_type().is_file() {
             continue;
         }
         let path = e.path().to_path_buf();
-        let rel = path.strip_prefix(dir).unwrap_or(&path).to_string_lossy().replace('\\', "/");
+        let rel = path
+            .strip_prefix(dir)
+            .unwrap_or(&path)
+            .to_string_lossy()
+            .replace('\\', "/");
         let meta = e.metadata().ok();
         let size = meta.as_ref().map(|m| m.len()).unwrap_or(0);
         let mtime = meta.map(|m| unix_secs(m.modified())).unwrap_or(0);
         let ext = ext_of(&path);
-        files.push(FileRec { path, rel, size, mtime, ext });
+        files.push(FileRec {
+            path,
+            rel,
+            size,
+            mtime,
+            ext,
+        });
     }
     files.sort_by(|a, b| crate::util::natural_cmp(&a.rel, &b.rel));
     let mut buf = Vec::new();

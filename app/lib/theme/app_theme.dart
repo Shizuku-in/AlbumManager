@@ -31,13 +31,22 @@ ThemeData buildTheme(ColorScheme scheme) {
     fontFamilyFallback: appFontFallback,
     visualDensity: VisualDensity.standard,
     extensions: [AppColors.forScheme(scheme)],
-    snackBarTheme: const SnackBarThemeData(behavior: SnackBarBehavior.floating, width: 480),
+    snackBarTheme: const SnackBarThemeData(
+      behavior: SnackBarBehavior.floating,
+      width: 480,
+    ),
     // Standard (non-modal) navigation drawer: flush with the window edge.
-    drawerTheme: const DrawerThemeData(shape: RoundedRectangleBorder(), width: 280),
+    drawerTheme: const DrawerThemeData(
+      shape: RoundedRectangleBorder(),
+      width: 280,
+    ),
     // Current M3 page transition (slide + fade). The Windows default zooms,
     // and any scale that is not exactly identity renders text blurry.
     pageTransitionsTheme: PageTransitionsTheme(
-      builders: {for (final p in TargetPlatform.values) p: const FadeForwardsPageTransitionsBuilder()},
+      builders: {
+        for (final p in TargetPlatform.values)
+          p: const FadeForwardsPageTransitionsBuilder(),
+      },
     ),
   );
 }
@@ -49,7 +58,12 @@ final _themes = <(int, Brightness), ThemeData>{};
 /// Theme generated from a seed color (tonal spot scheme), cached.
 ThemeData themeFor(Color seed, Brightness brightness) {
   if (_themes.length > 128) _themes.clear();
-  return _themes.putIfAbsent((seed.toARGB32(), brightness), () => buildTheme(ColorScheme.fromSeed(seedColor: seed, brightness: brightness)));
+  return _themes.putIfAbsent(
+    (seed.toARGB32(), brightness),
+    () => buildTheme(
+      ColorScheme.fromSeed(seedColor: seed, brightness: brightness),
+    ),
+  );
 }
 
 /// Theme derived from album content (cover color), per M3 content-based color.

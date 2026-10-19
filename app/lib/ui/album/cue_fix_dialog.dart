@@ -15,8 +15,14 @@ Future<bool> confirmCueFix(BuildContext context, int count) async {
         ),
       ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('取消')),
-        TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('转换')),
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, false),
+          child: const Text('取消'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, true),
+          child: const Text('转换'),
+        ),
       ],
     ),
   );

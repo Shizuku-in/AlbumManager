@@ -40,7 +40,9 @@ class LibraryController extends ChangeNotifier {
     albums = info.albums;
     ready = true;
     notifyListeners();
-    if (settings.scanOnStartup && root != null && Directory(root!).existsSync()) {
+    if (settings.scanOnStartup &&
+        root != null &&
+        Directory(root!).existsSync()) {
       unawaited(rescan());
     }
   }
@@ -66,9 +68,14 @@ class LibraryController extends ChangeNotifier {
             scanProgress.value = ScanProgress(0, total, '');
           case ScanEvent_Progress(:final done, :final total, :final current):
             scanProgress.value = ScanProgress(done, total, current);
-          case ScanEvent_Finished(:final albums, :final elapsedMs, :final rescanned):
+          case ScanEvent_Finished(
+            :final albums,
+            :final elapsedMs,
+            :final rescanned,
+          ):
             this.albums = albums;
-            lastScanMessage = '扫描完成：${albums.length} 张专辑，更新 $rescanned 张，用时 ${(elapsedMs / 1000).toStringAsFixed(1)} 秒';
+            lastScanMessage =
+                '扫描完成：${albums.length} 张专辑，更新 $rescanned 张，用时 ${(elapsedMs / 1000).toStringAsFixed(1)} 秒';
         }
       }
     } catch (e) {
@@ -96,15 +103,23 @@ class LibraryController extends ChangeNotifier {
 
   /// Albums grouped by year, newest first (0 = unknown year).
   Map<int, List<AlbumSummary>> get byYear => _byYear(albums, () {
-        final m = <int, List<AlbumSummary>>{};
-        for (final a in albums) {
-          m.putIfAbsent(a.year ?? 0, () => []).add(a);
-        }
-        return Map.fromEntries(m.entries.toList()..sort((a, b) => b.key.compareTo(a.key)));
-      });
+    final m = <int, List<AlbumSummary>>{};
+    for (final a in albums) {
+      m.putIfAbsent(a.year ?? 0, () => []).add(a);
+    }
+    return Map.fromEntries(
+      m.entries.toList()..sort((a, b) => b.key.compareTo(a.key)),
+    );
+  });
 
   /// Same metric as the health page: one per (album, issue kind).
-  int get issueCount => _issueCount((albums, settings.hiddenIssues), () => albums.fold(0, (n, a) => n + settings.issuesOf(a).map((i) => i.kind).toSet().length));
+  int get issueCount => _issueCount(
+    (albums, settings.hiddenIssues),
+    () => albums.fold(
+      0,
+      (n, a) => n + settings.issuesOf(a).map((i) => i.kind).toSet().length,
+    ),
+  );
 }
 
 final library = LibraryController();

@@ -3,9 +3,19 @@
 pub use album_model::*;
 
 pub enum ScanEvent {
-    Started { total: i32 },
-    Progress { done: i32, total: i32, current: String },
-    Finished { albums: Vec<AlbumSummary>, elapsed_ms: i64, rescanned: i32 },
+    Started {
+        total: i32,
+    },
+    Progress {
+        done: i32,
+        total: i32,
+        current: String,
+    },
+    Finished {
+        albums: Vec<AlbumSummary>,
+        elapsed_ms: i64,
+        rescanned: i32,
+    },
 }
 
 pub struct LibraryInfo {

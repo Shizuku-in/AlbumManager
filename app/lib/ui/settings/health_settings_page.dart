@@ -24,18 +24,21 @@ class HealthSettingsPage extends StatelessWidget {
     return SettingsSubpage(
       title: '健康检查',
       groups: (context) => [
-        SettingsGroup(title: '检查项', children: [
-          for (final k in IssueKind.values)
-            SwitchListTile(
-              secondary: Icon(k.icon),
-              title: Text(k.label),
-              subtitle: Text(_description(k)),
-              value: !settings.hiddenIssues.contains(k),
-              onChanged: (v) => settings.setIssueEnabled(k, v),
-            ),
-          const SizedBox(height: 8),
-          const SettingsNote('关闭的检查项不会出现在健康检查、专辑详情和 “有问题” 筛选中，也不计入导航栏的问题数。'),
-        ]),
+        SettingsGroup(
+          title: '检查项',
+          children: [
+            for (final k in IssueKind.values)
+              SwitchListTile(
+                secondary: Icon(k.icon),
+                title: Text(k.label),
+                subtitle: Text(_description(k)),
+                value: !settings.hiddenIssues.contains(k),
+                onChanged: (v) => settings.setIssueEnabled(k, v),
+              ),
+            const SizedBox(height: 8),
+            const SettingsNote('关闭的检查项不会出现在健康检查、专辑详情和 “有问题” 筛选中，也不计入导航栏的问题数。'),
+          ],
+        ),
       ],
     );
   }

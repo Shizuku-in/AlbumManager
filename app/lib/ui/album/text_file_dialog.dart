@@ -21,13 +21,23 @@ Future<void> showTextFile(BuildContext context, String path) async {
           child: SingleChildScrollView(
             child: SelectableText(
               text,
-              style: t.textTheme.bodySmall?.copyWith(fontFamily: 'Consolas', fontFamilyFallback: const ['MS Gothic', 'Microsoft YaHei'], height: 1.5),
+              style: t.textTheme.bodySmall?.copyWith(
+                fontFamily: 'Consolas',
+                fontFamilyFallback: const ['MS Gothic', 'Microsoft YaHei'],
+                height: 1.5,
+              ),
             ),
           ),
         ),
         actions: [
-          TextButton(onPressed: () => revealInExplorer(path), child: const Text('在资源管理器中显示')),
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('关闭')),
+          TextButton(
+            onPressed: () => revealInExplorer(path),
+            child: const Text('在资源管理器中显示'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('关闭'),
+          ),
         ],
       );
     },

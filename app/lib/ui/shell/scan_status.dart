@@ -16,14 +16,30 @@ class ScanStatus extends StatelessWidget {
         if (scan == null) return const SizedBox.shrink();
         return Padding(
           padding: const EdgeInsets.symmetric(horizontal: 28),
-          child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-            const Padding(padding: EdgeInsets.symmetric(vertical: 16), child: Divider()),
-            Text(scan.total == 0 ? '正在查找专辑…' : '正在扫描 ${scan.done} / ${scan.total}', style: tt.labelLarge),
-            if (scan.current.isNotEmpty) ...[
-              const SizedBox(height: 4),
-              Text(scan.current, maxLines: 1, overflow: TextOverflow.ellipsis, style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant)),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 16),
+                child: Divider(),
+              ),
+              Text(
+                scan.total == 0
+                    ? '正在查找专辑…'
+                    : '正在扫描 ${scan.done} / ${scan.total}',
+                style: tt.labelLarge,
+              ),
+              if (scan.current.isNotEmpty) ...[
+                const SizedBox(height: 4),
+                Text(
+                  scan.current,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: tt.bodySmall?.copyWith(color: cs.onSurfaceVariant),
+                ),
+              ],
             ],
-          ]),
+          ),
         );
       },
     );

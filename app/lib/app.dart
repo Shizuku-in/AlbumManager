@@ -17,9 +17,16 @@ class AlbumManagerApp extends StatelessWidget {
       builder: (lightDynamic, darkDynamic) => ListenableBuilder(
         listenable: settings,
         builder: (context, _) {
-          final useDynamic = settings.useSystemColor && lightDynamic != null && darkDynamic != null;
-          final lightSeed = useDynamic ? lightDynamic.primary : settings.seedColor;
-          final darkSeed = useDynamic ? darkDynamic.primary : settings.seedColor;
+          final useDynamic =
+              settings.useSystemColor &&
+              lightDynamic != null &&
+              darkDynamic != null;
+          final lightSeed = useDynamic
+              ? lightDynamic.primary
+              : settings.seedColor;
+          final darkSeed = useDynamic
+              ? darkDynamic.primary
+              : settings.seedColor;
           return MaterialApp(
             title: 'Album Manager',
             debugShowCheckedModeBanner: false,
@@ -32,7 +39,12 @@ class AlbumManagerApp extends StatelessWidget {
             // The title bar sits above the Navigator, so it needs its own
             // Overlay for its tooltips.
             builder: (context, child) => Overlay.wrap(
-              child: Column(children: [const TitleBar(), Expanded(child: child!)]),
+              child: Column(
+                children: [
+                  const TitleBar(),
+                  Expanded(child: child!),
+                ],
+              ),
             ),
             home: const Shell(),
           );

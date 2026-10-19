@@ -8,8 +8,22 @@ import 'package:album_manager/util/system.dart';
 IconData _fileIcon(String rel) {
   final ext = rel.contains('.') ? rel.split('.').last.toLowerCase() : '';
   return switch (ext) {
-    'flac' || 'wav' || 'ape' || 'tak' || 'tta' || 'dsf' || 'mp3' || 'm4a' || 'wv' => Icons.audio_file_outlined,
-    'jpg' || 'jpeg' || 'png' || 'bmp' || 'tif' || 'tiff' || 'webp' => Icons.image_outlined,
+    'flac' ||
+    'wav' ||
+    'ape' ||
+    'tak' ||
+    'tta' ||
+    'dsf' ||
+    'mp3' ||
+    'm4a' ||
+    'wv' => Icons.audio_file_outlined,
+    'jpg' ||
+    'jpeg' ||
+    'png' ||
+    'bmp' ||
+    'tif' ||
+    'tiff' ||
+    'webp' => Icons.image_outlined,
     'cue' => Icons.queue_music,
     'log' || 'txt' => Icons.article_outlined,
     'iso' || 'mds' || 'm2ts' => Icons.album_outlined,
@@ -26,13 +40,17 @@ List<Widget> filesSlivers(BuildContext context, Album a) {
       itemBuilder: (context, i) {
         final f = a.files[i];
         final full = '$root\\${f.relPath.replaceAll('/', '\\')}';
-        final isText = RegExp(r'\.(log|cue|txt|m3u8?|lrc|accurip)$', caseSensitive: false).hasMatch(f.relPath);
+        final isText = RegExp(
+          r'\.(log|cue|txt|m3u8?|lrc|accurip)$',
+          caseSensitive: false,
+        ).hasMatch(f.relPath);
         return ListTile(
           dense: true,
           leading: Icon(_fileIcon(f.relPath)),
           title: Text(f.relPath, maxLines: 1, overflow: TextOverflow.ellipsis),
           trailing: Text(formatSize(f.size), style: t.textTheme.bodySmall),
-          onTap: () => isText ? showTextFile(context, full) : revealInExplorer(full),
+          onTap: () =>
+              isText ? showTextFile(context, full) : revealInExplorer(full),
         );
       },
     ),

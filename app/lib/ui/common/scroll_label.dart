@@ -22,7 +22,12 @@ class ScrollLabel<T> extends StatefulWidget {
   /// Height of the pinned header covering the top of the viewport.
   final double topInset;
   final Widget child;
-  const ScrollLabel({super.key, required this.labelOf, this.topInset = 64, required this.child});
+  const ScrollLabel({
+    super.key,
+    required this.labelOf,
+    this.topInset = 64,
+    required this.child,
+  });
 
   @override
   State<ScrollLabel<T>> createState() => _ScrollLabelState<T>();
@@ -90,7 +95,10 @@ class _ScrollLabelState<T> extends State<ScrollLabel<T>> {
     final thumb = math.max(18.0, viewport * viewport / (viewport + extent));
     final fraction = ((m.pixels - m.minScrollExtent) / extent).clamp(0.0, 1.0);
     final center = fraction * (viewport - thumb) + thumb / 2;
-    _top.value = (center - _bubbleSize / 2).clamp(0.0, math.max(0.0, viewport - _bubbleSize));
+    _top.value = (center - _bubbleSize / 2).clamp(
+      0.0,
+      math.max(0.0, viewport - _bubbleSize),
+    );
   }
 
   ScrollLabelText? _labelAtTop() {
@@ -105,8 +113,14 @@ class _ScrollLabelState<T> extends State<ScrollLabel<T>> {
     void visit(RenderObject o) {
       if (o is RenderMetaData && o.metaData is T) {
         if (!o.hasSize) return;
-        final r = MatrixUtils.transformRect(o.getTransformTo(root), Offset.zero & o.size);
-        final better = best == null || r.top < bestRect.top - 0.5 || ((r.top - bestRect.top).abs() <= 0.5 && r.left < bestRect.left);
+        final r = MatrixUtils.transformRect(
+          o.getTransformTo(root),
+          Offset.zero & o.size,
+        );
+        final better =
+            best == null ||
+            r.top < bestRect.top - 0.5 ||
+            ((r.top - bestRect.top).abs() <= 0.5 && r.left < bestRect.left);
         if (r.bottom > probe && better) {
           best = o;
           bestRect = r;
@@ -132,7 +146,8 @@ class _ScrollLabelState<T> extends State<ScrollLabel<T>> {
         ),
         ValueListenableBuilder<double>(
           valueListenable: _top,
-          builder: (context, top, child) => Positioned(top: top, right: 14, child: child!),
+          builder: (context, top, child) =>
+              Positioned(top: top, right: 14, child: child!),
           child: IgnorePointer(
             child: ValueListenableBuilder<bool>(
               valueListenable: _visible,
@@ -141,7 +156,13 @@ class _ScrollLabelState<T> extends State<ScrollLabel<T>> {
                 opacity: visible ? 1 : 0,
                 duration: _fade,
                 curve: Curves.easeOut,
-                child: AnimatedScale(scale: visible ? 1 : 0.5, alignment: Alignment.centerRight, duration: _fade, curve: Curves.easeOutCubic, child: child),
+                child: AnimatedScale(
+                  scale: visible ? 1 : 0.5,
+                  alignment: Alignment.centerRight,
+                  duration: _fade,
+                  curve: Curves.easeOutCubic,
+                  child: child,
+                ),
               ),
               child: Material(
                 color: t.colorScheme.primaryContainer,
@@ -153,9 +174,15 @@ class _ScrollLabelState<T> extends State<ScrollLabel<T>> {
                   alignment: Alignment.centerRight,
                   child: Container(
                     height: _bubbleSize,
-                    constraints: const BoxConstraints(minWidth: _TeardropBorder.minWidth, maxWidth: 240),
+                    constraints: const BoxConstraints(
+                      minWidth: _TeardropBorder.minWidth,
+                      maxWidth: 240,
+                    ),
                     // Snug around the text; it may run a little into the base of the tip.
-                    padding: const EdgeInsets.only(left: 10, right: 12 + _TeardropBorder.tipLength / 2),
+                    padding: const EdgeInsets.only(
+                      left: 10,
+                      right: 12 + _TeardropBorder.tipLength / 2,
+                    ),
                     child: ValueListenableBuilder<ScrollLabelText?>(
                       valueListenable: _label,
                       builder: (context, label, _) => AnimatedSwitcher(
@@ -165,13 +192,21 @@ class _ScrollLabelState<T> extends State<ScrollLabel<T>> {
                         transitionBuilder: (child, anim) => FadeTransition(
                           opacity: anim,
                           child: SlideTransition(
-                            position: Tween(begin: const Offset(0, 0.25), end: Offset.zero).animate(anim),
+                            position: Tween(
+                              begin: const Offset(0, 0.25),
+                              end: Offset.zero,
+                            ).animate(anim),
                             child: child,
                           ),
                         ),
                         // Keep old and new centered on top of each other.
-                        layoutBuilder: (current, previous) => Stack(alignment: Alignment.center, children: [...previous, ?current]),
-                        child: label == null ? const SizedBox.shrink() : _content(t, fg, label),
+                        layoutBuilder: (current, previous) => Stack(
+                          alignment: Alignment.center,
+                          children: [...previous, ?current],
+                        ),
+                        child: label == null
+                            ? const SizedBox.shrink()
+                            : _content(t, fg, label),
                       ),
                     ),
                   ),
@@ -186,13 +221,19 @@ class _ScrollLabelState<T> extends State<ScrollLabel<T>> {
 
   Widget _content(ThemeData t, Color fg, ScrollLabelText l) {
     final short = l.main.characters.length <= 4;
-    final main = (short ? t.textTheme.titleLarge : t.textTheme.titleMedium)!.copyWith(color: fg, fontWeight: FontWeight.w700, height: 1.1);
+    final main = (short ? t.textTheme.titleLarge : t.textTheme.titleMedium)!
+        .copyWith(color: fg, fontWeight: FontWeight.w700, height: 1.1);
     return Column(
       key: ValueKey(l),
       mainAxisSize: MainAxisSize.min,
       children: [
         Text(l.main, maxLines: 1, overflow: TextOverflow.ellipsis, style: main),
-        if (l.sub != null) Text(l.sub!, maxLines: 1, style: t.textTheme.labelMedium?.copyWith(color: fg)),
+        if (l.sub != null)
+          Text(
+            l.sub!,
+            maxLines: 1,
+            style: t.textTheme.labelMedium?.copyWith(color: fg),
+          ),
       ],
     );
   }
@@ -214,7 +255,8 @@ class _TeardropBorder extends ShapeBorder {
   EdgeInsetsGeometry get dimensions => EdgeInsets.zero;
 
   @override
-  Path getInnerPath(Rect rect, {TextDirection? textDirection}) => getOuterPath(rect);
+  Path getInnerPath(Rect rect, {TextDirection? textDirection}) =>
+      getOuterPath(rect);
 
   @override
   Path getOuterPath(Rect rect, {TextDirection? textDirection}) {
@@ -225,11 +267,23 @@ class _TeardropBorder extends ShapeBorder {
     final d = r / math.sqrt2;
     return Path()
       ..moveTo(right + d, cy - d)
-      ..arcToPoint(Offset(right, rect.top), radius: Radius.circular(r), clockwise: false)
+      ..arcToPoint(
+        Offset(right, rect.top),
+        radius: Radius.circular(r),
+        clockwise: false,
+      )
       ..lineTo(left, rect.top)
-      ..arcToPoint(Offset(left, rect.bottom), radius: Radius.circular(r), clockwise: false)
+      ..arcToPoint(
+        Offset(left, rect.bottom),
+        radius: Radius.circular(r),
+        clockwise: false,
+      )
       ..lineTo(right, rect.bottom)
-      ..arcToPoint(Offset(right + d, cy + d), radius: Radius.circular(r), clockwise: false)
+      ..arcToPoint(
+        Offset(right + d, cy + d),
+        radius: Radius.circular(r),
+        clockwise: false,
+      )
       ..lineTo(right + r * math.sqrt2, cy)
       ..close();
   }

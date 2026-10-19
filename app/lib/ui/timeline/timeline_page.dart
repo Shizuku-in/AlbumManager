@@ -29,7 +29,8 @@ class TimelinePage extends StatelessWidget {
                   childAspectRatio: 1.1,
                 ),
                 itemCount: years.length,
-                itemBuilder: (context, i) => _YearCard(year: years[i].key, albums: years[i].value),
+                itemBuilder: (context, i) =>
+                    _YearCard(year: years[i].key, albums: years[i].value),
               ),
             ),
           ],
@@ -47,7 +48,8 @@ class _YearCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context);
-    final covers = albums.where((a) => a.coverThumb != null).toList()..sort((a, b) => (b.date ?? '').compareTo(a.date ?? ''));
+    final covers = albums.where((a) => a.coverThumb != null).toList()
+      ..sort((a, b) => (b.date ?? '').compareTo(a.date ?? ''));
     final mosaic = covers.take(6).toList();
     final dur = albums.fold<double>(0, (n, a) => n + a.durationSecs);
     final cd = albums.where((a) => a.source == AlbumSource.cdRip).length;
@@ -56,30 +58,58 @@ class _YearCard extends StatelessWidget {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () => browser.showYear(year == 0 ? null : year),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-          Expanded(
-            child: GridView.count(
-              crossAxisCount: 3,
-              physics: const NeverScrollableScrollPhysics(),
-              padding: EdgeInsets.zero,
-              children: [
-                for (var i = 0; i < 6; i++)
-                  i < mosaic.length ? CoverImage(path: mosaic[i].coverThumb, radius: 0, cacheWidth: 160) : ColoredBox(color: t.colorScheme.surfaceContainerHighest),
-              ],
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Expanded(
+              child: GridView.count(
+                crossAxisCount: 3,
+                physics: const NeverScrollableScrollPhysics(),
+                padding: EdgeInsets.zero,
+                children: [
+                  for (var i = 0; i < 6; i++)
+                    i < mosaic.length
+                        ? CoverImage(
+                            path: mosaic[i].coverThumb,
+                            radius: 0,
+                            cacheWidth: 160,
+                          )
+                        : ColoredBox(
+                            color: t.colorScheme.surfaceContainerHighest,
+                          ),
+                ],
+              ),
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-            child: Row(crossAxisAlignment: CrossAxisAlignment.end, children: [
-              Text(year == 0 ? '未知' : '$year', style: t.textTheme.headlineMedium),
-              const Spacer(),
-              Column(crossAxisAlignment: CrossAxisAlignment.end, children: [
-                Text('${albums.length} 张专辑', style: t.textTheme.titleSmall),
-                Text('$cd 张抓轨 · ${formatHours(dur)}', style: t.textTheme.bodySmall?.copyWith(color: t.colorScheme.onSurfaceVariant)),
-              ]),
-            ]),
-          ),
-        ]),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    year == 0 ? '未知' : '$year',
+                    style: t.textTheme.headlineMedium,
+                  ),
+                  const Spacer(),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Text(
+                        '${albums.length} 张专辑',
+                        style: t.textTheme.titleSmall,
+                      ),
+                      Text(
+                        '$cd 张抓轨 · ${formatHours(dur)}',
+                        style: t.textTheme.bodySmall?.copyWith(
+                          color: t.colorScheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

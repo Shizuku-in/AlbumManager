@@ -130,7 +130,17 @@ pub struct ScanRules {
 }
 
 fn default_scan_folder_keywords() -> Vec<String> {
-    ["scan", "bk", "booklet", "artwork", "扫图", "掃圖", "スキャン"].map(String::from).to_vec()
+    [
+        "scan",
+        "bk",
+        "booklet",
+        "artwork",
+        "扫图",
+        "掃圖",
+        "スキャン",
+    ]
+    .map(String::from)
+    .to_vec()
 }
 
 fn default_scan_min_images() -> u32 {
@@ -140,7 +150,17 @@ fn default_scan_min_images() -> u32 {
 impl Default for ScanRules {
     fn default() -> Self {
         Self {
-            cover_keywords: ["cover", "folder", "front", "jacket", "album", "ジャケット", "封面"].map(String::from).to_vec(),
+            cover_keywords: [
+                "cover",
+                "folder",
+                "front",
+                "jacket",
+                "album",
+                "ジャケット",
+                "封面",
+            ]
+            .map(String::from)
+            .to_vec(),
             name_templates: vec!["[{date}] {title}".into()],
             scan_folder_keywords: default_scan_folder_keywords(),
             scan_min_images: default_scan_min_images(),

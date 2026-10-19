@@ -57,7 +57,11 @@ fn msf(s: &str) -> Option<f64> {
 }
 
 fn non_empty(s: String) -> Option<String> {
-    if s.trim().is_empty() { None } else { Some(s) }
+    if s.trim().is_empty() {
+        None
+    } else {
+        Some(s)
+    }
 }
 
 pub fn parse(text: &str) -> CueSheet {
@@ -68,7 +72,10 @@ pub fn parse(text: &str) -> CueSheet {
         let (cmd, rest) = line.split_once(char::is_whitespace).unwrap_or((line, ""));
         match cmd.to_ascii_uppercase().as_str() {
             "REM" => {
-                let (key, val) = rest.trim().split_once(char::is_whitespace).unwrap_or((rest, ""));
+                let (key, val) = rest
+                    .trim()
+                    .split_once(char::is_whitespace)
+                    .unwrap_or((rest, ""));
                 match key.to_ascii_uppercase().as_str() {
                     "GENRE" => cue.genre = non_empty(arg(val)),
                     "DATE" => cue.date = non_empty(arg(val)),
@@ -81,7 +88,11 @@ pub fn parse(text: &str) -> CueSheet {
                 if let Some(t) = current.take() {
                     cue.tracks.push(t);
                 }
-                let num = rest.split_whitespace().next().and_then(|n| n.parse().ok()).unwrap_or(0);
+                let num = rest
+                    .split_whitespace()
+                    .next()
+                    .and_then(|n| n.parse().ok())
+                    .unwrap_or(0);
                 let is_audio = rest.to_ascii_uppercase().contains("AUDIO");
                 if is_audio {
                     current = Some(CueTrack {

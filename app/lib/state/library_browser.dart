@@ -16,11 +16,19 @@ extension SortModeX on SortMode {
     SortMode.artist => '艺术家',
     SortMode.size => '占用空间',
   };
-  bool get groupsByYear => this == SortMode.dateDesc || this == SortMode.dateAsc;
+  bool get groupsByYear =>
+      this == SortMode.dateDesc || this == SortMode.dateAsc;
 }
 
 /// Yes/no properties of an album.
-enum ContentFlag { hasIssues, missingCover, hasScans, hasCue, multiDisc, edited }
+enum ContentFlag {
+  hasIssues,
+  missingCover,
+  hasScans,
+  hasCue,
+  multiDisc,
+  edited,
+}
 
 extension ContentFlagX on ContentFlag {
   String get label => switch (this) {
@@ -37,12 +45,22 @@ extension ContentFlagX on ContentFlag {
     ContentFlag.hasScans => a.hasScans,
     ContentFlag.hasCue => a.hasCue,
     ContentFlag.multiDisc => a.discCount > 1,
-    ContentFlag.edited => a.overrides.source != null || a.overrides.coverPath != null || a.overrides.hasScans != null,
+    ContentFlag.edited =>
+      a.overrides.source != null ||
+          a.overrides.coverPath != null ||
+          a.overrides.hasScans != null,
   };
 }
 
 /// Rip statuses offered as filters (CD rips only).
-const ripStatusFilters = [RipStatus.perfect, RipStatus.good, RipStatus.warning, RipStatus.error, RipStatus.noLog, RipStatus.unknown];
+const ripStatusFilters = [
+  RipStatus.perfect,
+  RipStatus.good,
+  RipStatus.warning,
+  RipStatus.error,
+  RipStatus.noLog,
+  RipStatus.unknown,
+];
 
 enum FilterMode { include, exclude }
 
@@ -89,15 +107,21 @@ class TriFilter<T> {
   }
 
   /// `mode|value` strings for persistence.
-  Iterable<String> encode(String Function(T) nameOf) => modes.entries.map((e) => '${e.value.name}|${nameOf(e.key)}');
+  Iterable<String> encode(String Function(T) nameOf) =>
+      modes.entries.map((e) => '${e.value.name}|${nameOf(e.key)}');
 
   /// Inverse of [encode]; unknown entries are dropped.
-  static TriFilter<T> decode<T>(Iterable<String> items, T? Function(String) parse) {
+  static TriFilter<T> decode<T>(
+    Iterable<String> items,
+    T? Function(String) parse,
+  ) {
     final m = <T, FilterMode>{};
     for (final s in items) {
       final i = s.indexOf('|');
       if (i < 0) continue;
-      final mode = FilterMode.values.where((f) => f.name == s.substring(0, i)).firstOrNull;
+      final mode = FilterMode.values
+          .where((f) => f.name == s.substring(0, i))
+          .firstOrNull;
       final value = parse(s.substring(i + 1));
       if (mode != null && value != null) m[value] = mode;
     }
@@ -105,7 +129,8 @@ class TriFilter<T> {
   }
 }
 
-T? _byName<T extends Enum>(List<T> values, String name) => values.where((v) => v.name == name).firstOrNull;
+T? _byName<T extends Enum>(List<T> values, String name) =>
+    values.where((v) => v.name == name).firstOrNull;
 
 /// Filter selection. Within a group any included option matches and no
 /// excluded one may; groups combine with AND. Content flags are each a
@@ -135,24 +160,45 @@ class AlbumFilters {
   ];
 
   factory AlbumFilters.decode(List<String> items) {
-    Iterable<String> group(String g) => items.where((s) => s.startsWith('$g|')).map((s) => s.substring(g.length + 1));
+    Iterable<String> group(String g) => items
+        .where((s) => s.startsWith('$g|'))
+        .map((s) => s.substring(g.length + 1));
     return AlbumFilters(
-      sources: TriFilter.decode(group('source'), (n) => _byName(AlbumSource.values, n)),
-      qualities: TriFilter.decode(group('quality'), (n) => _byName(AudioQuality.values, n)),
+      sources: TriFilter.decode(
+        group('source'),
+        (n) => _byName(AlbumSource.values, n),
+      ),
+      qualities: TriFilter.decode(
+        group('quality'),
+        (n) => _byName(AudioQuality.values, n),
+      ),
       formats: TriFilter.decode(group('format'), (n) => n),
-      ripStatuses: TriFilter.decode(group('rip'), (n) => _byName(RipStatus.values, n)),
-      flags: TriFilter.decode(group('flag'), (n) => _byName(ContentFlag.values, n)),
+      ripStatuses: TriFilter.decode(
+        group('rip'),
+        (n) => _byName(RipStatus.values, n),
+      ),
+      flags: TriFilter.decode(
+        group('flag'),
+        (n) => _byName(ContentFlag.values, n),
+      ),
     );
   }
 
-  int get count => sources.length + qualities.length + formats.length + ripStatuses.length + flags.length;
+  int get count =>
+      sources.length +
+      qualities.length +
+      formats.length +
+      ripStatuses.length +
+      flags.length;
 
   bool matches(AlbumSummary a) =>
       sources.matchesAny([a.source]) &&
       qualities.matchesAny([a.quality]) &&
       formats.matchesAny(a.formats) &&
       ripStatuses.matchesAny([a.ripStatus]) &&
-      flags.modes.entries.every((e) => e.key.matches(a) == (e.value == FilterMode.include));
+      flags.modes.entries.every(
+        (e) => e.key.matches(a) == (e.value == FilterMode.include),
+      );
 
   AlbumFilters copyWith({
     TriFilter<AlbumSource>? sources,
@@ -168,15 +214,41 @@ class AlbumFilters {
     flags: flags ?? this.flags,
   );
 
-  AlbumFilters cycleSource(AlbumSource v) =>
-      AlbumFilters(sources: sources.cycle(v), qualities: qualities, formats: formats, ripStatuses: ripStatuses, flags: flags);
-  AlbumFilters cycleQuality(AudioQuality v) =>
-      AlbumFilters(sources: sources, qualities: qualities.cycle(v), formats: formats, ripStatuses: ripStatuses, flags: flags);
-  AlbumFilters cycleFormat(String v) => AlbumFilters(sources: sources, qualities: qualities, formats: formats.cycle(v), ripStatuses: ripStatuses, flags: flags);
-  AlbumFilters cycleRipStatus(RipStatus v) =>
-      AlbumFilters(sources: sources, qualities: qualities, formats: formats, ripStatuses: ripStatuses.cycle(v), flags: flags);
-  AlbumFilters cycleFlag(ContentFlag v) =>
-      AlbumFilters(sources: sources, qualities: qualities, formats: formats, ripStatuses: ripStatuses, flags: flags.cycle(v));
+  AlbumFilters cycleSource(AlbumSource v) => AlbumFilters(
+    sources: sources.cycle(v),
+    qualities: qualities,
+    formats: formats,
+    ripStatuses: ripStatuses,
+    flags: flags,
+  );
+  AlbumFilters cycleQuality(AudioQuality v) => AlbumFilters(
+    sources: sources,
+    qualities: qualities.cycle(v),
+    formats: formats,
+    ripStatuses: ripStatuses,
+    flags: flags,
+  );
+  AlbumFilters cycleFormat(String v) => AlbumFilters(
+    sources: sources,
+    qualities: qualities,
+    formats: formats.cycle(v),
+    ripStatuses: ripStatuses,
+    flags: flags,
+  );
+  AlbumFilters cycleRipStatus(RipStatus v) => AlbumFilters(
+    sources: sources,
+    qualities: qualities,
+    formats: formats,
+    ripStatuses: ripStatuses.cycle(v),
+    flags: flags,
+  );
+  AlbumFilters cycleFlag(ContentFlag v) => AlbumFilters(
+    sources: sources,
+    qualities: qualities,
+    formats: formats,
+    ripStatuses: ripStatuses,
+    flags: flags.cycle(v),
+  );
 }
 
 /// Album counts per filter option, over the whole library.
@@ -189,7 +261,11 @@ class FilterCounts {
   final Map<RipStatus, int> ripStatuses = {};
   final Map<ContentFlag, int> flags;
 
-  FilterCounts(List<AlbumSummary> albums) : formats = {}, flags = {for (final f in ContentFlag.values) f: albums.where(f.matches).length} {
+  FilterCounts(List<AlbumSummary> albums)
+    : formats = {},
+      flags = {
+        for (final f in ContentFlag.values) f: albums.where(f.matches).length,
+      } {
     final fmt = <String, int>{};
     for (final a in albums) {
       sources.update(a.source, (n) => n + 1, ifAbsent: () => 1);
@@ -199,7 +275,9 @@ class FilterCounts {
         fmt.update(f, (n) => n + 1, ifAbsent: () => 1);
       }
     }
-    formats.addEntries(fmt.entries.toList()..sort((a, b) => b.value.compareTo(a.value)));
+    formats.addEntries(
+      fmt.entries.toList()..sort((a, b) => b.value.compareTo(a.value)),
+    );
   }
 }
 
@@ -215,8 +293,12 @@ class LibraryBrowser extends ChangeNotifier {
   void load() {
     final prefs = settings.prefs;
     gridView = prefs.getBool('gridView') ?? true;
-    sort = _byName(SortMode.values, prefs.getString('sort') ?? '') ?? SortMode.dateDesc;
-    if (settings.rememberFilters) filters = AlbumFilters.decode(prefs.getStringList('filters') ?? const []);
+    sort =
+        _byName(SortMode.values, prefs.getString('sort') ?? '') ??
+        SortMode.dateDesc;
+    if (settings.rememberFilters) {
+      filters = AlbumFilters.decode(prefs.getStringList('filters') ?? const []);
+    }
     var hidden = settings.hiddenIssues;
     var remember = settings.rememberFilters;
     settings.addListener(() {
@@ -284,41 +366,59 @@ class LibraryBrowser extends ChangeNotifier {
     notifyListeners();
   }
 
-  final _visible = Memo<(List<AlbumSummary>, String, AlbumFilters, SortMode, int?, Set<IssueKind>), List<AlbumSummary>>();
+  final _visible =
+      Memo<
+        (
+          List<AlbumSummary>,
+          String,
+          AlbumFilters,
+          SortMode,
+          int?,
+          Set<IssueKind>,
+        ),
+        List<AlbumSummary>
+      >();
   final _counts = Memo<(List<AlbumSummary>, Set<IssueKind>), FilterCounts>();
 
   /// Albums after search / filters / sort.
-  List<AlbumSummary> visible(List<AlbumSummary> albums) => _visible((albums, query, filters, sort, yearFilter, settings.hiddenIssues), () {
-    final q = query.trim().toLowerCase();
-    final list = albums.where((a) {
-      if (!filters.matches(a)) return false;
-      if (yearFilter != null && a.year != yearFilter) return false;
-      if (q.isEmpty) return true;
-      return a.title.toLowerCase().contains(q) ||
-          (a.artist?.toLowerCase().contains(q) ?? false) ||
-          a.folderName.toLowerCase().contains(q) ||
-          (a.genre?.toLowerCase().contains(q) ?? false);
-    }).toList();
-    int byDate(AlbumSummary a, AlbumSummary b) => (a.date ?? '${a.year ?? 0}').compareTo(b.date ?? '${b.year ?? 0}');
-    switch (sort) {
-      case SortMode.dateDesc:
-        list.sort((a, b) => byDate(b, a));
-      case SortMode.dateAsc:
-        list.sort(byDate);
-      case SortMode.addedDesc:
-        list.sort((a, b) => b.addedAt.compareTo(a.addedAt));
-      case SortMode.title:
-        list.sort((a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()));
-      case SortMode.artist:
-        list.sort((a, b) => (a.artist ?? '￿').compareTo(b.artist ?? '￿'));
-      case SortMode.size:
-        list.sort((a, b) => b.totalSize.compareTo(a.totalSize));
-    }
-    return list;
-  });
+  List<AlbumSummary> visible(List<AlbumSummary> albums) => _visible(
+    (albums, query, filters, sort, yearFilter, settings.hiddenIssues),
+    () {
+      final q = query.trim().toLowerCase();
+      final list = albums.where((a) {
+        if (!filters.matches(a)) return false;
+        if (yearFilter != null && a.year != yearFilter) return false;
+        if (q.isEmpty) return true;
+        return a.title.toLowerCase().contains(q) ||
+            (a.artist?.toLowerCase().contains(q) ?? false) ||
+            a.folderName.toLowerCase().contains(q) ||
+            (a.genre?.toLowerCase().contains(q) ?? false);
+      }).toList();
+      int byDate(AlbumSummary a, AlbumSummary b) =>
+          (a.date ?? '${a.year ?? 0}').compareTo(b.date ?? '${b.year ?? 0}');
+      switch (sort) {
+        case SortMode.dateDesc:
+          list.sort((a, b) => byDate(b, a));
+        case SortMode.dateAsc:
+          list.sort(byDate);
+        case SortMode.addedDesc:
+          list.sort((a, b) => b.addedAt.compareTo(a.addedAt));
+        case SortMode.title:
+          list.sort(
+            (a, b) => a.title.toLowerCase().compareTo(b.title.toLowerCase()),
+          );
+        case SortMode.artist:
+          list.sort((a, b) => (a.artist ?? '￿').compareTo(b.artist ?? '￿'));
+        case SortMode.size:
+          list.sort((a, b) => b.totalSize.compareTo(a.totalSize));
+      }
+      return list;
+    },
+  );
 
   /// Album counts per filter option (for the filter panel).
-  FilterCounts counts(List<AlbumSummary> albums) => _counts((albums, settings.hiddenIssues), () => FilterCounts(albums));
+  FilterCounts counts(List<AlbumSummary> albums) =>
+      _counts((albums, settings.hiddenIssues), () => FilterCounts(albums));
 }
 
 final browser = LibraryBrowser();

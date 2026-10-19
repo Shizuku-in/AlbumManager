@@ -7,7 +7,9 @@ import 'package:album_manager/util/format.dart';
 import 'package:album_manager/util/system.dart';
 
 List<Widget> tracksSlivers(BuildContext context, Album a) {
-  if (a.discs.isEmpty) return [emptySliver(context, Icons.music_off_outlined, '没有识别到音轨（可能是光盘镜像）')];
+  if (a.discs.isEmpty) {
+    return [emptySliver(context, Icons.music_off_outlined, '没有识别到音轨（可能是光盘镜像）')];
+  }
   final multi = a.discs.length > 1;
   return [
     for (final d in a.discs) ...[
@@ -23,7 +25,8 @@ List<Widget> tracksSlivers(BuildContext context, Album a) {
         ),
       SliverList.builder(
         itemCount: d.tracks.length,
-        itemBuilder: (context, i) => _TrackTile(track: d.tracks[i], cuePath: d.cuePath),
+        itemBuilder: (context, i) =>
+            _TrackTile(track: d.tracks[i], cuePath: d.cuePath),
       ),
     ],
   ];
@@ -41,20 +44,48 @@ class _TrackTile extends StatelessWidget {
     final spec = [
       tr.format,
       if (tr.bitDepth > 1) '${tr.bitDepth}bit',
-      if (tr.sampleRate > 0) '${(tr.sampleRate / 1000).toStringAsFixed(tr.sampleRate % 1000 == 0 ? 0 : 1)}kHz',
+      if (tr.sampleRate > 0)
+        '${(tr.sampleRate / 1000).toStringAsFixed(tr.sampleRate % 1000 == 0 ? 0 : 1)}kHz',
     ].join(' · ');
-    final tabular = t.textTheme.bodyMedium?.copyWith(fontFeatures: const [FontFeature.tabularFigures()], color: t.colorScheme.onSurfaceVariant);
+    final tabular = t.textTheme.bodyMedium?.copyWith(
+      fontFeatures: const [FontFeature.tabularFigures()],
+      color: t.colorScheme.onSurfaceVariant,
+    );
     return ListTile(
-      leading: SizedBox(width: 32, child: Center(child: Text('${tr.number}'.padLeft(2, '0'), style: tabular))),
+      leading: SizedBox(
+        width: 32,
+        child: Center(
+          child: Text('${tr.number}'.padLeft(2, '0'), style: tabular),
+        ),
+      ),
       title: Text(tr.title, maxLines: 1, overflow: TextOverflow.ellipsis),
-      subtitle: tr.artist == null ? null : Text(tr.artist!, maxLines: 1, overflow: TextOverflow.ellipsis),
-      trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-        Text(spec, style: t.textTheme.bodySmall?.copyWith(color: t.colorScheme.onSurfaceVariant)),
-        const SizedBox(width: 24),
-        SizedBox(width: 56, child: Text(tr.durationSecs > 0 ? formatDuration(tr.durationSecs) : '—', style: tabular, textAlign: TextAlign.end)),
-      ]),
+      subtitle: tr.artist == null
+          ? null
+          : Text(tr.artist!, maxLines: 1, overflow: TextOverflow.ellipsis),
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            spec,
+            style: t.textTheme.bodySmall?.copyWith(
+              color: t.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(width: 24),
+          SizedBox(
+            width: 56,
+            child: Text(
+              tr.durationSecs > 0 ? formatDuration(tr.durationSecs) : '—',
+              style: tabular,
+              textAlign: TextAlign.end,
+            ),
+          ),
+        ],
+      ),
       // Cue rips: open the cue so the player sees the track list.
-      onTap: () => openPath(tr.startSecs != null && cuePath != null ? cuePath! : tr.file),
+      onTap: () => openPath(
+        tr.startSecs != null && cuePath != null ? cuePath! : tr.file,
+      ),
     );
   }
 }

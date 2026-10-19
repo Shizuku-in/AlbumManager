@@ -20,7 +20,18 @@ class _Stats {
   final List<MapEntry<String, int>> formats;
   final List<MapEntry<String, int>> artists;
 
-  _Stats._(this.tracks, this.size, this.images, this.cdRips, this.duration, this.sources, this.qualities, this.rips, this.formats, this.artists);
+  _Stats._(
+    this.tracks,
+    this.size,
+    this.images,
+    this.cdRips,
+    this.duration,
+    this.sources,
+    this.qualities,
+    this.rips,
+    this.formats,
+    this.artists,
+  );
 
   factory _Stats(List<AlbumSummary> albums) {
     Map<K, int> count<K>(K Function(AlbumSummary) key) {
@@ -33,7 +44,9 @@ class _Stats {
 
     final formats = <String, int>{};
     for (final a in albums) {
-      if (a.formats.isNotEmpty) formats[a.formats.first] = (formats[a.formats.first] ?? 0) + 1;
+      if (a.formats.isNotEmpty) {
+        formats[a.formats.first] = (formats[a.formats.first] ?? 0) + 1;
+      }
     }
     final artists = <String, int>{};
     for (final a in albums) {
@@ -68,14 +81,30 @@ class StatsPage extends StatelessWidget {
         final app = AppColors.of(context);
         final albums = library.albums;
         final st = _stats(albums, () => _Stats(albums));
-        final palette = [cs.primary, cs.tertiary, cs.secondary, app.cd.color, app.digital.color, app.dsd.color, app.disc.color, cs.outline];
+        final palette = [
+          cs.primary,
+          cs.tertiary,
+          cs.secondary,
+          app.cd.color,
+          app.digital.color,
+          app.dsd.color,
+          app.disc.color,
+          cs.outline,
+        ];
 
-        Widget card(String title, Widget child, {Widget? trailing}) => Card.outlined(
+        Widget card(String title, Widget child, {Widget? trailing}) =>
+            Card.outlined(
               margin: EdgeInsets.zero,
-              child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                SectionHeader(title, trailing: trailing),
-                Padding(padding: const EdgeInsets.fromLTRB(16, 0, 16, 16), child: child),
-              ]),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  SectionHeader(title, trailing: trailing),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+                    child: child,
+                  ),
+                ],
+              ),
             );
 
         return AppPage(
@@ -83,72 +112,159 @@ class StatsPage extends StatelessWidget {
           slivers: [
             SliverPadding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              sliver: SliverList.list(children: [
-                LayoutBuilder(builder: (context, c) {
-                  final cols = c.maxWidth >= 1100 ? 5 : (c.maxWidth >= 700 ? 3 : 2);
-                  final w = (c.maxWidth - 16 * (cols - 1)) / cols;
-                  return Wrap(spacing: 16, runSpacing: 16, children: [
-                    for (final k in [
-                      KpiCard('专辑', '${albums.length}', Icons.album_outlined),
-                      KpiCard('曲目', '${st.tracks}', Icons.music_note_outlined),
-                      KpiCard('总时长', formatHours(st.duration), Icons.schedule),
-                      KpiCard('占用空间', formatSize(st.size), Icons.storage),
-                      KpiCard('图片 / 扫图', '${st.images}', Icons.photo_library_outlined),
-                    ])
-                      SizedBox(width: w, child: k),
-                  ]);
-                }),
-                const SizedBox(height: 16),
-                card('每年专辑数', YearBarChart(data: library.byYear.map((k, v) => MapEntry(k, v.length)))),
-                const SizedBox(height: 16),
-                LayoutBuilder(builder: (context, c) {
-                  final left = card(
-                    '来源与音质',
-                    Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      BreakdownBar(entries: [for (final e in st.sources.entries) (e.key.label, e.value, e.key.tone(context).color)]),
-                      const SizedBox(height: 24),
-                      BreakdownBar(entries: [for (final e in st.qualities.entries) (e.key.label, e.value, e.key.tone(context).color)]),
-                    ]),
-                  );
-                  final right = card(
-                    '抓轨质量与格式',
-                    trailing: Text('${st.cdRips} 张 CD', style: Theme.of(context).textTheme.bodySmall),
-                    Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                      BreakdownBar(entries: [
-                        for (final e in st.rips.entries) (e.key.label, e.value, e.key.tone(context).color),
-                      ]),
-                      const SizedBox(height: 24),
-                      BreakdownBar(entries: [
-                        for (final (i, e) in st.formats.indexed)
-                          (e.key, e.value, palette[i % palette.length]),
-                      ]),
-                    ]),
-                  );
-                  if (c.maxWidth < 840) return Column(children: [left, const SizedBox(height: 16), right]);
-                  return Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    Expanded(child: left),
-                    const SizedBox(width: 16),
-                    Expanded(child: right),
-                  ]);
-                }),
-                const SizedBox(height: 16),
-                Card.outlined(
-                  margin: EdgeInsets.zero,
-                  child: Column(children: [
-                    const SectionHeader('专辑最多的艺术家 / 品牌'),
-                    for (final e in st.artists.take(12))
-                      ListTile(
-                        title: Text(e.key, maxLines: 1, overflow: TextOverflow.ellipsis),
-                        subtitle: Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: LinearProgressIndicator(value: e.value / st.artists.first.value),
+              sliver: SliverList.list(
+                children: [
+                  LayoutBuilder(
+                    builder: (context, c) {
+                      final cols = c.maxWidth >= 1100
+                          ? 5
+                          : (c.maxWidth >= 700 ? 3 : 2);
+                      final w = (c.maxWidth - 16 * (cols - 1)) / cols;
+                      return Wrap(
+                        spacing: 16,
+                        runSpacing: 16,
+                        children: [
+                          for (final k in [
+                            KpiCard(
+                              '专辑',
+                              '${albums.length}',
+                              Icons.album_outlined,
+                            ),
+                            KpiCard(
+                              '曲目',
+                              '${st.tracks}',
+                              Icons.music_note_outlined,
+                            ),
+                            KpiCard(
+                              '总时长',
+                              formatHours(st.duration),
+                              Icons.schedule,
+                            ),
+                            KpiCard('占用空间', formatSize(st.size), Icons.storage),
+                            KpiCard(
+                              '图片 / 扫图',
+                              '${st.images}',
+                              Icons.photo_library_outlined,
+                            ),
+                          ])
+                            SizedBox(width: w, child: k),
+                        ],
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  card(
+                    '每年专辑数',
+                    YearBarChart(
+                      data: library.byYear.map((k, v) => MapEntry(k, v.length)),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  LayoutBuilder(
+                    builder: (context, c) {
+                      final left = card(
+                        '来源与音质',
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            BreakdownBar(
+                              entries: [
+                                for (final e in st.sources.entries)
+                                  (
+                                    e.key.label,
+                                    e.value,
+                                    e.key.tone(context).color,
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: 24),
+                            BreakdownBar(
+                              entries: [
+                                for (final e in st.qualities.entries)
+                                  (
+                                    e.key.label,
+                                    e.value,
+                                    e.key.tone(context).color,
+                                  ),
+                              ],
+                            ),
+                          ],
                         ),
-                        trailing: Text('${e.value}', style: Theme.of(context).textTheme.labelLarge),
-                      ),
-                    const SizedBox(height: 8),
-                  ]),
-                ),
-              ]),
+                      );
+                      final right = card(
+                        '抓轨质量与格式',
+                        trailing: Text(
+                          '${st.cdRips} 张 CD',
+                          style: Theme.of(context).textTheme.bodySmall,
+                        ),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            BreakdownBar(
+                              entries: [
+                                for (final e in st.rips.entries)
+                                  (
+                                    e.key.label,
+                                    e.value,
+                                    e.key.tone(context).color,
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: 24),
+                            BreakdownBar(
+                              entries: [
+                                for (final (i, e) in st.formats.indexed)
+                                  (e.key, e.value, palette[i % palette.length]),
+                              ],
+                            ),
+                          ],
+                        ),
+                      );
+                      if (c.maxWidth < 840) {
+                        return Column(
+                          children: [left, const SizedBox(height: 16), right],
+                        );
+                      }
+                      return Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(child: left),
+                          const SizedBox(width: 16),
+                          Expanded(child: right),
+                        ],
+                      );
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  Card.outlined(
+                    margin: EdgeInsets.zero,
+                    child: Column(
+                      children: [
+                        const SectionHeader('专辑最多的艺术家 / 品牌'),
+                        for (final e in st.artists.take(12))
+                          ListTile(
+                            title: Text(
+                              e.key,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            subtitle: Padding(
+                              padding: const EdgeInsets.only(top: 8),
+                              child: LinearProgressIndicator(
+                                value: e.value / st.artists.first.value,
+                              ),
+                            ),
+                            trailing: Text(
+                              '${e.value}',
+                              style: Theme.of(context).textTheme.labelLarge,
+                            ),
+                          ),
+                        const SizedBox(height: 8),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
             ),
           ],
         );

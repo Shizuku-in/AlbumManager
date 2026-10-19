@@ -48,8 +48,14 @@ pub fn load_cache(data: &Path, root: &Path) -> Option<Vec<Album>> {
 }
 
 pub fn save_cache(st: &State) -> Result<()> {
-    let (Some(data), Some(root)) = (&st.data_dir, &st.root) else { return Ok(()) };
-    let cache = Cache { version: CACHE_VERSION, root: root.to_string_lossy().into_owned(), albums: st.albums.clone() };
+    let (Some(data), Some(root)) = (&st.data_dir, &st.root) else {
+        return Ok(());
+    };
+    let cache = Cache {
+        version: CACHE_VERSION,
+        root: root.to_string_lossy().into_owned(),
+        albums: st.albums.clone(),
+    };
     let tmp = cache_path(data).with_extension("tmp");
     std::fs::write(&tmp, serde_json::to_vec(&cache)?)?;
     std::fs::rename(tmp, cache_path(data))?;

@@ -46,46 +46,60 @@ class _TitleBarState extends State<TitleBar> with WindowListener {
       color: cs.surfaceContainerLow,
       child: SizedBox(
         height: TitleBar.height,
-        child: Row(children: [
-          Expanded(
-            child: DragToMoveArea(
-              child: Row(children: [
-                const SizedBox(width: 16),
-                Icon(Icons.album, size: 20, color: cs.primary),
-                const SizedBox(width: 12),
-                Text('Album Manager', style: t.textTheme.titleSmall),
-              ]),
+        child: Row(
+          children: [
+            Expanded(
+              child: DragToMoveArea(
+                child: Row(
+                  children: [
+                    const SizedBox(width: 16),
+                    Icon(Icons.album, size: 20, color: cs.primary),
+                    const SizedBox(width: 12),
+                    Text('Album Manager', style: t.textTheme.titleSmall),
+                  ],
+                ),
+              ),
             ),
-          ),
-          IconButton(
-            tooltip: '最小化',
-            visualDensity: density,
-            iconSize: 18,
-            onPressed: windowManager.minimize,
-            icon: const Icon(Icons.remove),
-          ),
-          const SizedBox(width: 4),
-          IconButton(
-            tooltip: _maximized ? '还原' : '最大化',
-            visualDensity: density,
-            iconSize: 18,
-            onPressed: () => _maximized ? windowManager.unmaximize() : windowManager.maximize(),
-            icon: Icon(_maximized ? Icons.filter_none : Icons.crop_square),
-          ),
-          const SizedBox(width: 4),
-          IconButton(
-            tooltip: '关闭',
-            visualDensity: density,
-            iconSize: 18,
-            style: ButtonStyle(
-              backgroundColor: WidgetStateProperty.resolveWith((s) => s.contains(WidgetState.hovered) ? cs.errorContainer : null),
-              foregroundColor: WidgetStateProperty.resolveWith((s) => s.contains(WidgetState.hovered) ? cs.onErrorContainer : null),
+            IconButton(
+              tooltip: '最小化',
+              visualDensity: density,
+              iconSize: 18,
+              onPressed: windowManager.minimize,
+              icon: const Icon(Icons.remove),
             ),
-            onPressed: windowManager.close,
-            icon: const Icon(Icons.close),
-          ),
-          const SizedBox(width: 6),
-        ]),
+            const SizedBox(width: 4),
+            IconButton(
+              tooltip: _maximized ? '还原' : '最大化',
+              visualDensity: density,
+              iconSize: 18,
+              onPressed: () => _maximized
+                  ? windowManager.unmaximize()
+                  : windowManager.maximize(),
+              icon: Icon(_maximized ? Icons.filter_none : Icons.crop_square),
+            ),
+            const SizedBox(width: 4),
+            IconButton(
+              tooltip: '关闭',
+              visualDensity: density,
+              iconSize: 18,
+              style: ButtonStyle(
+                backgroundColor: WidgetStateProperty.resolveWith(
+                  (s) => s.contains(WidgetState.hovered)
+                      ? cs.errorContainer
+                      : null,
+                ),
+                foregroundColor: WidgetStateProperty.resolveWith(
+                  (s) => s.contains(WidgetState.hovered)
+                      ? cs.onErrorContainer
+                      : null,
+                ),
+              ),
+              onPressed: windowManager.close,
+              icon: const Icon(Icons.close),
+            ),
+            const SizedBox(width: 6),
+          ],
+        ),
       ),
     );
   }

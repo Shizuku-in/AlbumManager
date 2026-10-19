@@ -5,7 +5,9 @@ String formatDuration(double secs, {bool long = false}) {
     if (h > 0) return '$h 小时 $m 分';
     return '$m 分 $r 秒';
   }
-  if (h > 0) return '$h:${m.toString().padLeft(2, '0')}:${r.toString().padLeft(2, '0')}';
+  if (h > 0) {
+    return '$h:${m.toString().padLeft(2, '0')}:${r.toString().padLeft(2, '0')}';
+  }
   return '$m:${r.toString().padLeft(2, '0')}';
 }
 

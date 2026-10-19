@@ -8,7 +8,12 @@ class AppPage extends StatefulWidget {
   final String title;
   final List<Widget> actions;
   final List<Widget> slivers;
-  const AppPage({super.key, required this.title, this.actions = const [], required this.slivers});
+  const AppPage({
+    super.key,
+    required this.title,
+    this.actions = const [],
+    required this.slivers,
+  });
 
   @override
   State<AppPage> createState() => _AppPageState();
@@ -29,7 +34,10 @@ class _AppPageState extends State<AppPage> {
       body: CustomScrollView(
         controller: _scroll,
         slivers: [
-          collapsingAppBar(title: Text(widget.title), actions: [...widget.actions, const SizedBox(width: 12)]),
+          collapsingAppBar(
+            title: Text(widget.title),
+            actions: [...widget.actions, const SizedBox(width: 12)],
+          ),
           ...widget.slivers,
           const SliverToBoxAdapter(child: SizedBox(height: 24)),
         ],

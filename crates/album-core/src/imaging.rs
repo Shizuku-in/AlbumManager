@@ -14,7 +14,9 @@ pub fn is_image_ext(ext: &str) -> bool {
 }
 
 fn thumb_path(cache_dir: &Path, key: &str, max: u32) -> PathBuf {
-    cache_dir.join("thumbs").join(format!("{:016x}_{max}.jpg", fnv1a(key.as_bytes())))
+    cache_dir
+        .join("thumbs")
+        .join(format!("{:016x}_{max}.jpg", fnv1a(key.as_bytes())))
 }
 
 fn source_key(src: &Path) -> String {
@@ -45,7 +47,9 @@ fn save_jpeg(img: &DynamicImage, out: &Path) -> Result<()> {
 fn decode_file(src: &Path) -> Result<DynamicImage> {
     let mut reader = ImageReader::open(src)?.with_guessed_format()?;
     reader.no_limits();
-    reader.decode().with_context(|| format!("decode {}", src.display()))
+    reader
+        .decode()
+        .with_context(|| format!("decode {}", src.display()))
 }
 
 /// Returns a cached JPEG thumbnail (longest side <= max) for an image file.
@@ -55,13 +59,23 @@ pub fn thumbnail(src: &Path, cache_dir: &Path, max: u32) -> Result<PathBuf> {
         return Ok(out);
     }
     // Scans can be several hundred MB (BMP/TIFF); decode those one at a time.
-    let big = std::fs::metadata(src).map(|m| m.len() > 48 * 1024 * 1024).unwrap_or(false);
-    let _guard = if big { Some(BIG_IMAGE_LOCK.lock().unwrap_or_else(|e| e.into_inner())) } else { None };
+    let big = std::fs::metadata(src)
+        .map(|m| m.len() > 48 * 1024 * 1024)
+        .unwrap_or(false);
+    let _guard = if big {
+        Some(BIG_IMAGE_LOCK.lock().unwrap_or_else(|e| e.into_inner()))
+    } else {
+        None
+    };
     if out.exists() {
         return Ok(out);
     }
     let img = decode_file(src)?;
-    let small = if img.width() > max || img.height() > max { img.thumbnail(max, max) } else { img };
+    let small = if img.width() > max || img.height() > max {
+        img.thumbnail(max, max)
+    } else {
+        img
+    };
     drop(_guard);
     save_jpeg(&small, &out)?;
     Ok(out)
@@ -70,13 +84,24 @@ pub fn thumbnail(src: &Path, cache_dir: &Path, max: u32) -> Result<PathBuf> {
 static BIG_IMAGE_LOCK: std::sync::Mutex<()> = std::sync::Mutex::new(());
 
 /// Thumbnail from in-memory bytes (embedded cover art), keyed by the audio file.
-pub fn thumbnail_from_bytes(bytes: &[u8], key_src: &Path, cache_dir: &Path, max: u32) -> Result<PathBuf> {
+pub fn thumbnail_from_bytes(
+    bytes: &[u8],
+    key_src: &Path,
+    cache_dir: &Path,
+    max: u32,
+) -> Result<PathBuf> {
     let out = thumb_path(cache_dir, &format!("embedded|{}", source_key(key_src)), max);
     if out.exists() {
         return Ok(out);
     }
-    let img = ImageReader::new(Cursor::new(bytes)).with_guessed_format()?.decode()?;
-    let small = if img.width() > max || img.height() > max { img.thumbnail(max, max) } else { img };
+    let img = ImageReader::new(Cursor::new(bytes))
+        .with_guessed_format()?
+        .decode()?;
+    let small = if img.width() > max || img.height() > max {
+        img.thumbnail(max, max)
+    } else {
+        img
+    };
     save_jpeg(&small, &out)?;
     Ok(out)
 }
@@ -116,7 +141,10 @@ pub fn accent_color(thumb: &Path) -> Option<u32> {
         sum[i][1] += g * w;
         sum[i][2] += b * w;
     }
-    let (best, &bw) = weight.iter().enumerate().max_by(|a, b| a.1.total_cmp(b.1))?;
+    let (best, &bw) = weight
+        .iter()
+        .enumerate()
+        .max_by(|a, b| a.1.total_cmp(b.1))?;
     let (r, g, b) = if bw > n * 0.03 {
         (sum[best][0] / bw, sum[best][1] / bw, sum[best][2] / bw)
     } else {

@@ -16,7 +16,9 @@ class CoverImage extends StatelessWidget {
     final cs = Theme.of(context).colorScheme;
     final placeholder = ColoredBox(
       color: cs.surfaceContainerHighest,
-      child: Center(child: Icon(Icons.album_outlined, color: cs.onSurfaceVariant, size: 40)),
+      child: Center(
+        child: Icon(Icons.album_outlined, color: cs.onSurfaceVariant, size: 40),
+      ),
     );
     final image = path == null
         ? placeholder
@@ -29,7 +31,9 @@ class CoverImage extends StatelessWidget {
             errorBuilder: (_, _, _) => placeholder,
           );
     // Square corners need no clip layer (the parent card already clips).
-    return radius == 0 ? image : ClipRRect(borderRadius: BorderRadius.circular(radius), child: image);
+    return radius == 0
+        ? image
+        : ClipRRect(borderRadius: BorderRadius.circular(radius), child: image);
   }
 }
 
@@ -38,14 +42,22 @@ class LazyThumb extends StatefulWidget {
   final String path;
   final int size;
   final BoxFit fit;
-  const LazyThumb({super.key, required this.path, this.size = 360, this.fit = BoxFit.cover});
+  const LazyThumb({
+    super.key,
+    required this.path,
+    this.size = 360,
+    this.fit = BoxFit.cover,
+  });
 
   @override
   State<LazyThumb> createState() => _LazyThumbState();
 }
 
 class _LazyThumbState extends State<LazyThumb> {
-  late Future<String> _f = api.getThumbnail(path: widget.path, maxSize: widget.size);
+  late Future<String> _f = api.getThumbnail(
+    path: widget.path,
+    maxSize: widget.size,
+  );
 
   @override
   void didUpdateWidget(LazyThumb old) {
@@ -61,10 +73,21 @@ class _LazyThumbState extends State<LazyThumb> {
       future: _f,
       builder: (context, snap) {
         if (snap.hasError) {
-          return Center(child: Icon(Icons.broken_image_outlined, color: Theme.of(context).colorScheme.onSurfaceVariant));
+          return Center(
+            child: Icon(
+              Icons.broken_image_outlined,
+              color: Theme.of(context).colorScheme.onSurfaceVariant,
+            ),
+          );
         }
-        if (!snap.hasData) return const Center(child: CircularProgressIndicator());
-        return Image.file(File(snap.data!), fit: widget.fit, gaplessPlayback: true);
+        if (!snap.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        return Image.file(
+          File(snap.data!),
+          fit: widget.fit,
+          gaplessPlayback: true,
+        );
       },
     );
   }

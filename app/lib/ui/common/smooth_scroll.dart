@@ -9,7 +9,11 @@ class SmoothScrollController extends ScrollController {
   SmoothScrollController({super.debugLabel});
 
   @override
-  ScrollPosition createScrollPosition(ScrollPhysics physics, ScrollContext context, ScrollPosition? oldPosition) {
+  ScrollPosition createScrollPosition(
+    ScrollPhysics physics,
+    ScrollContext context,
+    ScrollPosition? oldPosition,
+  ) {
     return _SmoothScrollPosition(
       physics: physics,
       context: context,
@@ -43,7 +47,11 @@ class _SmoothScrollPosition extends ScrollPositionWithSingleContext {
     final target = (from + delta).clamp(minScrollExtent, maxScrollExtent);
     if (target == from) return;
     _target = target;
-    animateTo(target, duration: _duration, curve: Curves.easeOutCubic).whenComplete(() {
+    animateTo(
+      target,
+      duration: _duration,
+      curve: Curves.easeOutCubic,
+    ).whenComplete(() {
       if (_target == target) _target = null;
     });
   }

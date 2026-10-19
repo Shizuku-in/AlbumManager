@@ -1,9 +1,9 @@
 //! Full (incremental) and single-album scans.
 
 use super::{cache, dirs, overrides, STATE};
-use album_model::Album;
 use crate::scanner::analyze;
 use crate::scanner::discover::{discover, list_files};
+use album_model::Album;
 use anyhow::Result;
 use rayon::prelude::*;
 use std::collections::HashMap;
@@ -16,7 +16,13 @@ pub fn scan(force: bool, progress: impl Fn(usize, usize, &str) + Sync) -> Result
     let (root, data) = dirs()?;
     let (previous, edits): (HashMap<String, Album>, overrides::Overrides) = {
         let st = STATE.read().unwrap();
-        (st.albums.iter().map(|a| (a.summary.id.clone(), a.clone())).collect(), st.overrides.clone())
+        (
+            st.albums
+                .iter()
+                .map(|a| (a.summary.id.clone(), a.clone()))
+                .collect(),
+            st.overrides.clone(),
+        )
     };
     let album_dirs = discover(&root);
     let total = album_dirs.len();
@@ -26,12 +32,21 @@ pub fn scan(force: bool, progress: impl Fn(usize, usize, &str) + Sync) -> Result
     let mut albums: Vec<Album> = album_dirs
         .par_iter()
         .map(|dir| {
-            let id = dir.strip_prefix(&root).unwrap_or(dir).to_string_lossy().replace('\\', "/");
+            let id = dir
+                .strip_prefix(&root)
+                .unwrap_or(dir)
+                .to_string_lossy()
+                .replace('\\', "/");
             let (fp, files) = list_files(dir);
             let reuse = previous.get(&id).filter(|old| {
                 !force
                     && old.fingerprint == fp
-                    && old.summary.cover_thumb.as_ref().map(|t| Path::new(t).exists()).unwrap_or(true)
+                    && old
+                        .summary
+                        .cover_thumb
+                        .as_ref()
+                        .map(|t| Path::new(t).exists())
+                        .unwrap_or(true)
             });
             // Reused albums already carry their overrides.
             let album = match reuse {

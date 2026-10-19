@@ -10,7 +10,13 @@ import 'package:album_manager/util/labels.dart';
 List<Widget> logsSlivers(BuildContext context, Album a) {
   if (a.logs.isEmpty) {
     return [
-      emptySliver(context, Icons.description_outlined, a.summary.source == AlbumSource.cdRip ? '这张 CD 抓轨没有日志文件' : '非 CD 抓轨资源，没有抓轨日志'),
+      emptySliver(
+        context,
+        Icons.description_outlined,
+        a.summary.source == AlbumSource.cdRip
+            ? '这张 CD 抓轨没有日志文件'
+            : '非 CD 抓轨资源，没有抓轨日志',
+      ),
     ];
   }
   return [
@@ -46,37 +52,62 @@ class _LogCard extends StatelessWidget {
     return Card.outlined(
       margin: EdgeInsets.zero,
       clipBehavior: Clip.antiAlias,
-      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-        ListTile(
-          leading: CircleAvatar(backgroundColor: tone.container, foregroundColor: tone.onContainer, child: Icon(l.status.icon)),
-          title: Text(baseName(l.path)),
-          subtitle: Text(l.status.description),
-          trailing: TextButton.icon(
-            onPressed: () => showTextFile(context, l.path),
-            icon: const Icon(Icons.article_outlined),
-            label: const Text('查看原始日志'),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          ListTile(
+            leading: CircleAvatar(
+              backgroundColor: tone.container,
+              foregroundColor: tone.onContainer,
+              child: Icon(l.status.icon),
+            ),
+            title: Text(baseName(l.path)),
+            subtitle: Text(l.status.description),
+            trailing: TextButton.icon(
+              onPressed: () => showTextFile(context, l.path),
+              icon: const Icon(Icons.article_outlined),
+              label: const Text('查看原始日志'),
+            ),
           ),
-        ),
-        const Divider(height: 1),
-        Padding(
-          padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
-          child: Column(children: [
-            for (final (k, v) in rows)
-              if (v != null)
-                Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4),
-                  child: Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                    SizedBox(width: 120, child: Text(k, style: t.textTheme.bodyMedium?.copyWith(color: t.colorScheme.onSurfaceVariant))),
-                    Expanded(child: Text(v, style: t.textTheme.bodyMedium)),
-                  ]),
-                ),
-          ]),
-        ),
-        if (l.tracks.isNotEmpty) ...[
           const Divider(height: 1),
-          SingleChildScrollView(scrollDirection: Axis.horizontal, child: _VerifyTable(tracks: l.tracks)),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+            child: Column(
+              children: [
+                for (final (k, v) in rows)
+                  if (v != null)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          SizedBox(
+                            width: 120,
+                            child: Text(
+                              k,
+                              style: t.textTheme.bodyMedium?.copyWith(
+                                color: t.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: Text(v, style: t.textTheme.bodyMedium),
+                          ),
+                        ],
+                      ),
+                    ),
+              ],
+            ),
+          ),
+          if (l.tracks.isNotEmpty) ...[
+            const Divider(height: 1),
+            SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: _VerifyTable(tracks: l.tracks),
+            ),
+          ],
         ],
-      ]),
+      ),
     );
   }
 }
@@ -102,18 +133,37 @@ class _VerifyTable extends StatelessWidget {
       ],
       rows: [
         for (final tr in tracks)
-          DataRow(cells: [
-            DataCell(Text('${tr.number}')),
-            DataCell(Row(mainAxisSize: MainAxisSize.min, children: [
-              if (tr.arOk != null)
-                Icon(tr.arOk! ? Icons.check_circle_outline : Icons.cancel_outlined, size: 18, color: tr.arOk! ? ok : t.colorScheme.error),
-              const SizedBox(width: 8),
-              Text(tr.accurateRip ?? '—'),
-            ])),
-            DataCell(Text(tr.copyCrc ?? '—', style: mono)),
-            DataCell(Text(tr.testCrc ?? '—',
-                style: mono?.copyWith(color: tr.crcMatch == false ? t.colorScheme.error : null))),
-          ]),
+          DataRow(
+            cells: [
+              DataCell(Text('${tr.number}')),
+              DataCell(
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (tr.arOk != null)
+                      Icon(
+                        tr.arOk!
+                            ? Icons.check_circle_outline
+                            : Icons.cancel_outlined,
+                        size: 18,
+                        color: tr.arOk! ? ok : t.colorScheme.error,
+                      ),
+                    const SizedBox(width: 8),
+                    Text(tr.accurateRip ?? '—'),
+                  ],
+                ),
+              ),
+              DataCell(Text(tr.copyCrc ?? '—', style: mono)),
+              DataCell(
+                Text(
+                  tr.testCrc ?? '—',
+                  style: mono?.copyWith(
+                    color: tr.crcMatch == false ? t.colorScheme.error : null,
+                  ),
+                ),
+              ),
+            ],
+          ),
       ],
     );
   }

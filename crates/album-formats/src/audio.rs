@@ -8,7 +8,8 @@ use std::io::{Read, Seek, SeekFrom};
 use std::path::Path;
 
 pub const AUDIO_EXTS: &[&str] = &[
-    "flac", "wav", "ape", "tak", "tta", "wv", "dsf", "dff", "mp3", "m4a", "aac", "ogg", "opus", "aiff", "aif", "alac",
+    "flac", "wav", "ape", "tak", "tta", "wv", "dsf", "dff", "mp3", "m4a", "aac", "ogg", "opus",
+    "aiff", "aif", "alac",
 ];
 pub const LOSSY_EXTS: &[&str] = &["mp3", "m4a", "aac", "ogg", "opus"];
 
@@ -36,12 +37,18 @@ pub struct AudioInfo {
 }
 
 pub fn ext_of(path: &Path) -> String {
-    path.extension().and_then(|e| e.to_str()).unwrap_or("").to_ascii_lowercase()
+    path.extension()
+        .and_then(|e| e.to_str())
+        .unwrap_or("")
+        .to_ascii_lowercase()
 }
 
 pub fn probe(path: &Path) -> AudioInfo {
     let ext = ext_of(path);
-    let mut info = AudioInfo { format: ext.to_ascii_uppercase(), ..Default::default() };
+    let mut info = AudioInfo {
+        format: ext.to_ascii_uppercase(),
+        ..Default::default()
+    };
     match ext.as_str() {
         "dsf" => {
             if let Some((rate, dur, ch)) = probe_dsf(path) {
@@ -81,8 +88,12 @@ pub fn probe(path: &Path) -> AudioInfo {
         _ => {}
     }
     let opts = ParseOptions::new().read_cover_art(false);
-    let Ok(probe) = Probe::open(path).map(|p| p.options(opts)) else { return info };
-    let Ok(tagged) = probe.read() else { return info };
+    let Ok(probe) = Probe::open(path).map(|p| p.options(opts)) else {
+        return info;
+    };
+    let Ok(tagged) = probe.read() else {
+        return info;
+    };
     let props = tagged.properties();
     info.duration = props.duration().as_secs_f64();
     info.sample_rate = props.sample_rate().unwrap_or(0);
@@ -96,7 +107,9 @@ pub fn probe(path: &Path) -> AudioInfo {
 }
 
 fn read_tags_only(path: &Path, info: &mut AudioInfo) {
-    let opts = ParseOptions::new().read_cover_art(false).read_properties(false);
+    let opts = ParseOptions::new()
+        .read_cover_art(false)
+        .read_properties(false);
     let tagged = Probe::open(path)
         .ok()
         .and_then(|p| p.options(opts).guess_file_type().ok())
@@ -119,7 +132,10 @@ fn fill_tags(tag: &lofty::tag::Tag, info: &mut AudioInfo) {
     info.genre = clean(tag.genre());
     info.track = tag.track();
     info.disc = tag.disk();
-    info.album_artist = tag.get_string(&ItemKey::AlbumArtist).map(|s| s.trim().to_string()).filter(|s| !s.is_empty());
+    info.album_artist = tag
+        .get_string(&ItemKey::AlbumArtist)
+        .map(|s| s.trim().to_string())
+        .filter(|s| !s.is_empty());
     info.date = tag
         .get_string(&ItemKey::RecordingDate)
         .or_else(|| tag.get_string(&ItemKey::Year))
@@ -152,7 +168,10 @@ fn probe_tta(path: &Path) -> Option<(u32, u32, u32, f64)> {
     f.read_exact(&mut buf).ok()?;
     // Optional leading ID3v2 tag.
     if &buf[0..3] == b"ID3" {
-        let size = ((buf[6] as u64 & 0x7f) << 21) | ((buf[7] as u64 & 0x7f) << 14) | ((buf[8] as u64 & 0x7f) << 7) | (buf[9] as u64 & 0x7f);
+        let size = ((buf[6] as u64 & 0x7f) << 21)
+            | ((buf[7] as u64 & 0x7f) << 14)
+            | ((buf[8] as u64 & 0x7f) << 7)
+            | (buf[9] as u64 & 0x7f);
         f.seek(SeekFrom::Start(10 + size)).ok()?;
     } else {
         f.seek(SeekFrom::Start(0)).ok()?;
@@ -219,7 +238,12 @@ fn probe_tak(path: &Path) -> Option<(u32, u32, u32, f64)> {
 
 /// Embedded front cover of an audio file, if any.
 pub fn embedded_cover(path: &Path) -> Option<Vec<u8>> {
-    let tagged = Probe::open(path).ok()?.guess_file_type().ok()?.read().ok()?;
+    let tagged = Probe::open(path)
+        .ok()?
+        .guess_file_type()
+        .ok()?
+        .read()
+        .ok()?;
     for tag in tagged.tags() {
         let pics = tag.pictures();
         let pic = pics

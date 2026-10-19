@@ -49,7 +49,10 @@ pub fn set_root(root: &Path) -> Result<()> {
         return Err(anyhow!("目录不存在：{}", root.display()));
     }
     let mut st = STATE.write().unwrap();
-    let data = st.data_dir.clone().ok_or_else(|| anyhow!("library not initialised"))?;
+    let data = st
+        .data_dir
+        .clone()
+        .ok_or_else(|| anyhow!("library not initialised"))?;
     if st.root.as_deref() != Some(root) {
         st.albums.clear();
     }
@@ -63,7 +66,12 @@ pub fn set_root(root: &Path) -> Result<()> {
 /// full scan.
 pub fn set_rules(r: ScanRules) -> Result<()> {
     rules::set(r.clone())?;
-    let data = STATE.read().unwrap().data_dir.clone().ok_or_else(|| anyhow!("library not initialised"))?;
+    let data = STATE
+        .read()
+        .unwrap()
+        .data_dir
+        .clone()
+        .ok_or_else(|| anyhow!("library not initialised"))?;
     let mut cfg = cache::load_config(&data);
     cfg.rules = Some(r);
     cache::save_config(&data, &cfg)
@@ -72,13 +80,25 @@ pub fn set_rules(r: ScanRules) -> Result<()> {
 /// (library root, app data dir)
 pub fn dirs() -> Result<(PathBuf, PathBuf)> {
     let st = STATE.read().unwrap();
-    let root = st.root.clone().ok_or_else(|| anyhow!("尚未设置专辑库目录"))?;
-    let data = st.data_dir.clone().ok_or_else(|| anyhow!("library not initialised"))?;
+    let root = st
+        .root
+        .clone()
+        .ok_or_else(|| anyhow!("尚未设置专辑库目录"))?;
+    let data = st
+        .data_dir
+        .clone()
+        .ok_or_else(|| anyhow!("library not initialised"))?;
     Ok((root, data))
 }
 
 pub fn get(id: &str) -> Option<Album> {
-    STATE.read().unwrap().albums.iter().find(|a| a.summary.id == id).cloned()
+    STATE
+        .read()
+        .unwrap()
+        .albums
+        .iter()
+        .find(|a| a.summary.id == id)
+        .cloned()
 }
 
 /// Stores the user's edits for an album (empty = back to detection) and
@@ -86,7 +106,10 @@ pub fn get(id: &str) -> Option<Album> {
 pub fn set_override(id: &str, ov: AlbumOverride) -> Result<Album> {
     {
         let mut st = STATE.write().unwrap();
-        let data = st.data_dir.clone().ok_or_else(|| anyhow!("library not initialised"))?;
+        let data = st
+            .data_dir
+            .clone()
+            .ok_or_else(|| anyhow!("library not initialised"))?;
         if ov == AlbumOverride::default() {
             st.overrides.remove(id);
         } else {

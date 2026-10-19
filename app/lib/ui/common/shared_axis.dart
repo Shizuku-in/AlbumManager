@@ -13,14 +13,24 @@ import 'package:flutter/material.dart';
 /// between layouts with no spatial relationship (without its scale, which
 /// blurs text).
 class SharedAxisSwitch {
-  SharedAxisSwitch({required TickerProvider vsync, int initial = 0, this.distance = 30, required this.onShownChanged}) : shown = initial, _target = initial {
-    controller = AnimationController(vsync: vsync, duration: const Duration(milliseconds: 300), value: 1)
-      ..addListener(() {
-        if (controller.value >= _exitEnd && shown != _target) {
-          shown = _target;
-          onShownChanged();
-        }
-      });
+  SharedAxisSwitch({
+    required TickerProvider vsync,
+    int initial = 0,
+    this.distance = 30,
+    required this.onShownChanged,
+  }) : shown = initial,
+       _target = initial {
+    controller =
+        AnimationController(
+          vsync: vsync,
+          duration: const Duration(milliseconds: 300),
+          value: 1,
+        )..addListener(() {
+          if (controller.value >= _exitEnd && shown != _target) {
+            shown = _target;
+            onShownChanged();
+          }
+        });
   }
 
   static const _exitEnd = 1 / 3;
@@ -57,7 +67,11 @@ class SharedAxisSwitch {
 
   double get opacity {
     final v = controller.value;
-    return v < _exitEnd ? 1 - Easing.emphasizedAccelerate.transform(v / _exitEnd) : Easing.emphasizedDecelerate.transform((v - _exitEnd) / (1 - _exitEnd));
+    return v < _exitEnd
+        ? 1 - Easing.emphasizedAccelerate.transform(v / _exitEnd)
+        : Easing.emphasizedDecelerate.transform(
+            (v - _exitEnd) / (1 - _exitEnd),
+          );
   }
 
   /// Offset along the axis: towards negative while leaving, from positive
@@ -65,8 +79,15 @@ class SharedAxisSwitch {
   double get shift {
     final v = controller.value;
     return v < _exitEnd
-        ? -_direction * distance * Easing.emphasizedAccelerate.transform(v / _exitEnd)
-        : _direction * distance * (1 - Easing.emphasizedDecelerate.transform((v - _exitEnd) / (1 - _exitEnd)));
+        ? -_direction *
+              distance *
+              Easing.emphasizedAccelerate.transform(v / _exitEnd)
+        : _direction *
+              distance *
+              (1 -
+                  Easing.emphasizedDecelerate.transform(
+                    (v - _exitEnd) / (1 - _exitEnd),
+                  ));
   }
 
   void dispose() => controller.dispose();

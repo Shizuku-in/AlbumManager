@@ -21,7 +21,10 @@ class SettingsGroup extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (title != null) SectionHeader(title!) else const SizedBox(height: 8),
+            if (title != null)
+              SectionHeader(title!)
+            else
+              const SizedBox(height: 8),
             ...children,
             const SizedBox(height: 8),
           ],
@@ -43,22 +46,42 @@ class SettingsNote extends StatelessWidget {
     final t = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.fromLTRB(56, 0, 24, 8),
-      child: Text(text, style: t.textTheme.bodySmall?.copyWith(color: color ?? t.colorScheme.onSurfaceVariant)),
+      child: Text(
+        text,
+        style: t.textTheme.bodySmall?.copyWith(
+          color: color ?? t.colorScheme.onSurfaceVariant,
+        ),
+      ),
     );
   }
 }
 
 /// M3 basic dialog confirming an action that discards something.
-Future<bool> confirmSetting(BuildContext context, {required IconData icon, required String title, required String body, required String confirm}) async {
+Future<bool> confirmSetting(
+  BuildContext context, {
+  required IconData icon,
+  required String title,
+  required String body,
+  required String confirm,
+}) async {
   final r = await showDialog<bool>(
     context: context,
     builder: (ctx) => AlertDialog(
       icon: Icon(icon),
       title: Text(title),
-      content: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 400), child: Text(body)),
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 400),
+        child: Text(body),
+      ),
       actions: [
-        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('取消')),
-        TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(confirm)),
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, false),
+          child: const Text('取消'),
+        ),
+        TextButton(
+          onPressed: () => Navigator.pop(ctx, true),
+          child: Text(confirm),
+        ),
       ],
     ),
   );
@@ -68,7 +91,12 @@ Future<bool> confirmSetting(BuildContext context, {required IconData icon, requi
 /// Chip row under a tile title.
 Widget settingsChips(List<Widget> chips) => Padding(
   padding: const EdgeInsets.only(top: 8),
-  child: Wrap(spacing: 8, runSpacing: 8, crossAxisAlignment: WrapCrossAlignment.center, children: chips),
+  child: Wrap(
+    spacing: 8,
+    runSpacing: 8,
+    crossAxisAlignment: WrapCrossAlignment.center,
+    children: chips,
+  ),
 );
 
 /// A second-level settings page: rebuilt when the library or settings change.
@@ -81,7 +109,10 @@ class SettingsSubpage extends StatelessWidget {
   Widget build(BuildContext context) {
     return ListenableBuilder(
       listenable: Listenable.merge([library, settings]),
-      builder: (context, _) => AppPage(title: title, slivers: [SliverList.list(children: groups(context))]),
+      builder: (context, _) => AppPage(
+        title: title,
+        slivers: [SliverList.list(children: groups(context))],
+      ),
     );
   }
 }

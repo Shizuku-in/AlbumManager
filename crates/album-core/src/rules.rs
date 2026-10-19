@@ -71,16 +71,28 @@ fn compile_template(t: &str) -> Result<Regex> {
 pub fn parse_date(code: &str) -> (Option<String>, Option<i32>) {
     let parts: Vec<&str> = code.split(['-', '.', '/']).collect();
     let (y, m, d) = if parts.len() > 1 {
-        let n = |i: usize| parts.get(i).and_then(|p| p.parse::<u32>().ok()).unwrap_or(0);
+        let n = |i: usize| {
+            parts
+                .get(i)
+                .and_then(|p| p.parse::<u32>().ok())
+                .unwrap_or(0)
+        };
         (parts[0].parse::<i32>().ok(), n(1), n(2))
     } else {
         let (y, rest) = if code.len() == 8 {
             (code[0..4].parse::<i32>().ok(), &code[4..])
         } else {
             let yy: i32 = code[0..2].parse().unwrap_or(0);
-            (Some(if yy <= 50 { 2000 + yy } else { 1900 + yy }), &code[2..])
+            (
+                Some(if yy <= 50 { 2000 + yy } else { 1900 + yy }),
+                &code[2..],
+            )
         };
-        (y, rest[0..2].parse().unwrap_or(0), rest[2..4].parse().unwrap_or(0))
+        (
+            y,
+            rest[0..2].parse().unwrap_or(0),
+            rest[2..4].parse().unwrap_or(0),
+        )
     };
     let Some(y) = y else { return (None, None) };
     let s = match (m, d) {
@@ -93,11 +105,26 @@ pub fn parse_date(code: &str) -> (Option<String>, Option<i32>) {
 
 impl Rules {
     pub fn compile(source: ScanRules) -> Result<Self> {
-        let names = source.name_templates.iter().filter(|t| !t.trim().is_empty()).map(|t| compile_template(t)).collect::<Result<_>>()?;
-        let lower = |list: &[String]| list.iter().map(|k| k.trim().to_lowercase()).filter(|k| !k.is_empty()).collect();
+        let names = source
+            .name_templates
+            .iter()
+            .filter(|t| !t.trim().is_empty())
+            .map(|t| compile_template(t))
+            .collect::<Result<_>>()?;
+        let lower = |list: &[String]| {
+            list.iter()
+                .map(|k| k.trim().to_lowercase())
+                .filter(|k| !k.is_empty())
+                .collect()
+        };
         let cover = lower(&source.cover_keywords);
         let scan_folders = lower(&source.scan_folder_keywords);
-        Ok(Self { source, cover, scan_folders, names })
+        Ok(Self {
+            source,
+            cover,
+            scan_folders,
+            names,
+        })
     }
 
     /// Priority of an image file name as a cover (lower is better).
@@ -126,10 +153,12 @@ impl Rules {
         if n > 0 && image_rels.len() >= n {
             return true;
         }
-        image_rels.filter_map(|rel| rel.rsplit_once('/')).any(|(dir, _)| {
-            let dir = dir.to_lowercase();
-            self.scan_folders.iter().any(|k| dir.contains(k.as_str()))
-        })
+        image_rels
+            .filter_map(|rel| rel.rsplit_once('/'))
+            .any(|(dir, _)| {
+                let dir = dir.to_lowercase();
+                self.scan_folders.iter().any(|k| dir.contains(k.as_str()))
+            })
     }
 
     pub fn is_album_name(&self, name: &str) -> bool {
@@ -149,4 +178,3 @@ pub fn set(rules: ScanRules) -> Result<()> {
     *CURRENT.write().unwrap() = Arc::new(Rules::compile(rules)?);
     Ok(())
 }
-

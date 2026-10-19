@@ -14,7 +14,8 @@ static AR_VER: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"AR v(\d)").unwrap
 static HEX8: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"([0-9A-Fa-f]{8})\s*$").unwrap());
 static CTDB_ROW: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"^\s*(\d+)\s*\|\s*\((\d+)/(\d+)\)\s*(.*)$").unwrap());
-static CHECKSUM: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^====.*[0-9A-F]{64}.*====").unwrap());
+static CHECKSUM: LazyLock<Regex> =
+    LazyLock::new(|| Regex::new(r"^====.*[0-9A-F]{64}.*====").unwrap());
 static XLD_AR: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"->\s*(.+)$").unwrap());
 
 fn contains_any(s: &str, needles: &[&str]) -> bool {
@@ -25,19 +26,39 @@ fn value_after_colon(line: &str) -> Option<String> {
     let idx = line.find([':', '：'])?;
     let v = line[idx..].trim_start_matches([':', '：']).trim();
     let v = v.split("Adapter").next().unwrap_or(v).trim();
-    if v.is_empty() { None } else { Some(v.to_string()) }
+    if v.is_empty() {
+        None
+    } else {
+        Some(v.to_string())
+    }
 }
 
 fn track_mut(tracks: &mut Vec<TrackVerify>, n: i32) -> &mut TrackVerify {
     if let Some(i) = tracks.iter().position(|t| t.number == n) {
         return &mut tracks[i];
     }
-    tracks.push(TrackVerify { number: n, accurate_rip: None, ar_ok: None, copy_crc: None, test_crc: None, crc_match: None });
+    tracks.push(TrackVerify {
+        number: n,
+        accurate_rip: None,
+        ar_ok: None,
+        copy_crc: None,
+        test_crc: None,
+        crc_match: None,
+    });
     tracks.last_mut().unwrap()
 }
 
 const ACCURATE_WORDS: &[&str] = &["ccurately ripped", "確実に正確", "精确", "精確"];
-const NEGATIVE_WORDS: &[&str] = &["cannot", "not ", "may not", "できません", "存在しません", "无法", "不", "未"];
+const NEGATIVE_WORDS: &[&str] = &[
+    "cannot",
+    "not ",
+    "may not",
+    "できません",
+    "存在しません",
+    "无法",
+    "不",
+    "未",
+];
 
 pub fn parse(path: &str, text: &str, encoding: &str) -> RipLog {
     let head: String = text.lines().take(5).collect::<Vec<_>>().join("\n");
@@ -91,30 +112,79 @@ pub fn parse(path: &str, text: &str, encoding: &str) -> RipLog {
             log.has_checksum = true;
             continue;
         }
-        if log.drive.is_none() && contains_any(t, &["Used drive", "使用ドライブ", "使用驱动器", "使用光驱"]) {
+        if log.drive.is_none()
+            && contains_any(t, &["Used drive", "使用ドライブ", "使用驱动器", "使用光驱"])
+        {
             log.drive = value_after_colon(t);
             continue;
         }
-        if log.read_mode.is_none() && contains_any(t, &["Read mode", "読み込みモード", "读取模式", "Ripper mode"]) {
+        if log.read_mode.is_none()
+            && contains_any(
+                t,
+                &["Read mode", "読み込みモード", "读取模式", "Ripper mode"],
+            )
+        {
             log.read_mode = value_after_colon(t);
             continue;
         }
 
         // --- global verdict lines ---
-        if contains_any(t, &["No errors occur", "エラーは発生しませんでした", "エラーは検出されませんでした", "没有错误发生", "没有发生错误", "未发生错误"]) {
+        if contains_any(
+            t,
+            &[
+                "No errors occur",
+                "エラーは発生しませんでした",
+                "エラーは検出されませんでした",
+                "没有错误发生",
+                "没有发生错误",
+                "未发生错误",
+            ],
+        ) {
             log.no_errors.get_or_insert(true);
-        } else if contains_any(t, &["There were errors", "エラーが発生しました", "有错误发生", "发生了错误", "Some inconsistencies found"]) {
+        } else if contains_any(
+            t,
+            &[
+                "There were errors",
+                "エラーが発生しました",
+                "有错误发生",
+                "发生了错误",
+                "Some inconsistencies found",
+            ],
+        ) {
             errors = true;
             log.no_errors = Some(false);
         }
         if contains_any(t, &["Suspicious position", "疑わしい位置", "可疑位置"]) {
             errors = true;
         }
-        if contains_any(t, &["All tracks accurately ripped", "全てのトラックが正確にコピーされました", "所有音轨精确", "所有音轨均已精确"]) {
+        if contains_any(
+            t,
+            &[
+                "All tracks accurately ripped",
+                "全てのトラックが正確にコピーされました",
+                "所有音轨精确",
+                "所有音轨均已精确",
+            ],
+        ) {
             ar_all = true;
-        } else if contains_any(t, &["None of the tracks are present", "どのトラックも", "没有任何音轨在"]) {
+        } else if contains_any(
+            t,
+            &[
+                "None of the tracks are present",
+                "どのトラックも",
+                "没有任何音轨在",
+            ],
+        ) {
             ar_none = true;
-        } else if contains_any(t, &["could not be verified", "正確であるか確認できません", "无法验证", "未能验证"]) {
+        } else if contains_any(
+            t,
+            &[
+                "could not be verified",
+                "正確であるか確認できません",
+                "无法验证",
+                "未能验证",
+            ],
+        ) {
             ar_some_bad = true;
         }
 
@@ -153,11 +223,19 @@ pub fn parse(path: &str, text: &str, encoding: &str) -> RipLog {
         }
         if let Some(c) = TRACK_AR_LINE.captures(t) {
             let rest = &c[2];
-            if rest.contains("AR v") || rest.contains("AccurateRip") || rest.contains("confidence") || rest.contains("database") {
+            if rest.contains("AR v")
+                || rest.contains("AccurateRip")
+                || rest.contains("confidence")
+                || rest.contains("database")
+            {
                 let n: i32 = c[1].parse().unwrap_or(0);
                 let ok = contains_any(rest, ACCURATE_WORDS) && !contains_any(rest, NEGATIVE_WORDS);
-                let present = !contains_any(rest, &["not present", "存在しません", "没有记录", "不存在"]);
-                let mut label = AR_VER.captures(rest).map(|v| format!("AR v{}", &v[1])).unwrap_or_else(|| "AR".into());
+                let present =
+                    !contains_any(rest, &["not present", "存在しません", "没有记录", "不存在"]);
+                let mut label = AR_VER
+                    .captures(rest)
+                    .map(|v| format!("AR v{}", &v[1]))
+                    .unwrap_or_else(|| "AR".into());
                 if let Some(conf) = CONFIDENCE.captures(rest) {
                     label.push_str(&format!(" ({})", &conf[1]));
                 }
@@ -174,11 +252,25 @@ pub fn parse(path: &str, text: &str, encoding: &str) -> RipLog {
         }
         if let Some(n) = section {
             let lower = t.to_ascii_lowercase();
-            if contains_any(t, &["Test CRC", "テストCRC", "测试 CRC", "测试CRC", "(test run)"]) {
+            if contains_any(
+                t,
+                &["Test CRC", "テストCRC", "测试 CRC", "测试CRC", "(test run)"],
+            ) {
                 if let Some(h) = HEX8.captures(t) {
                     track_mut(&mut log.tracks, n).test_crc = Some(h[1].to_uppercase());
                 }
-            } else if contains_any(t, &["Copy CRC", "コピーCRC", "复制 CRC", "复制CRC", "拷贝 CRC", "CRC32 hash"]) && !lower.contains("skip") {
+            } else if contains_any(
+                t,
+                &[
+                    "Copy CRC",
+                    "コピーCRC",
+                    "复制 CRC",
+                    "复制CRC",
+                    "拷贝 CRC",
+                    "CRC32 hash",
+                ],
+            ) && !lower.contains("skip")
+            {
                 if let Some(h) = HEX8.captures(t) {
                     track_mut(&mut log.tracks, n).copy_crc = Some(h[1].to_uppercase());
                 }
@@ -187,7 +279,12 @@ pub fn parse(path: &str, text: &str, encoding: &str) -> RipLog {
                     let msg = &c[1];
                     let tv = track_mut(&mut log.tracks, n);
                     if msg.starts_with("Accurately ripped") {
-                        tv.accurate_rip = Some(msg.trim_start_matches("Accurately ripped").trim().trim_matches(['(', ')']).to_string());
+                        tv.accurate_rip = Some(
+                            msg.trim_start_matches("Accurately ripped")
+                                .trim()
+                                .trim_matches(['(', ')'])
+                                .to_string(),
+                        );
                         tv.ar_ok = Some(true);
                     } else if msg.contains("may not be accurate") {
                         tv.ar_ok = Some(false);

@@ -6,13 +6,18 @@ import 'package:flutter/widgets.dart';
 /// the cross axis of a vertical scroll view).
 class SliverTranslateX extends SingleChildRenderObjectWidget {
   final double dx;
-  const SliverTranslateX({super.key, required this.dx, required Widget sliver}) : super(child: sliver);
+  const SliverTranslateX({super.key, required this.dx, required Widget sliver})
+    : super(child: sliver);
 
   @override
-  RenderObject createRenderObject(BuildContext context) => RenderSliverTranslateX(dx);
+  RenderObject createRenderObject(BuildContext context) =>
+      RenderSliverTranslateX(dx);
 
   @override
-  void updateRenderObject(BuildContext context, RenderSliverTranslateX renderObject) => renderObject.dx = dx;
+  void updateRenderObject(
+    BuildContext context,
+    RenderSliverTranslateX renderObject,
+  ) => renderObject.dx = dx;
 }
 
 class RenderSliverTranslateX extends RenderProxySliver {
@@ -27,16 +32,27 @@ class RenderSliverTranslateX extends RenderProxySliver {
 
   @override
   void paint(PaintingContext context, Offset offset) {
-    if (child != null && child!.geometry!.visible) context.paintChild(child!, offset + Offset(_dx, 0));
+    if (child != null && child!.geometry!.visible) {
+      context.paintChild(child!, offset + Offset(_dx, 0));
+    }
   }
 
   @override
-  void applyPaintTransform(RenderObject child, Matrix4 transform) => transform.translateByDouble(_dx, 0, 0, 1);
+  void applyPaintTransform(RenderObject child, Matrix4 transform) =>
+      transform.translateByDouble(_dx, 0, 0, 1);
 
   @override
-  bool hitTestChildren(SliverHitTestResult result, {required double mainAxisPosition, required double crossAxisPosition}) {
+  bool hitTestChildren(
+    SliverHitTestResult result, {
+    required double mainAxisPosition,
+    required double crossAxisPosition,
+  }) {
     return child != null &&
         child!.geometry!.hitTestExtent > 0 &&
-        child!.hitTest(result, mainAxisPosition: mainAxisPosition, crossAxisPosition: crossAxisPosition - _dx);
+        child!.hitTest(
+          result,
+          mainAxisPosition: mainAxisPosition,
+          crossAxisPosition: crossAxisPosition - _dx,
+        );
   }
 }
