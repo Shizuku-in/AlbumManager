@@ -5,13 +5,13 @@ import 'package:album_manager/state/settings_controller.dart';
 import 'package:album_manager/theme/app_theme.dart';
 import 'package:album_manager/ui/common/smooth_scroll.dart';
 
-/// Chooses the UI font among the installed ones (or the bundled default)
+/// Chooses the UI font among the installed ones (or the default)
 /// and applies it on confirm.
 Future<void> showFontPicker(BuildContext context) =>
     showDialog(context: context, builder: (_) => const _FontPickerDialog());
 
-/// Radio value of the bundled font (no installed font has an empty name).
-const _bundled = '';
+/// Radio value of the default font (no installed font has an empty name).
+const _default = '';
 
 class _FontPickerDialog extends StatefulWidget {
   const _FontPickerDialog();
@@ -23,7 +23,7 @@ class _FontPickerDialog extends StatefulWidget {
 class _FontPickerDialogState extends State<_FontPickerDialog> {
   final _fonts = api.systemFontFamilies();
   final _scroll = SmoothScrollController();
-  String _selected = settings.fontFamily ?? _bundled;
+  String _selected = settings.fontFamily ?? _default;
   String _query = '';
 
   @override
@@ -69,9 +69,10 @@ class _FontPickerDialogState extends State<_FontPickerDialog> {
                     return const Center(child: CircularProgressIndicator());
                   }
                   final fonts = [
-                    if (_query.isEmpty) _bundled,
+                    if (appFont.toLowerCase().contains(_query)) _default,
+                    // The default font is listed once, as the first entry.
                     ...snap.data!.where(
-                      (f) => f.toLowerCase().contains(_query),
+                      (f) => f != appFont && f.toLowerCase().contains(_query),
                     ),
                   ];
                   // The tiles' hover / selection ink paints on the nearest
@@ -88,15 +89,18 @@ class _FontPickerDialogState extends State<_FontPickerDialog> {
                         itemCount: fonts.length,
                         itemBuilder: (context, i) {
                           final f = fonts[i];
-                          final family = f == _bundled ? appFont : f;
+                          final family = f == _default ? appFont : f;
                           TextStyle? preview(TextStyle? s) => s?.copyWith(
                             fontFamily: family,
-                            fontFamilyFallback: const [appFont],
+                            fontFamilyFallback: const [
+                              appFont,
+                              ...appFontFallback,
+                            ],
                           );
                           return RadioListTile<String>(
                             value: f,
                             title: Text(
-                              f == _bundled ? '$appFont（内置，默认）' : f,
+                              f == _default ? '$appFont（默认）' : f,
                               style: preview(t.textTheme.bodyLarge),
                             ),
                             subtitle: Text(
@@ -124,7 +128,7 @@ class _FontPickerDialogState extends State<_FontPickerDialog> {
         ),
         FilledButton(
           onPressed: () {
-            settings.setFontFamily(_selected == _bundled ? null : _selected);
+            settings.setFontFamily(_selected == _default ? null : _selected);
             Navigator.pop(context);
           },
           child: const Text('确定'),

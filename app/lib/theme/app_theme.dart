@@ -21,16 +21,22 @@ const seedPresets = [
   Color(0xFF795548), // brown
 ];
 
-/// Bundled (see pubspec.yaml). Fallbacks cover Japanese-only kanji etc.
-const appFont = 'HarmonyOS Sans SC';
-const appFontFallback = ['Microsoft YaHei UI', 'Yu Gothic UI', 'Segoe UI'];
+/// Default UI font (system, not bundled). Fallbacks cover Japanese-only
+/// kanji etc. and the CJK fonts of macOS / Linux, which lack YaHei.
+const appFont = 'Microsoft YaHei UI';
+const appFontFallback = [
+  'Yu Gothic UI',
+  'Segoe UI',
+  'PingFang SC',
+  'Noto Sans CJK SC',
+];
 
 ThemeData buildTheme(ColorScheme scheme, {String? font}) {
   return ThemeData(
     useMaterial3: true,
     colorScheme: scheme,
     fontFamily: font ?? appFont,
-    // A chosen font may lack CJK characters; the bundled font fills those in.
+    // A chosen font may lack CJK characters; the default font fills those in.
     fontFamilyFallback: font == null
         ? appFontFallback
         : const [appFont, ...appFontFallback],

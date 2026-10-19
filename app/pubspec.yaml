@@ -72,15 +72,6 @@ flutter:
   # the material Icons class.
   uses-material-design: true
 
-  # UI font bundled with the app: unlike Microsoft YaHei it stays crisp with
-  # Flutter's unhinted text rendering. HarmonyOS Sans license permits embedding.
-  fonts:
-    - family: HarmonyOS Sans SC
-      fonts:
-        - asset: assets/fonts/HarmonyOS_Sans_SC_Regular.ttf
-        - asset: assets/fonts/HarmonyOS_Sans_SC_Medium.ttf
-          weight: 500
-
   assets:
     - assets/icons/
 

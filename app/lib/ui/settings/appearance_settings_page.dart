@@ -100,10 +100,10 @@ class AppearanceSettingsPage extends StatelessWidget {
               leading: const Icon(Icons.font_download_outlined),
               title: const Text('界面字体'),
               subtitle: Text(
-                settings.fontFamily ?? '$appFont（内置，默认）',
+                settings.fontFamily ?? '$appFont（默认）',
                 style: TextStyle(
                   fontFamily: settings.fontFamily ?? appFont,
-                  fontFamilyFallback: const [appFont],
+                  fontFamilyFallback: const [appFont, ...appFontFallback],
                 ),
               ),
               trailing: const Icon(Icons.chevron_right),

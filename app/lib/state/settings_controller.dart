@@ -72,7 +72,7 @@ class SettingsController extends ChangeNotifier {
   /// Seed used when the system accent color is off (or unavailable).
   Color seedColor = defaultSeed;
 
-  /// UI font family; null = the bundled [appFont].
+  /// UI font family; null = the default [appFont].
   String? fontFamily;
 
   bool scanOnStartup = true;
