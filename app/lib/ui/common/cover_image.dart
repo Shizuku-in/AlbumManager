@@ -11,6 +11,19 @@ class CoverImage extends StatelessWidget {
   final int? cacheWidth;
   const CoverImage({super.key, this.path, this.radius = 12, this.cacheWidth});
 
+  static ImageProvider _provider(String path, int? cacheWidth) =>
+      ResizeImage.resizeIfNeeded(cacheWidth, null, FileImage(File(path)));
+
+  /// Decodes a cover ahead of time, so a [CoverImage] with the same
+  /// [cacheWidth] shows it in the first frame it is built.
+  static Future<void> precache(
+    BuildContext context,
+    String? path, {
+    int? cacheWidth,
+  }) => path == null
+      ? Future.value()
+      : precacheImage(_provider(path, cacheWidth), context);
+
   @override
   Widget build(BuildContext context) {
     final cs = Theme.of(context).colorScheme;
@@ -22,10 +35,9 @@ class CoverImage extends StatelessWidget {
     );
     final image = path == null
         ? placeholder
-        : Image.file(
-            File(path!),
+        : Image(
+            image: _provider(path!, cacheWidth),
             fit: BoxFit.cover,
-            cacheWidth: cacheWidth,
             gaplessPlayback: true,
             filterQuality: FilterQuality.medium,
             errorBuilder: (_, _, _) => placeholder,

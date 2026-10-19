@@ -9,7 +9,6 @@ import 'package:album_manager/ui/album/cue_fix_dialog.dart';
 import 'package:album_manager/ui/common/app_page.dart';
 import 'package:album_manager/ui/common/cover_image.dart';
 import 'package:album_manager/ui/common/shared_axis.dart';
-import 'package:album_manager/ui/common/sliver_translate.dart';
 import 'package:album_manager/util/labels.dart';
 import 'package:album_manager/util/memo.dart';
 import 'package:album_manager/util/system.dart';
@@ -31,6 +30,11 @@ Map<IssueKind, List<AlbumSummary>> _group(List<AlbumSummary> albums) {
   return m;
 }
 
+const _coverWidth = 120;
+
+/// Rows on screen at most, whose covers are decoded before a switch.
+const _precacheRows = 24;
+
 class HealthPage extends StatefulWidget {
   const HealthPage({super.key});
 
@@ -43,10 +47,11 @@ class _HealthPageState extends State<HealthPage>
   IssueKind? _kind;
   bool _fixing = false;
 
-  /// Switches the album list between issue kinds (by [IssueKind.index], the
-  /// chip order) with the same transition as the album tabs.
+  /// Switches the album list between issue kinds (by [IssueKind.index]):
+  /// a plain fade through, like the library's grid / list switch.
   late final _kindSwitch = SharedAxisSwitch(
     vsync: this,
+    distance: 0,
     onShownChanged: () => setState(() {}),
   );
 
@@ -172,6 +177,14 @@ class _HealthPageState extends State<HealthPage>
                             label: Text('${k.label}  ${byKind[k]!.length}'),
                             selected: k == kind,
                             onSelected: (_) {
+                              // Decoded while the current list fades out.
+                              for (final a in byKind[k]!.take(_precacheRows)) {
+                                CoverImage.precache(
+                                  context,
+                                  a.coverThumb,
+                                  cacheWidth: _coverWidth,
+                                );
+                              }
                               _kindSwitch.select(k.index);
                               setState(() => _kind = k);
                             },
@@ -188,10 +201,8 @@ class _HealthPageState extends State<HealthPage>
             ),
             AnimatedBuilder(
               animation: _kindSwitch.controller,
-              builder: (context, child) => SliverOpacity(
-                opacity: _kindSwitch.opacity,
-                sliver: SliverTranslateX(dx: _kindSwitch.shift, sliver: child!),
-              ),
+              builder: (context, child) =>
+                  SliverOpacity(opacity: _kindSwitch.opacity, sliver: child),
               child: SliverList.builder(
                 itemCount: listed.length,
                 itemBuilder: (context, i) {
@@ -199,7 +210,10 @@ class _HealthPageState extends State<HealthPage>
                   final msgs = a.issues
                       .where((x) => x.kind == shownKind)
                       .toList();
+                  // Keyed by album: a row reused for another album would keep
+                  // showing the old cover (gapless) until the new one decodes.
                   return ListTile(
+                    key: ValueKey(a.id),
                     onTap: () => Navigator.of(context).push(AlbumPage.route(a)),
                     leading: SizedBox(
                       width: 56,
@@ -207,7 +221,7 @@ class _HealthPageState extends State<HealthPage>
                       child: CoverImage(
                         path: a.coverThumb,
                         radius: 8,
-                        cacheWidth: 120,
+                        cacheWidth: _coverWidth,
                       ),
                     ),
                     title: Text(
