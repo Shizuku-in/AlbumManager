@@ -39,7 +39,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.13.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 775402480;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -1140823237;
 
 // Section: executor
 
@@ -147,6 +147,38 @@ fn wire__crate__api__library__clear_thumbnail_cache_impl(
         },
     )
 }
+fn wire__crate__api__library__default_scan_rules_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "default_scan_rules",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, ()>((move || {
+                    let output_ok = Ok::<_, ()>(crate::api::library::default_scan_rules())?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
 fn wire__crate__api__library__fix_cue_encoding_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -209,6 +241,38 @@ fn wire__crate__api__library__get_album_impl(
             move |context| {
                 transform_result_sse::<_, ()>((move || {
                     let output_ok = Ok::<_, ()>(crate::api::library::get_album(api_id))?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__crate__api__library__get_scan_rules_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "get_scan_rules",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, ()>((move || {
+                    let output_ok = Ok::<_, ()>(crate::api::library::get_scan_rules())?;
                     std::result::Result::Ok(output_ok)
                 })())
             }
@@ -501,6 +565,41 @@ fn wire__crate__api__library__set_library_root_impl(
         },
     )
 }
+fn wire__crate__api__library__set_scan_rules_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "set_scan_rules",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_rules = <album_model::ScanRules>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, flutter_rust_bridge::for_generated::anyhow::Error>(
+                    (move || {
+                        let output_ok = crate::api::library::set_scan_rules(api_rules)?;
+                        std::result::Result::Ok(output_ok)
+                    })(),
+                )
+            }
+        },
+    )
+}
 
 // Section: static_checks
 
@@ -599,6 +698,11 @@ const _: fn() = || {
         let _: Option<String> = RipLog.ctdb_summary;
         let _: bool = RipLog.has_checksum;
         let _: Vec<album_model::TrackVerify> = RipLog.tracks;
+    }
+    {
+        let ScanRules = None::<album_model::ScanRules>.unwrap();
+        let _: Vec<String> = ScanRules.cover_keywords;
+        let _: Vec<String> = ScanRules.name_templates;
     }
     {
         let Track = None::<album_model::Track>.unwrap();
@@ -1220,6 +1324,18 @@ impl SseDecode for crate::api::models::ScanEvent {
     }
 }
 
+impl SseDecode for album_model::ScanRules {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_coverKeywords = <Vec<String>>::sse_decode(deserializer);
+        let mut var_nameTemplates = <Vec<String>>::sse_decode(deserializer);
+        return album_model::ScanRules {
+            cover_keywords: var_coverKeywords,
+            name_templates: var_nameTemplates,
+        };
+    }
+}
+
 impl SseDecode for album_model::Track {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -1308,16 +1424,19 @@ fn pde_ffi_dispatcher_primary_impl(
         3 => {
             wire__crate__api__library__clear_thumbnail_cache_impl(port, ptr, rust_vec_len, data_len)
         }
-        4 => wire__crate__api__library__fix_cue_encoding_impl(port, ptr, rust_vec_len, data_len),
-        5 => wire__crate__api__library__get_album_impl(port, ptr, rust_vec_len, data_len),
-        6 => wire__crate__api__library__get_thumbnail_impl(port, ptr, rust_vec_len, data_len),
-        7 => wire__crate__api__init_app_impl(port, ptr, rust_vec_len, data_len),
-        8 => wire__crate__api__library__init_library_impl(port, ptr, rust_vec_len, data_len),
-        9 => wire__crate__api__library__read_text_file_impl(port, ptr, rust_vec_len, data_len),
-        10 => wire__crate__api__library__rescan_album_impl(port, ptr, rust_vec_len, data_len),
-        11 => wire__crate__api__library__scan_library_impl(port, ptr, rust_vec_len, data_len),
-        12 => wire__crate__api__library__set_album_override_impl(port, ptr, rust_vec_len, data_len),
-        13 => wire__crate__api__library__set_library_root_impl(port, ptr, rust_vec_len, data_len),
+        4 => wire__crate__api__library__default_scan_rules_impl(port, ptr, rust_vec_len, data_len),
+        5 => wire__crate__api__library__fix_cue_encoding_impl(port, ptr, rust_vec_len, data_len),
+        6 => wire__crate__api__library__get_album_impl(port, ptr, rust_vec_len, data_len),
+        7 => wire__crate__api__library__get_scan_rules_impl(port, ptr, rust_vec_len, data_len),
+        8 => wire__crate__api__library__get_thumbnail_impl(port, ptr, rust_vec_len, data_len),
+        9 => wire__crate__api__init_app_impl(port, ptr, rust_vec_len, data_len),
+        10 => wire__crate__api__library__init_library_impl(port, ptr, rust_vec_len, data_len),
+        11 => wire__crate__api__library__read_text_file_impl(port, ptr, rust_vec_len, data_len),
+        12 => wire__crate__api__library__rescan_album_impl(port, ptr, rust_vec_len, data_len),
+        13 => wire__crate__api__library__scan_library_impl(port, ptr, rust_vec_len, data_len),
+        14 => wire__crate__api__library__set_album_override_impl(port, ptr, rust_vec_len, data_len),
+        15 => wire__crate__api__library__set_library_root_impl(port, ptr, rust_vec_len, data_len),
+        16 => wire__crate__api__library__set_scan_rules_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -1741,6 +1860,27 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::models::ScanEvent>
 {
     fn into_into_dart(self) -> crate::api::models::ScanEvent {
         self
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<album_model::ScanRules> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.0.cover_keywords.into_into_dart().into_dart(),
+            self.0.name_templates.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for FrbWrapper<album_model::ScanRules>
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<album_model::ScanRules>>
+    for album_model::ScanRules
+{
+    fn into_into_dart(self) -> FrbWrapper<album_model::ScanRules> {
+        self.into()
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
@@ -2276,6 +2416,14 @@ impl SseEncode for crate::api::models::ScanEvent {
                 unimplemented!("");
             }
         }
+    }
+}
+
+impl SseEncode for album_model::ScanRules {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <Vec<String>>::sse_encode(self.cover_keywords, serializer);
+        <Vec<String>>::sse_encode(self.name_templates, serializer);
     }
 }
 

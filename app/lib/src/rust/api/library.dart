@@ -61,3 +61,13 @@ Future<void> clearThumbnailCache() =>
 /// Where the app keeps its data and how much the thumbnail cache takes.
 Future<CacheInfo> cacheInfo() =>
     RustLib.instance.api.crateApiLibraryCacheInfo();
+
+Future<ScanRules> getScanRules() =>
+    RustLib.instance.api.crateApiLibraryGetScanRules();
+
+Future<ScanRules> defaultScanRules() =>
+    RustLib.instance.api.crateApiLibraryDefaultScanRules();
+
+/// Fails with a readable message when a template is invalid.
+Future<void> setScanRules({required ScanRules rules}) =>
+    RustLib.instance.api.crateApiLibrarySetScanRules(rules: rules);

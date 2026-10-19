@@ -2,7 +2,7 @@
 
 use crate::api::models::*;
 use album_formats::text;
-use album_core::{imaging, library};
+use album_core::{imaging, library, rules};
 use crate::frb_generated::StreamSink;
 use anyhow::{anyhow, Result};
 use std::path::{Path, PathBuf};
@@ -116,4 +116,17 @@ pub fn cache_info() -> Result<CacheInfo> {
         }
     }
     Ok(CacheInfo { data_dir: data.to_string_lossy().into_owned(), thumb_count: count, thumb_bytes: bytes })
+}
+
+pub fn get_scan_rules() -> ScanRules {
+    rules::current().source.clone()
+}
+
+pub fn default_scan_rules() -> ScanRules {
+    rules::defaults()
+}
+
+/// Fails with a readable message when a template is invalid.
+pub fn set_scan_rules(rules: ScanRules) -> Result<()> {
+    library::set_rules(rules)
 }

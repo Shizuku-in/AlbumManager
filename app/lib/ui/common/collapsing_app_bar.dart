@@ -37,6 +37,10 @@ class _CollapsingTitle extends StatelessWidget {
     final collapsedStyle = theme.textTheme.titleLarge!.copyWith(color: scheme.onSurface);
     final expandedStyle = theme.textTheme.headlineSmall!;
     final topPadding = s.minExtent - _toolbarHeight;
+    // Collapsed, the title moves past the back button (if any), like a
+    // regular toolbar title.
+    final hasBack = ModalRoute.of(context)?.canPop ?? false;
+    final left = lerpDouble(16, hasBack ? 72 : 16, t)!;
     // Expanded: centered in the band below the toolbar, 20px above the bottom
     // (M3 medium spec). Collapsed: centered in the toolbar.
     final expandedLineHeight = expandedStyle.fontSize! * (expandedStyle.height ?? 1.2);
@@ -48,7 +52,7 @@ class _CollapsingTitle extends StatelessWidget {
       child: Stack(children: [
         Positioned(
           top: topPadding,
-          left: 16,
+          left: left,
           right: 16,
           height: _toolbarHeight,
           child: Align(

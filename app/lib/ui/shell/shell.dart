@@ -17,14 +17,15 @@ class _Dest {
   final IconData selectedIcon;
   final String label;
   final Widget page;
-  const _Dest(this.icon, this.selectedIcon, this.label, this.page);
+  final HideablePage? hideable;
+  const _Dest(this.icon, this.selectedIcon, this.label, this.page, [this.hideable]);
 }
 
 const _dests = [
   _Dest(Icons.library_music_outlined, Icons.library_music, '专辑库', LibraryPage()),
-  _Dest(Icons.view_timeline_outlined, Icons.view_timeline, '时间线', TimelinePage()),
-  _Dest(Icons.insights_outlined, Icons.insights, '统计', StatsPage()),
-  _Dest(Icons.health_and_safety_outlined, Icons.health_and_safety, '健康检查', HealthPage()),
+  _Dest(Icons.view_timeline_outlined, Icons.view_timeline, '时间线', TimelinePage(), HideablePage.timeline),
+  _Dest(Icons.insights_outlined, Icons.insights, '统计', StatsPage(), HideablePage.stats),
+  _Dest(Icons.health_and_safety_outlined, Icons.health_and_safety, '健康检查', HealthPage(), HideablePage.health),
   _Dest(Icons.settings_outlined, Icons.settings, '设置', SettingsPage()),
 ];
 
@@ -64,21 +65,28 @@ class _ShellState extends State<Shell> {
       body: Row(children: [
         ListenableBuilder(
           listenable: Listenable.merge([library, navIndex, settings]),
-          builder: (context, _) => NavPanel(
-            wide: wide,
-            selectedIndex: navIndex.value,
-            onSelected: _select,
-            items: [
+          builder: (context, _) {
+            // Indices into _dests of the destinations shown.
+            final shown = [
               for (var i = 0; i < _dests.length; i++)
-                NavItem(
-                  icon: _dests[i].icon,
-                  selectedIcon: _dests[i].selectedIcon,
-                  label: _dests[i].label,
-                  count: i == _healthIndex ? library.issueCount : 0,
-                ),
-            ],
-            footer: const ScanStatus(),
-          ),
+                if (!settings.hiddenPages.contains(_dests[i].hideable)) i,
+            ];
+            return NavPanel(
+              wide: wide,
+              selectedIndex: shown.indexOf(navIndex.value),
+              onSelected: (i) => _select(shown[i]),
+              items: [
+                for (final i in shown)
+                  NavItem(
+                    icon: _dests[i].icon,
+                    selectedIcon: _dests[i].selectedIcon,
+                    label: _dests[i].label,
+                    count: i == _healthIndex ? library.issueCount : 0,
+                  ),
+              ],
+              footer: const ScanStatus(),
+            );
+          },
         ),
         Expanded(
           child: Column(children: [

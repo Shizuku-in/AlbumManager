@@ -8,7 +8,8 @@ mod tests;
 
 pub use scan::{rescan_album, scan};
 
-use album_model::{Album, AlbumOverride};
+use crate::rules;
+use album_model::{Album, AlbumOverride, ScanRules};
 use anyhow::{anyhow, Result};
 use std::path::{Path, PathBuf};
 use std::sync::{LazyLock, RwLock};
@@ -25,7 +26,12 @@ pub static STATE: LazyLock<RwLock<State>> = LazyLock::new(|| RwLock::new(State::
 
 pub fn init(data_dir: &Path) -> Result<()> {
     std::fs::create_dir_all(data_dir)?;
-    let root = cache::load_config(data_dir).root.map(PathBuf::from);
+    let cfg = cache::load_config(data_dir);
+    // Invalid saved rules fall back to the defaults rather than failing startup.
+    if rules::set(cfg.rules.unwrap_or_else(rules::defaults)).is_err() {
+        rules::set(rules::defaults())?;
+    }
+    let root = cfg.root.map(PathBuf::from);
     let albums = match &root {
         Some(r) => cache::load_cache(data_dir, r).unwrap_or_default(),
         None => Vec::new(),
@@ -48,7 +54,19 @@ pub fn set_root(root: &Path) -> Result<()> {
         st.albums.clear();
     }
     st.root = Some(root.to_path_buf());
-    cache::save_config(&data, &cache::Config { root: Some(root.to_string_lossy().into_owned()) })
+    let mut cfg = cache::load_config(&data);
+    cfg.root = Some(root.to_string_lossy().into_owned());
+    cache::save_config(&data, &cfg)
+}
+
+/// Validates, installs and saves recognition rules. Takes effect on the next
+/// full scan.
+pub fn set_rules(r: ScanRules) -> Result<()> {
+    rules::set(r.clone())?;
+    let data = STATE.read().unwrap().data_dir.clone().ok_or_else(|| anyhow!("library not initialised"))?;
+    let mut cfg = cache::load_config(&data);
+    cfg.rules = Some(r);
+    cache::save_config(&data, &cfg)
 }
 
 /// (library root, app data dir)

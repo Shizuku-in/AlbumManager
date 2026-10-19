@@ -109,6 +109,16 @@ pub struct AlbumSummary {
     pub overrides: AlbumOverride,
 }
 
+/// User-editable recognition rules, stored with the library config.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct ScanRules {
+    /// Cover image file name prefixes, highest priority first.
+    pub cover_keywords: Vec<String>,
+    /// Album folder name templates using `{date}`, `{year}` and `{title}`,
+    /// tried in order.
+    pub name_templates: Vec<String>,
+}
+
 /// Hand-edited album values, kept apart from the scan results so a rescan
 /// re-applies them. `None` = use the detected value.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]

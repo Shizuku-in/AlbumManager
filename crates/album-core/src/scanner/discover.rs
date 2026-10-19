@@ -1,12 +1,12 @@
 //! Finding album folders inside the library root and fingerprinting them.
 
 use album_formats::audio::{ext_of, is_audio_ext};
+use crate::rules::{self, Rules};
 use crate::util::{fnv1a, unix_secs};
 use regex::Regex;
 use std::path::{Path, PathBuf};
 use std::sync::LazyLock;
 
-pub static ALBUM_NAME: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^\[(\d{6}|\d{8})\]\s*(.+)$").unwrap());
 static YEAR_DIR: LazyLock<Regex> = LazyLock::new(|| Regex::new(r"^(19|20)\d{2}$").unwrap());
 pub static DISC_LIKE: LazyLock<Regex> = LazyLock::new(|| {
     Regex::new(r"(?i)^(disc|disk|cd|dvd|bd|sacd)\s*[-_ ]?\s*\d+|^(flac|wav|alac|mp3|aac|dsd|dsf|dff|hi-?res|24bit|16bit|\d{2,3}k(hz)?)\b").unwrap()
@@ -30,12 +30,12 @@ fn subtree_has_media(dir: &Path) -> bool {
 /// Walks the library and returns album folders.
 pub fn discover(root: &Path) -> Vec<PathBuf> {
     let mut out = Vec::new();
-    visit(root, 0, &mut out);
+    visit(root, 0, &rules::current(), &mut out);
     out.sort();
     out
 }
 
-fn visit(dir: &Path, depth: usize, out: &mut Vec<PathBuf>) {
+fn visit(dir: &Path, depth: usize, rules: &Rules, out: &mut Vec<PathBuf>) {
     let Ok(rd) = std::fs::read_dir(dir) else { return };
     let mut subdirs = Vec::new();
     let mut direct_media = false;
@@ -59,7 +59,7 @@ fn visit(dir: &Path, depth: usize, out: &mut Vec<PathBuf>) {
     }
     let name = dir.file_name().and_then(|n| n.to_str()).unwrap_or("");
     if depth > 0 && !YEAR_DIR.is_match(name) {
-        if ALBUM_NAME.is_match(name) || direct_media {
+        if rules.is_album_name(name) || direct_media {
             out.push(dir.to_path_buf());
             return;
         }
@@ -77,7 +77,7 @@ fn visit(dir: &Path, depth: usize, out: &mut Vec<PathBuf>) {
     }
     subdirs.sort();
     for d in subdirs {
-        visit(&d, depth + 1, out);
+        visit(&d, depth + 1, rules, out);
     }
 }
 

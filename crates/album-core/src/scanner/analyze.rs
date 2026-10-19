@@ -1,8 +1,9 @@
 //! Turns an album folder into an `Album` (summary + details).
 
 use album_formats::audio::{self, is_audio_ext, AudioInfo, LOSSY_EXTS};
-use super::discover::{list_files, FileRec, ALBUM_NAME};
+use super::discover::{list_files, FileRec};
 use crate::imaging::{self, is_image_ext};
+use crate::rules::{self, Rules};
 use crate::util::{natural_cmp, unix_secs};
 use super::discs;
 use album_formats::{riplog, text};
@@ -13,8 +14,6 @@ use std::path::Path;
 use std::sync::LazyLock;
 
 pub const COVER_THUMB: u32 = 480;
-static COVER_NAME: LazyLock<Regex> =
-    LazyLock::new(|| Regex::new(r"(?i)^(cover|folder|front|jacket|album|ジャケット|封面)").unwrap());
 static SCAN_COVER_NAME: LazyLock<Regex> =
     LazyLock::new(|| Regex::new(r"(?i)(cover|front|jacket|ジャケ|表|封面|^0*1\b|_0*1$|^0*1$)").unwrap());
 
@@ -27,24 +26,6 @@ fn most_common<'a>(it: impl Iterator<Item = &'a str>) -> Option<(String, usize)>
     }
     let _ = total;
     m.into_iter().max_by(|a, b| a.1.cmp(&b.1).then(b.0.cmp(a.0))).map(|(k, v)| (k.to_string(), v))
-}
-
-fn parse_date(code: &str) -> (Option<String>, Option<i32>) {
-    let (y, rest) = if code.len() == 8 {
-        (code[0..4].parse::<i32>().ok(), &code[4..])
-    } else {
-        let yy: i32 = code[0..2].parse().unwrap_or(0);
-        (Some(if yy <= 50 { 2000 + yy } else { 1900 + yy }), &code[2..])
-    };
-    let Some(y) = y else { return (None, None) };
-    let m: u32 = rest[0..2].parse().unwrap_or(0);
-    let d: u32 = rest[2..4].parse().unwrap_or(0);
-    let s = match (m, d) {
-        (1..=12, 1..=31) => format!("{y:04}-{m:02}-{d:02}"),
-        (1..=12, _) => format!("{y:04}-{m:02}"),
-        _ => format!("{y:04}"),
-    };
-    (Some(s), Some(y))
 }
 
 fn severity(s: RipStatus) -> u8 {
@@ -88,18 +69,24 @@ fn quality_label(audio_files: &[&FileRec], infos: &[AudioInfo]) -> String {
     }
 }
 
-fn pick_cover<'a>(images: &[&'a FileRec]) -> Option<&'a FileRec> {
+fn file_name(f: &FileRec) -> &str {
+    f.rel.rsplit('/').next().unwrap_or("")
+}
+
+fn pick_cover<'a>(images: &[&'a FileRec], rules: &Rules) -> Option<&'a FileRec> {
     let root: Vec<_> = images.iter().copied().filter(|f| !f.rel.contains('/')).collect();
-    let by_name = |list: &[&'a FileRec], re: &Regex| {
-        list.iter().copied().find(|f| re.is_match(f.rel.rsplit('/').next().unwrap_or("")))
-    };
-    by_name(&root, &COVER_NAME)
+    // Best-ranked keyword wins; ties go to the first file.
+    root.iter()
+        .copied()
+        .filter_map(|f| Some((rules.cover_rank(file_name(f))?, f)))
+        .min_by_key(|(rank, _)| *rank)
+        .map(|(_, f)| f)
         .or_else(|| root.first().copied())
         .or_else(|| {
             images.iter().copied().find(|f| {
-                let name = f.rel.rsplit('/').next().unwrap_or("");
+                let name = file_name(f);
                 let stem = name.rsplit_once('.').map(|s| s.0).unwrap_or(name);
-                COVER_NAME.is_match(stem) || SCAN_COVER_NAME.is_match(stem)
+                rules.cover_rank(name).is_some() || SCAN_COVER_NAME.is_match(stem)
             })
         })
         .or_else(|| images.first().copied())
@@ -135,9 +122,9 @@ pub fn analyze_files(root: &Path, dir: &Path, cache_dir: &Path, fingerprint: u64
 
     // ---- metadata ----
     let (mut date, mut year, mut title) = (None, None, folder_name.clone());
-    let standard_name = if let Some(c) = ALBUM_NAME.captures(&folder_name) {
-        (date, year) = parse_date(&c[1]);
-        title = c[2].trim().to_string();
+    let rules = rules::current();
+    let standard_name = if let Some(m) = rules.parse_name(&folder_name) {
+        (date, year, title) = (m.date, m.year, m.title);
         true
     } else {
         false
@@ -204,7 +191,7 @@ pub fn analyze_files(root: &Path, dir: &Path, cache_dir: &Path, fingerprint: u64
         AlbumSource::Unknown
     };
     // ---- cover ----
-    let cover = pick_cover(&image_files);
+    let cover = pick_cover(&image_files, &rules);
     let mut cover_path = cover.map(|c| c.path.to_string_lossy().into_owned());
     let mut cover_thumb = cover.and_then(|c| imaging::thumbnail(&c.path, cache_dir, COVER_THUMB).ok());
     if cover_thumb.is_none() {
@@ -239,7 +226,7 @@ pub fn analyze_files(root: &Path, dir: &Path, cache_dir: &Path, fingerprint: u64
         }
     }
     if !standard_name {
-        issues.push(Issue { kind: IssueKind::NonStandardName, message: "文件夹名不符合 “[YYMMDD] 标题” 格式".into(), path: None });
+        issues.push(Issue { kind: IssueKind::NonStandardName, message: format!("文件夹名不符合命名格式（{}）", rules.source.name_templates.join("、")), path: None });
     }
 
     let mut images: Vec<ImageItem> = image_files

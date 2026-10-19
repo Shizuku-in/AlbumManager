@@ -1,7 +1,7 @@
-//! On-disk persistence: `config.json` (library root) and `library.json` (scan cache).
+//! On-disk persistence: `config.json` (library root, rules) and `library.json` (scan cache).
 
 use super::State;
-use album_model::Album;
+use album_model::{Album, ScanRules};
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
@@ -11,6 +11,8 @@ const CACHE_VERSION: u32 = 2;
 #[derive(Serialize, Deserialize, Default)]
 pub struct Config {
     pub root: Option<String>,
+    #[serde(default)]
+    pub rules: Option<ScanRules>,
 }
 
 #[derive(Serialize, Deserialize)]

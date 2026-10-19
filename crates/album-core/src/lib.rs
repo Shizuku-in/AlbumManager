@@ -3,5 +3,6 @@
 
 pub mod imaging;
 pub mod library;
+pub mod rules;
 mod scanner;
 mod util;

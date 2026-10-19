@@ -70,6 +70,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   int dco_decode_box_autoadd_i_32(dynamic raw);
 
   @protected
+  ScanRules dco_decode_box_autoadd_scan_rules(dynamic raw);
+
+  @protected
   int dco_decode_box_autoadd_u_32(dynamic raw);
 
   @protected
@@ -169,6 +172,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ScanEvent dco_decode_scan_event(dynamic raw);
 
   @protected
+  ScanRules dco_decode_scan_rules(dynamic raw);
+
+  @protected
   Track dco_decode_track(dynamic raw);
 
   @protected
@@ -234,6 +240,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   int sse_decode_box_autoadd_i_32(SseDeserializer deserializer);
+
+  @protected
+  ScanRules sse_decode_box_autoadd_scan_rules(SseDeserializer deserializer);
 
   @protected
   int sse_decode_box_autoadd_u_32(SseDeserializer deserializer);
@@ -339,6 +348,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   ScanEvent sse_decode_scan_event(SseDeserializer deserializer);
 
   @protected
+  ScanRules sse_decode_scan_rules(SseDeserializer deserializer);
+
+  @protected
   Track sse_decode_track(SseDeserializer deserializer);
 
   @protected
@@ -412,6 +424,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_box_autoadd_i_32(int self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_box_autoadd_scan_rules(
+    ScanRules self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_box_autoadd_u_32(int self, SseSerializer serializer);
@@ -529,6 +547,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_scan_event(ScanEvent self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_scan_rules(ScanRules self, SseSerializer serializer);
 
   @protected
   void sse_encode_track(Track self, SseSerializer serializer);

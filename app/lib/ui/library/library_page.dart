@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:album_manager/src/rust/third_party/album_model.dart';
 import 'package:album_manager/state/library_browser.dart';
 import 'package:album_manager/state/library_controller.dart';
+import 'package:album_manager/state/settings_controller.dart';
 import 'package:album_manager/ui/album/album_page.dart';
 import 'package:album_manager/ui/common/collapsing_app_bar.dart';
 import 'package:album_manager/ui/common/scroll_label.dart';
@@ -35,7 +36,7 @@ class _LibraryPageState extends State<LibraryPage> {
   Widget build(BuildContext context) {
     final t = Theme.of(context);
     return ListenableBuilder(
-      listenable: Listenable.merge([library, browser]),
+      listenable: Listenable.merge([library, browser, settings]),
       builder: (context, _) {
         final albums = browser.visible(library.albums);
         final filterCount = browser.activeFilterCount;

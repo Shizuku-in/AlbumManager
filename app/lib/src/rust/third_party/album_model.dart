@@ -7,7 +7,7 @@ import '../frb_generated.dart';
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`
 
 /// Full album info for the detail page.
 class Album {
@@ -485,6 +485,29 @@ enum RipStatus {
 
   /// Log exists but could not be interpreted (e.g. SACD logs).
   unknown,
+}
+
+/// User-editable recognition rules, stored with the library config.
+class ScanRules {
+  /// Cover image file name prefixes, highest priority first.
+  final List<String> coverKeywords;
+
+  /// Album folder name templates using `{date}`, `{year}` and `{title}`,
+  /// tried in order.
+  final List<String> nameTemplates;
+
+  const ScanRules({required this.coverKeywords, required this.nameTemplates});
+
+  @override
+  int get hashCode => coverKeywords.hashCode ^ nameTemplates.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is ScanRules &&
+          runtimeType == other.runtimeType &&
+          coverKeywords == other.coverKeywords &&
+          nameTemplates == other.nameTemplates;
 }
 
 class Track {

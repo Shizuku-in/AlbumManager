@@ -222,7 +222,7 @@ class _AlbumPageState extends State<AlbumPage> with SingleTickerProviderStateMix
         Expanded(
           child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Text(
-              [s.source.label, s.date].whereType<String>().join(' · '),
+              [s.source.label, settings.formatDate(s.date)].whereType<String>().join(' · '),
               style: t.textTheme.labelLarge?.copyWith(color: t.colorScheme.primary),
             ),
             const SizedBox(height: 8),

@@ -85,7 +85,25 @@ class TriFilter<T> {
     }
     return !anyIncluded || hit;
   }
+
+  /// `mode|value` strings for persistence.
+  Iterable<String> encode(String Function(T) nameOf) => modes.entries.map((e) => '${e.value.name}|${nameOf(e.key)}');
+
+  /// Inverse of [encode]; unknown entries are dropped.
+  static TriFilter<T> decode<T>(Iterable<String> items, T? Function(String) parse) {
+    final m = <T, FilterMode>{};
+    for (final s in items) {
+      final i = s.indexOf('|');
+      if (i < 0) continue;
+      final mode = FilterMode.values.where((f) => f.name == s.substring(0, i)).firstOrNull;
+      final value = parse(s.substring(i + 1));
+      if (mode != null && value != null) m[value] = mode;
+    }
+    return TriFilter(m);
+  }
 }
+
+T? _byName<T extends Enum>(List<T> values, String name) => values.where((v) => v.name == name).firstOrNull;
 
 /// Filter selection. Within a group any included option matches and no
 /// excluded one may; groups combine with AND. Content flags are each a
@@ -104,6 +122,26 @@ class AlbumFilters {
     this.ripStatuses = const TriFilter(),
     this.flags = const TriFilter(),
   });
+
+  /// `group|mode|value` strings for persistence.
+  List<String> encode() => [
+    for (final s in sources.encode((v) => v.name)) 'source|$s',
+    for (final s in qualities.encode((v) => v.name)) 'quality|$s',
+    for (final s in formats.encode((v) => v)) 'format|$s',
+    for (final s in ripStatuses.encode((v) => v.name)) 'rip|$s',
+    for (final s in flags.encode((v) => v.name)) 'flag|$s',
+  ];
+
+  factory AlbumFilters.decode(List<String> items) {
+    Iterable<String> group(String g) => items.where((s) => s.startsWith('$g|')).map((s) => s.substring(g.length + 1));
+    return AlbumFilters(
+      sources: TriFilter.decode(group('source'), (n) => _byName(AlbumSource.values, n)),
+      qualities: TriFilter.decode(group('quality'), (n) => _byName(AudioQuality.values, n)),
+      formats: TriFilter.decode(group('format'), (n) => n),
+      ripStatuses: TriFilter.decode(group('rip'), (n) => _byName(RipStatus.values, n)),
+      flags: TriFilter.decode(group('flag'), (n) => _byName(ContentFlag.values, n)),
+    );
+  }
 
   int get count => sources.length + qualities.length + formats.length + ripStatuses.length + flags.length;
 
@@ -159,14 +197,30 @@ class LibraryBrowser extends ChangeNotifier {
   bool gridView = true;
 
   void load() {
-    gridView = settings.prefs.getBool('gridView') ?? true;
-    // The "has issues" filter depends on which checks are enabled.
+    final prefs = settings.prefs;
+    gridView = prefs.getBool('gridView') ?? true;
+    sort = _byName(SortMode.values, prefs.getString('sort') ?? '') ?? SortMode.dateDesc;
+    if (settings.rememberFilters) filters = AlbumFilters.decode(prefs.getStringList('filters') ?? const []);
     var hidden = settings.hiddenIssues;
+    var remember = settings.rememberFilters;
     settings.addListener(() {
+      if (remember != settings.rememberFilters) {
+        remember = settings.rememberFilters;
+        _saveFilters();
+      }
+      // The "has issues" filter depends on which checks are enabled.
       if (identical(hidden, settings.hiddenIssues)) return;
       hidden = settings.hiddenIssues;
       notifyListeners();
     });
+  }
+
+  void _saveFilters() {
+    if (settings.rememberFilters) {
+      settings.prefs.setStringList('filters', filters.encode());
+    } else {
+      settings.prefs.remove('filters');
+    }
   }
 
   void setQuery(String q) {
@@ -176,6 +230,7 @@ class LibraryBrowser extends ChangeNotifier {
 
   void setFilters(AlbumFilters f) {
     filters = f;
+    _saveFilters();
     notifyListeners();
   }
 
@@ -185,11 +240,13 @@ class LibraryBrowser extends ChangeNotifier {
   void clearFilters() {
     filters = const AlbumFilters();
     yearFilter = null;
+    _saveFilters();
     notifyListeners();
   }
 
   void setSort(SortMode s) {
     sort = s;
+    settings.prefs.setString('sort', s.name);
     notifyListeners();
   }
 
