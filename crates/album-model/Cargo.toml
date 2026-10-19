@@ -3,6 +3,9 @@ name = "album-model"
 description = "Data types describing an album library."
 version.workspace = true
 edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
 publish.workspace = true
 
 [dependencies]

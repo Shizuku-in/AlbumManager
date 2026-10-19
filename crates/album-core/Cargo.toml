@@ -3,6 +3,9 @@ name = "album-core"
 description = "Album library engine: discovery, analysis, thumbnails and cache."
 version.workspace = true
 edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
 publish.workspace = true
 
 [dependencies]

@@ -699,7 +699,7 @@ packages:
       path: rust_builder
       relative: true
     source: path
-    version: "0.0.1"
+    version: "0.1.0"
   screen_retriever:
     dependency: transitive
     description:

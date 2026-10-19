@@ -3,6 +3,9 @@ name = "rust_lib_album_manager"
 description = "flutter_rust_bridge layer between the Flutter app and album-core."
 version.workspace = true
 edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
 publish.workspace = true
 
 [lib]

@@ -26,3 +26,7 @@ flutter run -d windows
 
 cargo test --workspace                 # 在仓库根目录
 ```
+
+## 许可证
+
+[MIT](LICENSE)。内置的 HarmonyOS Sans 字体（`app/assets/fonts/`）遵循其自身的许可协议。

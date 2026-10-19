@@ -3,6 +3,9 @@ name = "album-formats"
 description = "Readers for audio files, cue sheets, rip logs and legacy text encodings."
 version.workspace = true
 edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
 publish.workspace = true
 
 [dependencies]

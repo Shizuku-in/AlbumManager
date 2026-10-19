@@ -1,6 +1,6 @@
 name: rust_lib_album_manager
-description: "Utility to build Rust code"
-version: 0.0.1
+description: "Builds the Rust library of Album Manager"
+version: 0.1.0
 publish_to: none
 
 environment:
