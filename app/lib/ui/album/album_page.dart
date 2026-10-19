@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:album_manager/src/rust/api/library.dart' as api;
 import 'package:album_manager/src/rust/third_party/album_model.dart';
 import 'package:album_manager/state/library_controller.dart';
+import 'package:album_manager/state/settings_controller.dart';
 import 'package:album_manager/theme/app_theme.dart';
 import 'package:album_manager/ui/album/cue_fix_dialog.dart';
 import 'package:album_manager/ui/album/edit_album_dialog.dart';
@@ -110,7 +111,7 @@ class _AlbumPageState extends State<AlbumPage> with SingleTickerProviderStateMix
   Widget _buildPage(BuildContext context) {
     final a = _album;
     final hasBadCue = a?.cues.any((c) => !c.isUtf8) ?? false;
-    final issues = _s.issues.where((i) => i.kind != IssueKind.nonStandardName).toList();
+    final issues = settings.issuesOf(_s).where((i) => i.kind != IssueKind.nonStandardName).toList();
     return Scaffold(
       body: CustomScrollView(controller: _scroll, slivers: [
         SliverAppBar(

@@ -57,3 +57,7 @@ Future<Album> fixCueEncoding({required String id}) =>
 /// Removes all cached thumbnails (they are regenerated on next scan).
 Future<void> clearThumbnailCache() =>
     RustLib.instance.api.crateApiLibraryClearThumbnailCache();
+
+/// Where the app keeps its data and how much the thumbnail cache takes.
+Future<CacheInfo> cacheInfo() =>
+    RustLib.instance.api.crateApiLibraryCacheInfo();

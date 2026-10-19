@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:album_manager/state/library_controller.dart';
 import 'package:album_manager/state/navigation.dart';
+import 'package:album_manager/state/settings_controller.dart';
 import 'package:album_manager/ui/health/health_page.dart';
 import 'package:album_manager/ui/library/library_page.dart';
 import 'package:album_manager/ui/settings/settings_page.dart';
@@ -62,7 +63,7 @@ class _ShellState extends State<Shell> {
     return Scaffold(
       body: Row(children: [
         ListenableBuilder(
-          listenable: Listenable.merge([library, navIndex]),
+          listenable: Listenable.merge([library, navIndex, settings]),
           builder: (context, _) => NavPanel(
             wide: wide,
             selectedIndex: navIndex.value,

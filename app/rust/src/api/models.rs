@@ -12,3 +12,10 @@ pub struct LibraryInfo {
     pub root: Option<String>,
     pub albums: Vec<AlbumSummary>,
 }
+
+pub struct CacheInfo {
+    /// App data folder (config, album cache, thumbnails).
+    pub data_dir: String,
+    pub thumb_count: i32,
+    pub thumb_bytes: i64,
+}

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import 'package:album_manager/src/rust/third_party/album_model.dart';
 import 'package:album_manager/state/library_controller.dart';
+import 'package:album_manager/state/settings_controller.dart';
 import 'package:album_manager/ui/album/album_page.dart';
 import 'package:album_manager/ui/album/cue_fix_dialog.dart';
 import 'package:album_manager/ui/common/app_page.dart';
@@ -11,12 +12,12 @@ import 'package:album_manager/util/memo.dart';
 import 'package:album_manager/util/system.dart';
 
 /// Albums affected per issue kind (each album counted once per kind).
-final _byKind = Memo<List<AlbumSummary>, Map<IssueKind, List<AlbumSummary>>>();
+final _byKind = Memo<(List<AlbumSummary>, Set<IssueKind>), Map<IssueKind, List<AlbumSummary>>>();
 
 Map<IssueKind, List<AlbumSummary>> _group(List<AlbumSummary> albums) {
   final m = <IssueKind, List<AlbumSummary>>{};
   for (final a in albums) {
-    for (final k in a.issues.map((i) => i.kind).toSet()) {
+    for (final k in settings.issuesOf(a).map((i) => i.kind).toSet()) {
       m.putIfAbsent(k, () => []).add(a);
     }
   }
@@ -53,11 +54,11 @@ class _HealthPageState extends State<HealthPage> {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: library,
+      listenable: Listenable.merge([library, settings]),
       builder: (context, _) {
         final t = Theme.of(context);
         final albums = library.albums;
-        final byKind = _byKind(albums, () => _group(albums));
+        final byKind = _byKind((albums, settings.hiddenIssues), () => _group(albums));
         final kinds = IssueKind.values.where(byKind.containsKey).toList();
         final kind = (_kind != null && kinds.contains(_kind)) ? _kind : (kinds.isEmpty ? null : kinds.first);
         final affected = byKind[kind] ?? const <AlbumSummary>[];
@@ -78,7 +79,7 @@ class _HealthPageState extends State<HealthPage> {
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
                 child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
                   Text(
-                    kinds.isEmpty ? '没有发现问题' : '$total 项问题，涉及 ${library.albums.where((a) => a.issues.isNotEmpty).length} 张专辑',
+                    kinds.isEmpty ? '没有发现问题' : '$total 项问题，涉及 ${library.albums.where((a) => settings.issuesOf(a).isNotEmpty).length} 张专辑',
                     style: t.textTheme.bodyMedium?.copyWith(color: t.colorScheme.onSurfaceVariant),
                   ),
                   const SizedBox(height: 12),

@@ -1,12 +1,16 @@
 import 'package:flutter/material.dart';
 
 import 'package:album_manager/src/rust/api/library.dart' as api;
+import 'package:album_manager/src/rust/api/models.dart';
+import 'package:album_manager/src/rust/third_party/album_model.dart';
 import 'package:album_manager/state/library_controller.dart';
 import 'package:album_manager/state/settings_controller.dart';
 import 'package:album_manager/theme/app_theme.dart';
 import 'package:album_manager/ui/common/app_page.dart';
 import 'package:album_manager/ui/common/section_header.dart';
 import 'package:album_manager/ui/settings/welcome_page.dart';
+import 'package:album_manager/util/format.dart';
+import 'package:album_manager/util/labels.dart';
 import 'package:album_manager/util/system.dart';
 
 class SettingsPage extends StatelessWidget {
@@ -53,6 +57,13 @@ class SettingsPage extends StatelessWidget {
                   ),
                 ]),
                 group('扫描', [
+                  SwitchListTile(
+                    secondary: const Icon(Icons.play_circle_outline),
+                    title: const Text('启动时自动扫描'),
+                    subtitle: const Text('打开应用后在后台进行一次增量扫描'),
+                    value: settings.scanOnStartup,
+                    onChanged: settings.setScanOnStartup,
+                  ),
                   ListTile(
                     leading: const Icon(Icons.sync),
                     title: const Text('增量扫描'),
@@ -65,21 +76,38 @@ class SettingsPage extends StatelessWidget {
                     subtitle: const Text('重新解析所有 CUE、日志和音频信息'),
                     trailing: OutlinedButton(onPressed: library.scanning ? null : () => library.rescan(force: true), child: const Text('扫描')),
                   ),
+                ]),
+                group('健康检查', [
                   ListTile(
-                    leading: const Icon(Icons.image_outlined),
-                    title: const Text('重建封面缓存'),
-                    subtitle: const Text('删除缩略图缓存并重新生成'),
-                    trailing: OutlinedButton(
-                      onPressed: library.scanning
-                          ? null
-                          : () async {
-                              await api.clearThumbnailCache();
-                              await library.rescan(force: true);
-                            },
-                      child: const Text('重建'),
+                    leading: const Icon(Icons.health_and_safety_outlined),
+                    title: const Text('检查项'),
+                    subtitle: Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        children: [
+                          for (final k in IssueKind.values)
+                            FilterChip(
+                              avatar: Icon(k.icon),
+                              label: Text(k.label),
+                              selected: !settings.hiddenIssues.contains(k),
+                              showCheckmark: false,
+                              onSelected: (v) => settings.setIssueEnabled(k, v),
+                            ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(56, 0, 24, 8),
+                    child: Text(
+                      '关闭的检查项不会出现在健康检查、专辑详情和 “有问题” 筛选中，也不计入导航栏的问题数。',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Theme.of(context).colorScheme.onSurfaceVariant),
                     ),
                   ),
                 ]),
+                group('存储', [const _CacheTile()]),
                 group('外观', [
                   ListTile(
                     leading: const Icon(Icons.brightness_6_outlined),
@@ -144,6 +172,68 @@ class SettingsPage extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+/// Thumbnail cache size, refreshed after each scan.
+class _CacheTile extends StatefulWidget {
+  const _CacheTile();
+
+  @override
+  State<_CacheTile> createState() => _CacheTileState();
+}
+
+class _CacheTileState extends State<_CacheTile> {
+  CacheInfo? _info;
+  bool _wasScanning = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _wasScanning = library.scanning;
+    library.addListener(_onLibrary);
+    _refresh();
+  }
+
+  @override
+  void dispose() {
+    library.removeListener(_onLibrary);
+    super.dispose();
+  }
+
+  void _onLibrary() {
+    if (_wasScanning && !library.scanning) _refresh();
+    _wasScanning = library.scanning;
+  }
+
+  Future<void> _refresh() async {
+    final info = await api.cacheInfo();
+    if (mounted) setState(() => _info = info);
+  }
+
+  Future<void> _rebuild() async {
+    await api.clearThumbnailCache();
+    await _refresh();
+    await library.rescan(force: true);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final info = _info;
+    return ListTile(
+      leading: const Icon(Icons.image_outlined),
+      title: const Text('封面缓存'),
+      subtitle: Text(info == null ? '正在统计…' : '${info.thumbCount} 张缩略图，${formatSize(info.thumbBytes)}\n${info.dataDir}'),
+      isThreeLine: info != null,
+      trailing: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (info != null) TextButton(onPressed: () => openPath(info.dataDir), child: const Text('打开')),
+          const SizedBox(width: 8),
+          OutlinedButton(onPressed: library.scanning ? null : _rebuild, child: const Text('重建')),
+        ],
+      ),
     );
   }
 }

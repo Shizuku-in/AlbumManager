@@ -104,3 +104,16 @@ pub fn clear_thumbnail_cache() -> Result<()> {
     }
     Ok(())
 }
+
+/// Where the app keeps its data and how much the thumbnail cache takes.
+pub fn cache_info() -> Result<CacheInfo> {
+    let data = library::STATE.read().unwrap().data_dir.clone().ok_or_else(|| anyhow!("library not initialised"))?;
+    let (mut count, mut bytes) = (0, 0);
+    if let Ok(entries) = std::fs::read_dir(data.join("thumbs")) {
+        for m in entries.flatten().filter_map(|e| e.metadata().ok()).filter(|m| m.is_file()) {
+            count += 1;
+            bytes += m.len() as i64;
+        }
+    }
+    Ok(CacheInfo { data_dir: data.to_string_lossy().into_owned(), thumb_count: count, thumb_bytes: bytes })
+}

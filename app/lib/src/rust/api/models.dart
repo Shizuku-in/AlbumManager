@@ -10,6 +10,32 @@ import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 import 'package:freezed_annotation/freezed_annotation.dart' hide protected;
 part 'models.freezed.dart';
 
+class CacheInfo {
+  /// App data folder (config, album cache, thumbnails).
+  final String dataDir;
+  final int thumbCount;
+  final PlatformInt64 thumbBytes;
+
+  const CacheInfo({
+    required this.dataDir,
+    required this.thumbCount,
+    required this.thumbBytes,
+  });
+
+  @override
+  int get hashCode =>
+      dataDir.hashCode ^ thumbCount.hashCode ^ thumbBytes.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is CacheInfo &&
+          runtimeType == other.runtimeType &&
+          dataDir == other.dataDir &&
+          thumbCount == other.thumbCount &&
+          thumbBytes == other.thumbBytes;
+}
+
 class LibraryInfo {
   final String? root;
   final List<AlbumSummary> albums;

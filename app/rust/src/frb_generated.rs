@@ -39,7 +39,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.13.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 1486659204;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 775402480;
 
 // Section: executor
 
@@ -75,6 +75,40 @@ fn wire__album_model__album_override_default_impl(
                     let output_ok = Ok::<_, ()>(album_model::AlbumOverride::default())?;
                     std::result::Result::Ok(output_ok)
                 })())
+            }
+        },
+    )
+}
+fn wire__crate__api__library__cache_info_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "cache_info",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, flutter_rust_bridge::for_generated::anyhow::Error>(
+                    (move || {
+                        let output_ok = crate::api::library::cache_info()?;
+                        std::result::Result::Ok(output_ok)
+                    })(),
+                )
             }
         },
     )
@@ -756,6 +790,20 @@ impl SseDecode for bool {
     }
 }
 
+impl SseDecode for crate::api::models::CacheInfo {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_dataDir = <String>::sse_decode(deserializer);
+        let mut var_thumbCount = <i32>::sse_decode(deserializer);
+        let mut var_thumbBytes = <i64>::sse_decode(deserializer);
+        return crate::api::models::CacheInfo {
+            data_dir: var_dataDir,
+            thumb_count: var_thumbCount,
+            thumb_bytes: var_thumbBytes,
+        };
+    }
+}
+
 impl SseDecode for album_model::CueInfo {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -1256,19 +1304,20 @@ fn pde_ffi_dispatcher_primary_impl(
     // Codec=Pde (Serialization + dispatch), see doc to use other codecs
     match func_id {
         1 => wire__album_model__album_override_default_impl(port, ptr, rust_vec_len, data_len),
-        2 => {
+        2 => wire__crate__api__library__cache_info_impl(port, ptr, rust_vec_len, data_len),
+        3 => {
             wire__crate__api__library__clear_thumbnail_cache_impl(port, ptr, rust_vec_len, data_len)
         }
-        3 => wire__crate__api__library__fix_cue_encoding_impl(port, ptr, rust_vec_len, data_len),
-        4 => wire__crate__api__library__get_album_impl(port, ptr, rust_vec_len, data_len),
-        5 => wire__crate__api__library__get_thumbnail_impl(port, ptr, rust_vec_len, data_len),
-        6 => wire__crate__api__init_app_impl(port, ptr, rust_vec_len, data_len),
-        7 => wire__crate__api__library__init_library_impl(port, ptr, rust_vec_len, data_len),
-        8 => wire__crate__api__library__read_text_file_impl(port, ptr, rust_vec_len, data_len),
-        9 => wire__crate__api__library__rescan_album_impl(port, ptr, rust_vec_len, data_len),
-        10 => wire__crate__api__library__scan_library_impl(port, ptr, rust_vec_len, data_len),
-        11 => wire__crate__api__library__set_album_override_impl(port, ptr, rust_vec_len, data_len),
-        12 => wire__crate__api__library__set_library_root_impl(port, ptr, rust_vec_len, data_len),
+        4 => wire__crate__api__library__fix_cue_encoding_impl(port, ptr, rust_vec_len, data_len),
+        5 => wire__crate__api__library__get_album_impl(port, ptr, rust_vec_len, data_len),
+        6 => wire__crate__api__library__get_thumbnail_impl(port, ptr, rust_vec_len, data_len),
+        7 => wire__crate__api__init_app_impl(port, ptr, rust_vec_len, data_len),
+        8 => wire__crate__api__library__init_library_impl(port, ptr, rust_vec_len, data_len),
+        9 => wire__crate__api__library__read_text_file_impl(port, ptr, rust_vec_len, data_len),
+        10 => wire__crate__api__library__rescan_album_impl(port, ptr, rust_vec_len, data_len),
+        11 => wire__crate__api__library__scan_library_impl(port, ptr, rust_vec_len, data_len),
+        12 => wire__crate__api__library__set_album_override_impl(port, ptr, rust_vec_len, data_len),
+        13 => wire__crate__api__library__set_library_root_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -1426,6 +1475,25 @@ impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<album_model::AudioQuality>>
 {
     fn into_into_dart(self) -> FrbWrapper<album_model::AudioQuality> {
         self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for crate::api::models::CacheInfo {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.data_dir.into_into_dart().into_dart(),
+            self.thumb_count.into_into_dart().into_dart(),
+            self.thumb_bytes.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive for crate::api::models::CacheInfo {}
+impl flutter_rust_bridge::IntoIntoDart<crate::api::models::CacheInfo>
+    for crate::api::models::CacheInfo
+{
+    fn into_into_dart(self) -> crate::api::models::CacheInfo {
+        self
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
@@ -1849,6 +1917,15 @@ impl SseEncode for bool {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         serializer.cursor.write_u8(self as _).unwrap();
+    }
+}
+
+impl SseEncode for crate::api::models::CacheInfo {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.data_dir, serializer);
+        <i32>::sse_encode(self.thumb_count, serializer);
+        <i64>::sse_encode(self.thumb_bytes, serializer);
     }
 }
 

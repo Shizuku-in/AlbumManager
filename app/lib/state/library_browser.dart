@@ -32,7 +32,7 @@ extension ContentFlagX on ContentFlag {
     ContentFlag.edited => '手动编辑过',
   };
   bool matches(AlbumSummary a) => switch (this) {
-    ContentFlag.hasIssues => a.issues.isNotEmpty,
+    ContentFlag.hasIssues => settings.issuesOf(a).isNotEmpty,
     ContentFlag.missingCover => a.coverThumb == null,
     // More than one image: a cover alone isn't a scan.
     ContentFlag.hasScans => a.imageCount > 1,
@@ -158,7 +158,16 @@ class LibraryBrowser extends ChangeNotifier {
   int? yearFilter;
   bool gridView = true;
 
-  void load() => gridView = settings.prefs.getBool('gridView') ?? true;
+  void load() {
+    gridView = settings.prefs.getBool('gridView') ?? true;
+    // The "has issues" filter depends on which checks are enabled.
+    var hidden = settings.hiddenIssues;
+    settings.addListener(() {
+      if (identical(hidden, settings.hiddenIssues)) return;
+      hidden = settings.hiddenIssues;
+      notifyListeners();
+    });
+  }
 
   void setQuery(String q) {
     query = q;
@@ -202,11 +211,11 @@ class LibraryBrowser extends ChangeNotifier {
     notifyListeners();
   }
 
-  final _visible = Memo<(List<AlbumSummary>, String, AlbumFilters, SortMode, int?), List<AlbumSummary>>();
-  final _counts = Memo<List<AlbumSummary>, FilterCounts>();
+  final _visible = Memo<(List<AlbumSummary>, String, AlbumFilters, SortMode, int?, Set<IssueKind>), List<AlbumSummary>>();
+  final _counts = Memo<(List<AlbumSummary>, Set<IssueKind>), FilterCounts>();
 
   /// Albums after search / filters / sort.
-  List<AlbumSummary> visible(List<AlbumSummary> albums) => _visible((albums, query, filters, sort, yearFilter), () {
+  List<AlbumSummary> visible(List<AlbumSummary> albums) => _visible((albums, query, filters, sort, yearFilter, settings.hiddenIssues), () {
     final q = query.trim().toLowerCase();
     final list = albums.where((a) {
       if (!filters.matches(a)) return false;
@@ -236,7 +245,7 @@ class LibraryBrowser extends ChangeNotifier {
   });
 
   /// Album counts per filter option (for the filter panel).
-  FilterCounts counts(List<AlbumSummary> albums) => _counts(albums, () => FilterCounts(albums));
+  FilterCounts counts(List<AlbumSummary> albums) => _counts((albums, settings.hiddenIssues), () => FilterCounts(albums));
 }
 
 final browser = LibraryBrowser();

@@ -7,6 +7,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:album_manager/src/rust/api/library.dart' as api;
 import 'package:album_manager/src/rust/api/models.dart';
 import 'package:album_manager/src/rust/third_party/album_model.dart';
+import 'package:album_manager/state/settings_controller.dart';
 import 'package:album_manager/util/memo.dart';
 
 class ScanProgress {
@@ -39,7 +40,7 @@ class LibraryController extends ChangeNotifier {
     albums = info.albums;
     ready = true;
     notifyListeners();
-    if (root != null && Directory(root!).existsSync()) {
+    if (settings.scanOnStartup && root != null && Directory(root!).existsSync()) {
       unawaited(rescan());
     }
   }
@@ -91,7 +92,7 @@ class LibraryController extends ChangeNotifier {
   }
 
   final _byYear = Memo<List<AlbumSummary>, Map<int, List<AlbumSummary>>>();
-  final _issueCount = Memo<List<AlbumSummary>, int>();
+  final _issueCount = Memo<(List<AlbumSummary>, Set<IssueKind>), int>();
 
   /// Albums grouped by year, newest first (0 = unknown year).
   Map<int, List<AlbumSummary>> get byYear => _byYear(albums, () {
@@ -103,7 +104,7 @@ class LibraryController extends ChangeNotifier {
       });
 
   /// Same metric as the health page: one per (album, issue kind).
-  int get issueCount => _issueCount(albums, () => albums.fold(0, (n, a) => n + a.issues.map((i) => i.kind).toSet().length));
+  int get issueCount => _issueCount((albums, settings.hiddenIssues), () => albums.fold(0, (n, a) => n + settings.issuesOf(a).map((i) => i.kind).toSet().length));
 }
 
 final library = LibraryController();
