@@ -106,6 +106,16 @@ class _HealthPageState extends State<HealthPage> with SingleTickerProviderStateM
         final listed = byKind[shownKind]!;
         return AppPage(
           title: '健康检查',
+          // Bulk fix for the selected kind. In the app bar rather than above
+          // the list, so it doesn't push the list around while switching.
+          actions: [
+            if (kind == IssueKind.cueEncoding && affected.isNotEmpty)
+              FilledButton.icon(
+                onPressed: _fixing ? null : () => _fixAll(affected),
+                icon: const Icon(Icons.auto_fix_high),
+                label: Text('全部转换为 UTF-8（${affected.length}）'),
+              ),
+          ],
           slivers: [
             SliverToBoxAdapter(
               child: Padding(
@@ -129,15 +139,6 @@ class _HealthPageState extends State<HealthPage> with SingleTickerProviderStateM
                         },
                       ),
                   ]),
-                  // Bulk fix for the selected kind, next to the list it acts on.
-                  if (kind == IssueKind.cueEncoding && affected.isNotEmpty) ...[
-                    const SizedBox(height: 16),
-                    FilledButton.icon(
-                      onPressed: _fixing ? null : () => _fixAll(affected),
-                      icon: const Icon(Icons.auto_fix_high),
-                      label: Text('全部转换为 UTF-8（${affected.length} 张专辑）'),
-                    ),
-                  ],
                   if (_fixing) ...[const SizedBox(height: 12), const LinearProgressIndicator()],
                 ]),
               ),

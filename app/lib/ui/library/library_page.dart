@@ -8,6 +8,7 @@ import 'package:album_manager/state/settings_controller.dart';
 import 'package:album_manager/ui/album/album_page.dart';
 import 'package:album_manager/ui/common/collapsing_app_bar.dart';
 import 'package:album_manager/ui/common/scroll_label.dart';
+import 'package:album_manager/ui/common/shared_axis.dart';
 import 'package:album_manager/ui/common/smooth_scroll.dart';
 import 'package:album_manager/ui/library/album_card.dart';
 import 'package:album_manager/ui/library/filter_panel.dart';
@@ -24,14 +25,24 @@ class LibraryPage extends StatefulWidget {
   State<LibraryPage> createState() => _LibraryPageState();
 }
 
-class _LibraryPageState extends State<LibraryPage> {
+class _LibraryPageState extends State<LibraryPage> with SingleTickerProviderStateMixin {
   final _search = TextEditingController(text: browser.query);
   final _scroll = SmoothScrollController();
+
+  /// Grid ↔ list: M3 fade through (the layouts have no spatial relationship).
+  static const _gridIndex = 0, _listIndex = 1;
+  late final _layoutSwitch = SharedAxisSwitch(
+    vsync: this,
+    initial: browser.gridView ? _gridIndex : _listIndex,
+    distance: 0,
+    onShownChanged: () => setState(() {}),
+  );
 
   @override
   void dispose() {
     _search.dispose();
     _scroll.dispose();
+    _layoutSwitch.dispose();
     super.dispose();
   }
 
@@ -107,7 +118,10 @@ class _LibraryPageState extends State<LibraryPage> {
                         ButtonSegment(value: false, icon: Icon(Icons.view_list), tooltip: '列表'),
                       ],
                       selected: {browser.gridView},
-                      onSelectionChanged: (s) => browser.setGridView(s.first),
+                      onSelectionChanged: (s) {
+                        browser.setGridView(s.first);
+                        _layoutSwitch.select(s.first ? _gridIndex : _listIndex);
+                      },
                     ),
                     const SizedBox(width: 16),
                   ],
@@ -169,12 +183,20 @@ class _LibraryPageState extends State<LibraryPage> {
                       onClear: _clearAll,
                     ),
                   )
-                else if (browser.gridView)
-                  ..._gridSlivers(context, albums)
                 else
-                  SliverList.builder(
-                    itemCount: albums.length,
-                    itemBuilder: (context, i) => _marked(albums[i], _item(albums[i], AlbumTile(album: albums[i], onTap: () => _open(albums[i])))),
+                  AnimatedBuilder(
+                    animation: _layoutSwitch.controller,
+                    builder: (context, child) => SliverOpacity(opacity: _layoutSwitch.opacity, sliver: child!),
+                    child: SliverMainAxisGroup(
+                      slivers: _layoutSwitch.shown == _gridIndex
+                          ? _gridSlivers(context, albums)
+                          : [
+                              SliverList.builder(
+                                itemCount: albums.length,
+                                itemBuilder: (context, i) => _marked(albums[i], _item(albums[i], AlbumTile(album: albums[i], onTap: () => _open(albums[i])))),
+                              ),
+                            ],
+                    ),
                   ),
                 const SliverToBoxAdapter(child: SizedBox(height: 24)),
               ],

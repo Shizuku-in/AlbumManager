@@ -8,8 +8,12 @@ import 'package:flutter/material.dart';
 ///
 /// [shown] trails the selection by the exit half, so the caller keeps
 /// rendering the old content until [onShownChanged] fires.
+///
+/// With a [distance] of 0 nothing slides: M3 fade through, for switching
+/// between layouts with no spatial relationship (without its scale, which
+/// blurs text).
 class SharedAxisSwitch {
-  SharedAxisSwitch({required TickerProvider vsync, int initial = 0, required this.onShownChanged}) : shown = initial, _target = initial {
+  SharedAxisSwitch({required TickerProvider vsync, int initial = 0, this.distance = 30, required this.onShownChanged}) : shown = initial, _target = initial {
     controller = AnimationController(vsync: vsync, duration: const Duration(milliseconds: 300), value: 1)
       ..addListener(() {
         if (controller.value >= _exitEnd && shown != _target) {
@@ -20,7 +24,9 @@ class SharedAxisSwitch {
   }
 
   static const _exitEnd = 1 / 3;
-  static const _slide = 30.0;
+
+  /// How far the content slides, in logical pixels.
+  final double distance;
 
   late final AnimationController controller;
   final VoidCallback onShownChanged;
@@ -59,8 +65,8 @@ class SharedAxisSwitch {
   double get shift {
     final v = controller.value;
     return v < _exitEnd
-        ? -_direction * _slide * Easing.emphasizedAccelerate.transform(v / _exitEnd)
-        : _direction * _slide * (1 - Easing.emphasizedDecelerate.transform((v - _exitEnd) / (1 - _exitEnd)));
+        ? -_direction * distance * Easing.emphasizedAccelerate.transform(v / _exitEnd)
+        : _direction * distance * (1 - Easing.emphasizedDecelerate.transform((v - _exitEnd) / (1 - _exitEnd)));
   }
 
   void dispose() => controller.dispose();
