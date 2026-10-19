@@ -353,7 +353,9 @@ class _BackToTop extends StatelessWidget {
     return ListenableBuilder(
       listenable: controller,
       builder: (context, child) {
-        final shown = controller.hasClients && controller.offset > controller.position.viewportDimension;
+        // Before the first layout the position has no viewport size yet.
+        final p = controller.hasClients ? controller.position : null;
+        final shown = p != null && p.hasPixels && p.hasViewportDimension && p.pixels > p.viewportDimension;
         return IgnorePointer(
           ignoring: !shown,
           child: AnimatedSlide(
