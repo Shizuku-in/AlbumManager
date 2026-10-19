@@ -8,6 +8,8 @@ import 'package:album_manager/ui/album/album_page.dart';
 import 'package:album_manager/ui/album/cue_fix_dialog.dart';
 import 'package:album_manager/ui/common/app_page.dart';
 import 'package:album_manager/ui/common/cover_image.dart';
+import 'package:album_manager/ui/common/shared_axis.dart';
+import 'package:album_manager/ui/common/sliver_translate.dart';
 import 'package:album_manager/util/labels.dart';
 import 'package:album_manager/util/memo.dart';
 import 'package:album_manager/util/system.dart';
@@ -32,9 +34,19 @@ class HealthPage extends StatefulWidget {
   State<HealthPage> createState() => _HealthPageState();
 }
 
-class _HealthPageState extends State<HealthPage> {
+class _HealthPageState extends State<HealthPage> with SingleTickerProviderStateMixin {
   IssueKind? _kind;
   bool _fixing = false;
+
+  /// Switches the album list between issue kinds (by [IssueKind.index], the
+  /// chip order) with the same transition as the album tabs.
+  late final _kindSwitch = SharedAxisSwitch(vsync: this, onShownChanged: () => setState(() {}));
+
+  @override
+  void dispose() {
+    _kindSwitch.dispose();
+    super.dispose();
+  }
 
   Future<void> _fixAll(List<AlbumSummary> targets) async {
     final n = targets.fold(0, (n, a) => n + a.issues.where((i) => i.kind == IssueKind.cueEncoding).length);
@@ -87,6 +99,11 @@ class _HealthPageState extends State<HealthPage> {
             ],
           );
         }
+        // Follow the selection when it changes on its own (e.g. the selected
+        // kind's issues were all fixed); a chip tap animates instead.
+        _kindSwitch.jump(kind!.index);
+        final shownKind = kinds.contains(IssueKind.values[_kindSwitch.shown]) ? IssueKind.values[_kindSwitch.shown] : kind;
+        final listed = byKind[shownKind]!;
         return AppPage(
           title: '健康检查',
           slivers: [
@@ -106,7 +123,10 @@ class _HealthPageState extends State<HealthPage> {
                         avatar: Icon(k.icon, color: k.tone(context).color),
                         label: Text('${k.label}  ${byKind[k]!.length}'),
                         selected: k == kind,
-                        onSelected: (_) => setState(() => _kind = k),
+                        onSelected: (_) {
+                          _kindSwitch.select(k.index);
+                          setState(() => _kind = k);
+                        },
                       ),
                   ]),
                   // Bulk fix for the selected kind, next to the list it acts on.
@@ -122,27 +142,34 @@ class _HealthPageState extends State<HealthPage> {
                 ]),
               ),
             ),
-            SliverList.builder(
-              itemCount: affected.length,
-              itemBuilder: (context, i) {
-                final a = affected[i];
-                final msgs = a.issues.where((x) => x.kind == kind).toList();
-                return ListTile(
-                  onTap: () => Navigator.of(context).push(AlbumPage.route(a)),
-                  leading: SizedBox(width: 56, height: 56, child: CoverImage(path: a.coverThumb, radius: 8, cacheWidth: 120)),
-                  title: Text(a.title, maxLines: 1, overflow: TextOverflow.ellipsis),
-                  subtitle: Text(msgs.map((m) => m.message).join('；'), maxLines: 2, overflow: TextOverflow.ellipsis),
-                  trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-                    Text(a.id.split('/').first, style: t.textTheme.labelMedium),
-                    const SizedBox(width: 8),
-                    IconButton(
-                      tooltip: '在资源管理器中显示',
-                      onPressed: () => msgs.first.path != null ? revealInExplorer(msgs.first.path!) : openPath(a.path),
-                      icon: const Icon(Icons.folder_open_outlined),
-                    ),
-                  ]),
-                );
-              },
+            AnimatedBuilder(
+              animation: _kindSwitch.controller,
+              builder: (context, child) => SliverOpacity(
+                opacity: _kindSwitch.opacity,
+                sliver: SliverTranslateX(dx: _kindSwitch.shift, sliver: child!),
+              ),
+              child: SliverList.builder(
+                itemCount: listed.length,
+                itemBuilder: (context, i) {
+                  final a = listed[i];
+                  final msgs = a.issues.where((x) => x.kind == shownKind).toList();
+                  return ListTile(
+                    onTap: () => Navigator.of(context).push(AlbumPage.route(a)),
+                    leading: SizedBox(width: 56, height: 56, child: CoverImage(path: a.coverThumb, radius: 8, cacheWidth: 120)),
+                    title: Text(a.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+                    subtitle: Text(msgs.map((m) => m.message).join('；'), maxLines: 2, overflow: TextOverflow.ellipsis),
+                    trailing: Row(mainAxisSize: MainAxisSize.min, children: [
+                      Text(a.id.split('/').first, style: t.textTheme.labelMedium),
+                      const SizedBox(width: 8),
+                      IconButton(
+                        tooltip: '在资源管理器中显示',
+                        onPressed: () => msgs.first.path != null ? revealInExplorer(msgs.first.path!) : openPath(a.path),
+                        icon: const Icon(Icons.folder_open_outlined),
+                      ),
+                    ]),
+                  );
+                },
+              ),
             ),
           ],
         );

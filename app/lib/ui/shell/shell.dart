@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:album_manager/state/library_controller.dart';
 import 'package:album_manager/state/navigation.dart';
 import 'package:album_manager/state/settings_controller.dart';
+import 'package:album_manager/ui/common/shared_axis.dart';
 import 'package:album_manager/ui/health/health_page.dart';
 import 'package:album_manager/ui/library/library_page.dart';
 import 'package:album_manager/ui/settings/settings_page.dart';
@@ -42,7 +43,7 @@ class Shell extends StatefulWidget {
   State<Shell> createState() => _ShellState();
 }
 
-class _ShellState extends State<Shell> {
+class _ShellState extends State<Shell> with SingleTickerProviderStateMixin {
   final _navKeys = List.generate(_dests.length, (_) => GlobalKey<NavigatorState>());
 
   // Built once: switching destinations must not rebuild the pages.
@@ -53,6 +54,40 @@ class _ShellState extends State<Shell> {
         onGenerateRoute: (_) => MaterialPageRoute(builder: (_) => _dests[i].page),
       ),
   ];
+
+  /// Shared axis Y, matching the vertical rail: a destination further down
+  /// comes up from below. Content follows the selection.
+  late final _pageSwitch = SharedAxisSwitch(vsync: this, initial: navIndex.value, onShownChanged: _onPageShown);
+
+  /// Ctrl+F was pressed while another destination was showing.
+  bool _focusSearch = false;
+
+  @override
+  void initState() {
+    super.initState();
+    navIndex.addListener(_onNav);
+  }
+
+  @override
+  void dispose() {
+    navIndex.removeListener(_onNav);
+    _pageSwitch.dispose();
+    super.dispose();
+  }
+
+  void _onNav() => _pageSwitch.select(navIndex.value);
+
+  void _onPageShown() {
+    setState(() {});
+    if (_focusSearch && _pageSwitch.shown == 0) _requestSearchFocus();
+  }
+
+  void _requestSearchFocus() {
+    _focusSearch = false;
+    // After the frame that makes the library page focusable again (hidden
+    // IndexedStack children exclude focus).
+    WidgetsBinding.instance.addPostFrameCallback((_) => librarySearchFocus.requestFocus());
+  }
 
   void _select(int i) {
     // Re-selecting the current destination returns to its root page.
@@ -67,8 +102,9 @@ class _ShellState extends State<Shell> {
   void _search() {
     _navKeys[0].currentState?.popUntil((r) => r.isFirst);
     navIndex.value = 0;
-    // Once the library page is the visible one again.
-    WidgetsBinding.instance.addPostFrameCallback((_) => librarySearchFocus.requestFocus());
+    // Focus once the library page is the one on screen.
+    _focusSearch = true;
+    if (_pageSwitch.shown == 0) _requestSearchFocus();
   }
 
   @override
@@ -131,13 +167,21 @@ class _ShellState extends State<Shell> {
             ),
             Expanded(
               child: ListenableBuilder(
-                listenable: Listenable.merge([library, navIndex]),
+                listenable: library,
                 builder: (context, _) {
                   if (!library.ready) return const Center(child: CircularProgressIndicator());
                   if (library.root == null) return const WelcomePage();
-                  return IndexedStack(index: navIndex.value, children: [
-                    for (var i = 0; i < _pages.length; i++) _PageHost(active: i == navIndex.value, child: _pages[i]),
-                  ]);
+                  final shown = _pageSwitch.shown;
+                  return AnimatedBuilder(
+                    animation: _pageSwitch.controller,
+                    builder: (context, child) => Opacity(
+                      opacity: _pageSwitch.opacity,
+                      child: Transform.translate(offset: Offset(0, _pageSwitch.shift), child: child),
+                    ),
+                    child: IndexedStack(index: shown, children: [
+                      for (var i = 0; i < _pages.length; i++) _PageHost(active: i == shown, child: _pages[i]),
+                    ]),
+                  );
                 },
               ),
             ),
@@ -150,8 +194,8 @@ class _ShellState extends State<Shell> {
 
 /// Hosts one destination inside the IndexedStack.
 ///
-/// * Shown destinations fade in. No scaling: a transform that is not exactly
-///   identity makes text render blurry.
+/// * No scaling in the switch transition: a transform that is not exactly
+///   identity makes text render blurry (the slide ends at exactly zero).
 /// * Hidden destinations keep the theme they were last shown with, so a theme
 ///   change (which animates frame by frame) only rebuilds the visible page;
 ///   a hidden page catches up once when it is shown again.
@@ -164,23 +208,13 @@ class _PageHost extends StatefulWidget {
   State<_PageHost> createState() => _PageHostState();
 }
 
-class _PageHostState extends State<_PageHost> with SingleTickerProviderStateMixin {
+class _PageHostState extends State<_PageHost> {
   Widget? _themedChild;
-  late final _enter = AnimationController(vsync: this, duration: const Duration(milliseconds: 250), value: 1);
-  late final _curve = CurvedAnimation(parent: _enter, curve: Easing.emphasizedDecelerate);
 
   @override
   void didUpdateWidget(_PageHost old) {
     super.didUpdateWidget(old);
     if (widget.child != old.child) _themedChild = null;
-    if (widget.active && !old.active) _enter.forward(from: 0);
-  }
-
-  @override
-  void dispose() {
-    _curve.dispose();
-    _enter.dispose();
-    super.dispose();
   }
 
   @override
@@ -192,6 +226,6 @@ class _PageHostState extends State<_PageHost> with SingleTickerProviderStateMixi
     if (widget.active || _themedChild == null) {
       _themedChild = InheritedTheme.captureAll(context, widget.child);
     }
-    return FadeTransition(opacity: _curve, child: _themedChild!);
+    return _themedChild!;
   }
 }
