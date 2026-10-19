@@ -1,5 +1,6 @@
 # Cargo workspace build output
 /target
+/dist/
 **/*.rs.bk
 
 # Windows

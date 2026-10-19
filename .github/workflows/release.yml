@@ -82,16 +82,19 @@ jobs:
         shell: bash
         working-directory: app
         run: flutter build ${{ matrix.platform }} --release --no-pub --build-name="$VERSION" --build-number="$BUILD_NUMBER"
-      - name: Package Windows
+      - name: Install Inno Setup
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Path dist | Out-Null
-          $bundle = 'app/build/windows/x64/runner/Release'
-          if (!(Test-Path "$bundle/album_manager.exe")) { throw 'Missing Windows executable' }
-          Copy-Item LICENSE "$bundle/LICENSE.txt"
-          Copy-Item README.md "$bundle/README.md"
-          Compress-Archive -Path "$bundle/*" -DestinationPath "dist/AlbumManager-$env:TAG-windows-x64.zip"
+          if (!(Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe")) {
+            choco install innosetup --version=6.7.3 --yes --no-progress
+            if ($LASTEXITCODE -ne 0) { throw 'Inno Setup installation failed' }
+          }
+      - name: Package Windows ZIP and installer
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          ./scripts/package-windows.ps1 -Version $env:VERSION -Tag $env:TAG
       - name: Package macOS
         if: runner.os == 'macOS'
         shell: bash
@@ -139,7 +142,7 @@ jobs:
         working-directory: dist
         shell: bash
         run: |
-          assets=("AlbumManager-$TAG-windows-x64.zip" "AlbumManager-$TAG-macos-universal.zip" "AlbumManager-$TAG-linux-x64.tar.gz")
+          assets=("AlbumManager-$TAG-windows-x64.zip" "AlbumManager-$TAG-windows-x64-setup.exe" "AlbumManager-$TAG-macos-universal.zip" "AlbumManager-$TAG-linux-x64.tar.gz")
           for asset in "${assets[@]}"; do test -s "$asset"; done
           sha256sum "${assets[@]}" > SHA256SUMS.txt
       - name: Publish complete release
