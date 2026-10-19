@@ -72,7 +72,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.13.0';
 
   @override
-  int get rustContentHash => -2034446358;
+  int get rustContentHash => 1169207117;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -90,11 +90,15 @@ abstract class RustLibApi extends BaseApi {
 
   Future<void> crateApiLibraryClearThumbnailCache();
 
+  Future<RipRules> crateApiLibraryDefaultRipRules();
+
   Future<ScanRules> crateApiLibraryDefaultScanRules();
 
   Future<Album> crateApiLibraryFixCueEncoding({required String id});
 
   Future<Album?> crateApiLibraryGetAlbum({required String id});
+
+  Future<RipRules> crateApiLibraryGetRipRules();
 
   Future<ScanRules> crateApiLibraryGetScanRules();
 
@@ -111,6 +115,8 @@ abstract class RustLibApi extends BaseApi {
 
   Future<Album> crateApiLibraryRescanAlbum({required String id});
 
+  Future<List<DeductionKind>> crateApiLibraryRipDeductionKinds();
+
   Stream<ScanEvent> crateApiLibraryScanLibrary({required bool force});
 
   Future<ScanRules> albumModelScanRulesDefault();
@@ -122,7 +128,13 @@ abstract class RustLibApi extends BaseApi {
 
   Future<void> crateApiLibrarySetLibraryRoot({required String root});
 
+  Future<List<AlbumSummary>> crateApiLibrarySetRipRules({
+    required RipRules rules,
+  });
+
   Future<void> crateApiLibrarySetScanRules({required ScanRules rules});
+
+  Future<String?> crateApiLibraryTranslateLog({required String path});
 }
 
 class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
@@ -215,7 +227,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "clear_thumbnail_cache", argNames: []);
 
   @override
-  Future<ScanRules> crateApiLibraryDefaultScanRules() {
+  Future<RipRules> crateApiLibraryDefaultRipRules() {
     return handler.executeNormal(
       NormalTask(
         callFfi: (port_) {
@@ -224,6 +236,33 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             generalizedFrbRustBinding,
             serializer,
             funcId: 4,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_rip_rules,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiLibraryDefaultRipRulesConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiLibraryDefaultRipRulesConstMeta =>
+      const TaskConstMeta(debugName: "default_rip_rules", argNames: []);
+
+  @override
+  Future<ScanRules> crateApiLibraryDefaultScanRules() {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 5,
             port: port_,
           );
         },
@@ -251,7 +290,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 5,
+            funcId: 6,
             port: port_,
           );
         },
@@ -279,7 +318,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 6,
+            funcId: 7,
             port: port_,
           );
         },
@@ -298,6 +337,33 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "get_album", argNames: ["id"]);
 
   @override
+  Future<RipRules> crateApiLibraryGetRipRules() {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 8,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_rip_rules,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiLibraryGetRipRulesConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiLibraryGetRipRulesConstMeta =>
+      const TaskConstMeta(debugName: "get_rip_rules", argNames: []);
+
+  @override
   Future<ScanRules> crateApiLibraryGetScanRules() {
     return handler.executeNormal(
       NormalTask(
@@ -306,7 +372,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 7,
+            funcId: 9,
             port: port_,
           );
         },
@@ -338,7 +404,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 8,
+            funcId: 10,
             port: port_,
           );
         },
@@ -368,7 +434,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 9,
+            funcId: 11,
             port: port_,
           );
         },
@@ -396,7 +462,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 10,
+            funcId: 12,
             port: port_,
           );
         },
@@ -424,7 +490,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 11,
+            funcId: 13,
             port: port_,
           );
         },
@@ -452,7 +518,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 12,
+            funcId: 14,
             port: port_,
           );
         },
@@ -471,6 +537,33 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "rescan_album", argNames: ["id"]);
 
   @override
+  Future<List<DeductionKind>> crateApiLibraryRipDeductionKinds() {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 15,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_deduction_kind,
+          decodeErrorData: null,
+        ),
+        constMeta: kCrateApiLibraryRipDeductionKindsConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiLibraryRipDeductionKindsConstMeta =>
+      const TaskConstMeta(debugName: "rip_deduction_kinds", argNames: []);
+
+  @override
   Stream<ScanEvent> crateApiLibraryScanLibrary({required bool force}) {
     final sink = RustStreamSink<ScanEvent>();
     unawaited(
@@ -483,7 +576,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
             pdeCallFfi(
               generalizedFrbRustBinding,
               serializer,
-              funcId: 13,
+              funcId: 16,
               port: port_,
             );
           },
@@ -514,7 +607,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 14,
+            funcId: 17,
             port: port_,
           );
         },
@@ -546,7 +639,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 15,
+            funcId: 18,
             port: port_,
           );
         },
@@ -577,7 +670,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 16,
+            funcId: 19,
             port: port_,
           );
         },
@@ -596,6 +689,36 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "set_library_root", argNames: ["root"]);
 
   @override
+  Future<List<AlbumSummary>> crateApiLibrarySetRipRules({
+    required RipRules rules,
+  }) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_box_autoadd_rip_rules(rules, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 20,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_list_album_summary,
+          decodeErrorData: sse_decode_AnyhowException,
+        ),
+        constMeta: kCrateApiLibrarySetRipRulesConstMeta,
+        argValues: [rules],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiLibrarySetRipRulesConstMeta =>
+      const TaskConstMeta(debugName: "set_rip_rules", argNames: ["rules"]);
+
+  @override
   Future<void> crateApiLibrarySetScanRules({required ScanRules rules}) {
     return handler.executeNormal(
       NormalTask(
@@ -605,7 +728,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 17,
+            funcId: 21,
             port: port_,
           );
         },
@@ -622,6 +745,34 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
 
   TaskConstMeta get kCrateApiLibrarySetScanRulesConstMeta =>
       const TaskConstMeta(debugName: "set_scan_rules", argNames: ["rules"]);
+
+  @override
+  Future<String?> crateApiLibraryTranslateLog({required String path}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(path, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 22,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_opt_String,
+          decodeErrorData: sse_decode_AnyhowException,
+        ),
+        constMeta: kCrateApiLibraryTranslateLogConstMeta,
+        argValues: [path],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiLibraryTranslateLogConstMeta =>
+      const TaskConstMeta(debugName: "translate_log", argNames: ["path"]);
 
   @protected
   AnyhowException dco_decode_AnyhowException(dynamic raw) {
@@ -767,6 +918,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  RipRules dco_decode_box_autoadd_rip_rules(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_rip_rules(raw);
+  }
+
+  @protected
   ScanRules dco_decode_box_autoadd_scan_rules(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_scan_rules(raw);
@@ -802,6 +959,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       encoding: dco_decode_String(arr[1]),
       isUtf8: dco_decode_bool(arr[2]),
       missingFiles: dco_decode_list_String(arr[3]),
+    );
+  }
+
+  @protected
+  DeductionKind dco_decode_deduction_kind(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    return DeductionKind(
+      id: dco_decode_String(arr[0]),
+      label: dco_decode_String(arr[1]),
+      points: dco_decode_i_32(arr[2]),
+      problemByDefault: dco_decode_bool(arr[3]),
     );
   }
 
@@ -912,6 +1083,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<DeductionKind> dco_decode_list_deduction_kind(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_deduction_kind).toList();
+  }
+
+  @protected
   List<Disc> dco_decode_list_disc(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_disc).toList();
@@ -936,6 +1113,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<LogDeduction> dco_decode_list_log_deduction(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_log_deduction).toList();
+  }
+
+  @protected
+  Int32List dco_decode_list_prim_i_32_strict(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return raw as Int32List;
+  }
+
+  @protected
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as Uint8List;
@@ -957,6 +1146,27 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   List<TrackVerify> dco_decode_list_track_verify(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return (raw as List<dynamic>).map(dco_decode_track_verify).toList();
+  }
+
+  @protected
+  LogChecksum dco_decode_log_checksum(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return LogChecksum.values[raw as int];
+  }
+
+  @protected
+  LogDeduction dco_decode_log_deduction(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    return LogDeduction(
+      kind: dco_decode_String(arr[0]),
+      message: dco_decode_String(arr[1]),
+      points: dco_decode_i_32(arr[2]),
+      track: dco_decode_opt_box_autoadd_i_32(arr[3]),
+      informational: dco_decode_bool(arr[4]),
+    );
   }
 
   @protected
@@ -1005,8 +1215,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   RipLog dco_decode_rip_log(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 12)
-      throw Exception('unexpected arr length: expect 12 but see ${arr.length}');
+    if (arr.length != 18)
+      throw Exception('unexpected arr length: expect 18 but see ${arr.length}');
     return RipLog(
       path: dco_decode_String(arr[0]),
       ripper: dco_decode_String(arr[1]),
@@ -1016,10 +1226,31 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       readMode: dco_decode_opt_String(arr[5]),
       status: dco_decode_rip_status(arr[6]),
       noErrors: dco_decode_opt_box_autoadd_bool(arr[7]),
-      accurateRipSummary: dco_decode_opt_String(arr[8]),
-      ctdbSummary: dco_decode_opt_String(arr[9]),
-      hasChecksum: dco_decode_bool(arr[10]),
-      tracks: dco_decode_list_track_verify(arr[11]),
+      errors: dco_decode_bool(arr[8]),
+      accurateRipSummary: dco_decode_opt_String(arr[9]),
+      ctdbSummary: dco_decode_opt_String(arr[10]),
+      checksum: dco_decode_log_checksum(arr[11]),
+      score: dco_decode_opt_box_autoadd_i_32(arr[12]),
+      deductions: dco_decode_list_log_deduction(arr[13]),
+      language: dco_decode_opt_String(arr[14]),
+      readOffset: dco_decode_opt_box_autoadd_i_32(arr[15]),
+      driveOffsets: dco_decode_list_prim_i_32_strict(arr[16]),
+      tracks: dco_decode_list_track_verify(arr[17]),
+    );
+  }
+
+  @protected
+  RipRules dco_decode_rip_rules(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    return RipRules(
+      problemKinds: dco_decode_list_String(arr[0]),
+      arMismatchMinSubmissions: dco_decode_u_32(arr[1]),
+      invalidSignatureIsProblem: dco_decode_bool(arr[2]),
+      perfectMinConfidence: dco_decode_u_32(arr[3]),
+      perfectNeedsBoth: dco_decode_bool(arr[4]),
     );
   }
 
@@ -1090,15 +1321,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TrackVerify dco_decode_track_verify(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 6)
-      throw Exception('unexpected arr length: expect 6 but see ${arr.length}');
+    if (arr.length != 9)
+      throw Exception('unexpected arr length: expect 9 but see ${arr.length}');
     return TrackVerify(
       number: dco_decode_i_32(arr[0]),
       accurateRip: dco_decode_opt_String(arr[1]),
       arOk: dco_decode_opt_box_autoadd_bool(arr[2]),
-      copyCrc: dco_decode_opt_String(arr[3]),
-      testCrc: dco_decode_opt_String(arr[4]),
-      crcMatch: dco_decode_opt_box_autoadd_bool(arr[5]),
+      accurateRipOk: dco_decode_opt_box_autoadd_bool(arr[3]),
+      arConfidence: dco_decode_opt_box_autoadd_i_32(arr[4]),
+      ctdbOk: dco_decode_opt_box_autoadd_bool(arr[5]),
+      copyCrc: dco_decode_opt_String(arr[6]),
+      testCrc: dco_decode_opt_String(arr[7]),
+      crcMatch: dco_decode_opt_box_autoadd_bool(arr[8]),
     );
   }
 
@@ -1312,6 +1546,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  RipRules sse_decode_box_autoadd_rip_rules(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_rip_rules(deserializer));
+  }
+
+  @protected
   ScanRules sse_decode_box_autoadd_scan_rules(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return (sse_decode_scan_rules(deserializer));
@@ -1348,6 +1588,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       encoding: var_encoding,
       isUtf8: var_isUtf8,
       missingFiles: var_missingFiles,
+    );
+  }
+
+  @protected
+  DeductionKind sse_decode_deduction_kind(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_id = sse_decode_String(deserializer);
+    var var_label = sse_decode_String(deserializer);
+    var var_points = sse_decode_i_32(deserializer);
+    var var_problemByDefault = sse_decode_bool(deserializer);
+    return DeductionKind(
+      id: var_id,
+      label: var_label,
+      points: var_points,
+      problemByDefault: var_problemByDefault,
     );
   }
 
@@ -1464,6 +1719,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<DeductionKind> sse_decode_list_deduction_kind(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <DeductionKind>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_deduction_kind(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
   List<Disc> sse_decode_list_disc(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
 
@@ -1512,6 +1781,27 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<LogDeduction> sse_decode_list_log_deduction(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <LogDeduction>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_log_deduction(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
+  Int32List sse_decode_list_prim_i_32_strict(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var len_ = sse_decode_i_32(deserializer);
+    return deserializer.buffer.getInt32List(len_);
+  }
+
+  @protected
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var len_ = sse_decode_i_32(deserializer);
@@ -1552,6 +1842,30 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       ans_.add(sse_decode_track_verify(deserializer));
     }
     return ans_;
+  }
+
+  @protected
+  LogChecksum sse_decode_log_checksum(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_i_32(deserializer);
+    return LogChecksum.values[inner];
+  }
+
+  @protected
+  LogDeduction sse_decode_log_deduction(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_kind = sse_decode_String(deserializer);
+    var var_message = sse_decode_String(deserializer);
+    var var_points = sse_decode_i_32(deserializer);
+    var var_track = sse_decode_opt_box_autoadd_i_32(deserializer);
+    var var_informational = sse_decode_bool(deserializer);
+    return LogDeduction(
+      kind: var_kind,
+      message: var_message,
+      points: var_points,
+      track: var_track,
+      informational: var_informational,
+    );
   }
 
   @protected
@@ -1644,9 +1958,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_readMode = sse_decode_opt_String(deserializer);
     var var_status = sse_decode_rip_status(deserializer);
     var var_noErrors = sse_decode_opt_box_autoadd_bool(deserializer);
+    var var_errors = sse_decode_bool(deserializer);
     var var_accurateRipSummary = sse_decode_opt_String(deserializer);
     var var_ctdbSummary = sse_decode_opt_String(deserializer);
-    var var_hasChecksum = sse_decode_bool(deserializer);
+    var var_checksum = sse_decode_log_checksum(deserializer);
+    var var_score = sse_decode_opt_box_autoadd_i_32(deserializer);
+    var var_deductions = sse_decode_list_log_deduction(deserializer);
+    var var_language = sse_decode_opt_String(deserializer);
+    var var_readOffset = sse_decode_opt_box_autoadd_i_32(deserializer);
+    var var_driveOffsets = sse_decode_list_prim_i_32_strict(deserializer);
     var var_tracks = sse_decode_list_track_verify(deserializer);
     return RipLog(
       path: var_path,
@@ -1657,10 +1977,33 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       readMode: var_readMode,
       status: var_status,
       noErrors: var_noErrors,
+      errors: var_errors,
       accurateRipSummary: var_accurateRipSummary,
       ctdbSummary: var_ctdbSummary,
-      hasChecksum: var_hasChecksum,
+      checksum: var_checksum,
+      score: var_score,
+      deductions: var_deductions,
+      language: var_language,
+      readOffset: var_readOffset,
+      driveOffsets: var_driveOffsets,
       tracks: var_tracks,
+    );
+  }
+
+  @protected
+  RipRules sse_decode_rip_rules(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_problemKinds = sse_decode_list_String(deserializer);
+    var var_arMismatchMinSubmissions = sse_decode_u_32(deserializer);
+    var var_invalidSignatureIsProblem = sse_decode_bool(deserializer);
+    var var_perfectMinConfidence = sse_decode_u_32(deserializer);
+    var var_perfectNeedsBoth = sse_decode_bool(deserializer);
+    return RipRules(
+      problemKinds: var_problemKinds,
+      arMismatchMinSubmissions: var_arMismatchMinSubmissions,
+      invalidSignatureIsProblem: var_invalidSignatureIsProblem,
+      perfectMinConfidence: var_perfectMinConfidence,
+      perfectNeedsBoth: var_perfectNeedsBoth,
     );
   }
 
@@ -1751,6 +2094,9 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_number = sse_decode_i_32(deserializer);
     var var_accurateRip = sse_decode_opt_String(deserializer);
     var var_arOk = sse_decode_opt_box_autoadd_bool(deserializer);
+    var var_accurateRipOk = sse_decode_opt_box_autoadd_bool(deserializer);
+    var var_arConfidence = sse_decode_opt_box_autoadd_i_32(deserializer);
+    var var_ctdbOk = sse_decode_opt_box_autoadd_bool(deserializer);
     var var_copyCrc = sse_decode_opt_String(deserializer);
     var var_testCrc = sse_decode_opt_String(deserializer);
     var var_crcMatch = sse_decode_opt_box_autoadd_bool(deserializer);
@@ -1758,6 +2104,9 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       number: var_number,
       accurateRip: var_accurateRip,
       arOk: var_arOk,
+      accurateRipOk: var_accurateRipOk,
+      arConfidence: var_arConfidence,
+      ctdbOk: var_ctdbOk,
       copyCrc: var_copyCrc,
       testCrc: var_testCrc,
       crcMatch: var_crcMatch,
@@ -1936,6 +2285,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_box_autoadd_rip_rules(
+    RipRules self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_rip_rules(self, serializer);
+  }
+
+  @protected
   void sse_encode_box_autoadd_scan_rules(
     ScanRules self,
     SseSerializer serializer,
@@ -1965,6 +2323,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_String(self.encoding, serializer);
     sse_encode_bool(self.isUtf8, serializer);
     sse_encode_list_String(self.missingFiles, serializer);
+  }
+
+  @protected
+  void sse_encode_deduction_kind(DeductionKind self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.id, serializer);
+    sse_encode_String(self.label, serializer);
+    sse_encode_i_32(self.points, serializer);
+    sse_encode_bool(self.problemByDefault, serializer);
   }
 
   @protected
@@ -2061,6 +2428,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_list_deduction_kind(
+    List<DeductionKind> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_deduction_kind(item, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_list_disc(List<Disc> self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_i_32(self.length, serializer);
@@ -2103,6 +2482,28 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_list_log_deduction(
+    List<LogDeduction> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_log_deduction(item, serializer);
+    }
+  }
+
+  @protected
+  void sse_encode_list_prim_i_32_strict(
+    Int32List self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    serializer.buffer.putInt32List(self);
+  }
+
+  @protected
   void sse_encode_list_prim_u_8_strict(
     Uint8List self,
     SseSerializer serializer,
@@ -2140,6 +2541,22 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     for (final item in self) {
       sse_encode_track_verify(item, serializer);
     }
+  }
+
+  @protected
+  void sse_encode_log_checksum(LogChecksum self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
+  }
+
+  @protected
+  void sse_encode_log_deduction(LogDeduction self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_String(self.kind, serializer);
+    sse_encode_String(self.message, serializer);
+    sse_encode_i_32(self.points, serializer);
+    sse_encode_opt_box_autoadd_i_32(self.track, serializer);
+    sse_encode_bool(self.informational, serializer);
   }
 
   @protected
@@ -2226,10 +2643,26 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_opt_String(self.readMode, serializer);
     sse_encode_rip_status(self.status, serializer);
     sse_encode_opt_box_autoadd_bool(self.noErrors, serializer);
+    sse_encode_bool(self.errors, serializer);
     sse_encode_opt_String(self.accurateRipSummary, serializer);
     sse_encode_opt_String(self.ctdbSummary, serializer);
-    sse_encode_bool(self.hasChecksum, serializer);
+    sse_encode_log_checksum(self.checksum, serializer);
+    sse_encode_opt_box_autoadd_i_32(self.score, serializer);
+    sse_encode_list_log_deduction(self.deductions, serializer);
+    sse_encode_opt_String(self.language, serializer);
+    sse_encode_opt_box_autoadd_i_32(self.readOffset, serializer);
+    sse_encode_list_prim_i_32_strict(self.driveOffsets, serializer);
     sse_encode_list_track_verify(self.tracks, serializer);
+  }
+
+  @protected
+  void sse_encode_rip_rules(RipRules self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_list_String(self.problemKinds, serializer);
+    sse_encode_u_32(self.arMismatchMinSubmissions, serializer);
+    sse_encode_bool(self.invalidSignatureIsProblem, serializer);
+    sse_encode_u_32(self.perfectMinConfidence, serializer);
+    sse_encode_bool(self.perfectNeedsBoth, serializer);
   }
 
   @protected
@@ -2296,6 +2729,9 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_i_32(self.number, serializer);
     sse_encode_opt_String(self.accurateRip, serializer);
     sse_encode_opt_box_autoadd_bool(self.arOk, serializer);
+    sse_encode_opt_box_autoadd_bool(self.accurateRipOk, serializer);
+    sse_encode_opt_box_autoadd_i_32(self.arConfidence, serializer);
+    sse_encode_opt_box_autoadd_bool(self.ctdbOk, serializer);
     sse_encode_opt_String(self.copyCrc, serializer);
     sse_encode_opt_String(self.testCrc, serializer);
     sse_encode_opt_box_autoadd_bool(self.crcMatch, serializer);

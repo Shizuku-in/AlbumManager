@@ -6,7 +6,7 @@ use crate::imaging::{self, is_image_ext};
 use crate::rules::{self, Rules};
 use crate::util::{natural_cmp, unix_secs};
 use album_formats::audio::{self, is_audio_ext, AudioInfo, LOSSY_EXTS};
-use album_formats::{riplog, text};
+use album_formats::riplog;
 use album_model::*;
 use regex::Regex;
 use std::collections::HashMap;
@@ -147,10 +147,10 @@ pub fn analyze_files(
     let infos = discs::probe_all(&audio_files);
     let built = discs::build(&audio_files, &infos, &cue_files);
 
-    let logs: Vec<RipLog> = log_files
+    let mut logs: Vec<RipLog> = log_files
         .iter()
         .filter_map(|f| {
-            let d = text::read_decoded(&f.path).ok()?;
+            let d = riplog::read(&f.path).ok()?;
             Some(riplog::parse(
                 &f.path.to_string_lossy(),
                 &d.text,
@@ -395,7 +395,7 @@ pub fn analyze_files(
         issues,
         overrides: AlbumOverride::default(),
     };
-    apply_source(&mut summary, &logs, source);
+    apply_source(&mut summary, &mut logs, source);
     Album {
         summary,
         discs: built.discs,
@@ -415,7 +415,11 @@ pub fn analyze_files(
 
 /// Sets the album source and everything derived from it: the rip status and
 /// the rip-related issues (which only apply to CD rips).
-pub fn apply_source(summary: &mut AlbumSummary, logs: &[RipLog], source: AlbumSource) {
+pub fn apply_source(summary: &mut AlbumSummary, logs: &mut [RipLog], source: AlbumSource) {
+    let rules = rules::rip();
+    for l in logs.iter_mut() {
+        riplog::judge(l, &rules);
+    }
     summary.source = source;
     summary.rip_status = if source != AlbumSource::CdRip {
         RipStatus::NotApplicable
@@ -436,18 +440,25 @@ pub fn apply_source(summary: &mut AlbumSummary, logs: &[RipLog], source: AlbumSo
     if source != AlbumSource::CdRip {
         return;
     }
-    for l in logs {
+    for l in logs.iter() {
         match l.status {
             RipStatus::Error => summary.issues.push(Issue {
                 kind: IssueKind::RipErrors,
-                message: "抓轨日志报告了读取错误或 CRC 不一致".into(),
+                message: "抓轨日志报告了读取错误、可疑位置或 CRC 不一致".into(),
                 path: Some(l.path.clone()),
             }),
-            RipStatus::Warning => summary.issues.push(Issue {
-                kind: IssueKind::RipUnverified,
-                message: "部分音轨未通过 AccurateRip 校验".into(),
-                path: Some(l.path.clone()),
-            }),
+            RipStatus::Warning => {
+                let problems = riplog::problems(l, &rules);
+                summary.issues.push(Issue {
+                    kind: IssueKind::RipUnverified,
+                    message: match problems.as_slice() {
+                        [] => String::new(),
+                        [one] => one.clone(),
+                        [first, rest @ ..] => format!("{first}等 {} 项", rest.len() + 1),
+                    },
+                    path: Some(l.path.clone()),
+                })
+            }
             _ => {}
         }
     }

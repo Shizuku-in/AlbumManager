@@ -1,7 +1,7 @@
 //! User-editable recognition rules: cover file names and album folder name
 //! templates. Compiled once and shared by scans.
 
-use album_model::ScanRules;
+use album_model::{RipRules, ScanRules};
 use anyhow::{anyhow, Result};
 use regex::Regex;
 use std::sync::{Arc, LazyLock, RwLock};
@@ -177,4 +177,16 @@ pub fn current() -> Arc<Rules> {
 pub fn set(rules: ScanRules) -> Result<()> {
     *CURRENT.write().unwrap() = Arc::new(Rules::compile(rules)?);
     Ok(())
+}
+
+/// How rip logs are judged (see [RipRules]).
+static RIP: LazyLock<RwLock<RipRules>> =
+    LazyLock::new(|| RwLock::new(album_formats::riplog::default_rules()));
+
+pub fn rip() -> RipRules {
+    RIP.read().unwrap().clone()
+}
+
+pub fn set_rip(rules: RipRules) {
+    *RIP.write().unwrap() = rules;
 }

@@ -9,7 +9,8 @@ mod tests;
 pub use scan::{rescan_album, scan};
 
 use crate::rules;
-use album_model::{Album, AlbumOverride, ScanRules};
+use crate::scanner::analyze;
+use album_model::{Album, AlbumOverride, AlbumSummary, RipRules, ScanRules};
 use anyhow::{anyhow, Result};
 use std::path::{Path, PathBuf};
 use std::sync::{LazyLock, RwLock};
@@ -31,6 +32,10 @@ pub fn init(data_dir: &Path) -> Result<()> {
     if rules::set(cfg.rules.unwrap_or_else(rules::defaults)).is_err() {
         rules::set(rules::defaults())?;
     }
+    rules::set_rip(
+        cfg.rip_rules
+            .unwrap_or_else(album_formats::riplog::default_rules),
+    );
     let root = cfg.root.map(PathBuf::from);
     let albums = match &root {
         Some(r) => cache::load_cache(data_dir, r).unwrap_or_default(),
@@ -75,6 +80,26 @@ pub fn set_rules(r: ScanRules) -> Result<()> {
     let mut cfg = cache::load_config(&data);
     cfg.rules = Some(r);
     cache::save_config(&data, &cfg)
+}
+
+/// Installs new rip log rules and re-judges every album's logs with them
+/// (no files are read). Returns the updated summaries.
+pub fn set_rip_rules(r: RipRules) -> Result<Vec<AlbumSummary>> {
+    rules::set_rip(r.clone());
+    let mut st = STATE.write().unwrap();
+    let data = st
+        .data_dir
+        .clone()
+        .ok_or_else(|| anyhow!("library not initialised"))?;
+    let mut cfg = cache::load_config(&data);
+    cfg.rip_rules = Some(r);
+    cache::save_config(&data, &cfg)?;
+    for album in st.albums.iter_mut() {
+        let source = album.summary.source;
+        analyze::apply_source(&mut album.summary, &mut album.logs, source);
+    }
+    cache::save_cache(&st)?;
+    Ok(st.albums.iter().map(|a| a.summary.clone()).collect())
 }
 
 /// (library root, app data dir)

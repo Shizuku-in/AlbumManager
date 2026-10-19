@@ -30,7 +30,7 @@ pub fn save(data: &Path, overrides: &Overrides) -> Result<()> {
 /// Applies `ov` to a freshly analysed album.
 pub fn apply(album: &mut Album, ov: &AlbumOverride, cache_dir: &Path) {
     if let Some(source) = ov.source {
-        analyze::apply_source(&mut album.summary, &album.logs, source);
+        analyze::apply_source(&mut album.summary, &mut album.logs, source);
     }
     if let Some(cover) = &ov.cover_path {
         // A cover that was moved or deleted falls back to the detected one.

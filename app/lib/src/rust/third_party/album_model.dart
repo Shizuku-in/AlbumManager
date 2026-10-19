@@ -7,7 +7,7 @@ import '../frb_generated.dart';
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`
 
 /// Full album info for the detail page.
 class Album {
@@ -294,6 +294,38 @@ class CueInfo {
           missingFiles == other.missingFiles;
 }
 
+/// A log checker rule the user can count as a problem or not.
+class DeductionKind {
+  final String id;
+  final String label;
+  final int points;
+  final bool problemByDefault;
+
+  const DeductionKind({
+    required this.id,
+    required this.label,
+    required this.points,
+    required this.problemByDefault,
+  });
+
+  @override
+  int get hashCode =>
+      id.hashCode ^
+      label.hashCode ^
+      points.hashCode ^
+      problemByDefault.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is DeductionKind &&
+          runtimeType == other.runtimeType &&
+          id == other.id &&
+          label == other.label &&
+          points == other.points &&
+          problemByDefault == other.problemByDefault;
+}
+
 class Disc {
   final int number;
 
@@ -404,6 +436,60 @@ enum IssueKind {
   nonStandardName,
 }
 
+/// The signature EAC / XLD append to their logs, which detects later edits.
+enum LogChecksum {
+  valid,
+
+  /// The log was changed after ripping.
+  invalid,
+  missing,
+
+  /// The ripper doesn't sign its logs.
+  notApplicable,
+}
+
+/// One OPS log checker deduction.
+class LogDeduction {
+  /// Stable id of the rule (see [DeductionKind]).
+  final String kind;
+  final String message;
+  final int points;
+
+  /// Track-level deductions name their track.
+  final int? track;
+
+  /// Counts in the score but, per the user's [RipRules], isn't a problem
+  /// with the rip, so it doesn't flag the log.
+  final bool informational;
+
+  const LogDeduction({
+    required this.kind,
+    required this.message,
+    required this.points,
+    this.track,
+    required this.informational,
+  });
+
+  @override
+  int get hashCode =>
+      kind.hashCode ^
+      message.hashCode ^
+      points.hashCode ^
+      track.hashCode ^
+      informational.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is LogDeduction &&
+          runtimeType == other.runtimeType &&
+          kind == other.kind &&
+          message == other.message &&
+          points == other.points &&
+          track == other.track &&
+          informational == other.informational;
+}
+
 class RipLog {
   final String path;
 
@@ -413,13 +499,31 @@ class RipLog {
   final String encoding;
   final String? drive;
   final String? readMode;
+
+  /// Judged with the user's [RipRules]; see `errors` for the log's own verdict.
   final RipStatus status;
   final bool? noErrors;
+
+  /// Read errors, suspicious positions, CRC mismatches or aborted copies.
+  final bool errors;
 
   /// "全部 AccurateRip 校验通过" etc. (human readable)
   final String? accurateRipSummary;
   final String? ctdbSummary;
-  final bool hasChecksum;
+  final LogChecksum checksum;
+
+  /// OPS-style score: 100 minus the deductions. None for logs that aren't
+  /// scored (SACD-Ripper, unknown rippers).
+  final int? score;
+  final List<LogDeduction> deductions;
+
+  /// EAC UI language the log was written in ("日本語"), when it had to be
+  /// translated to English for checking.
+  final String? language;
+  final int? readOffset;
+
+  /// Read offsets AccurateRip lists for the drive; empty if it isn't known.
+  final Int32List driveOffsets;
   final List<TrackVerify> tracks;
 
   const RipLog({
@@ -431,9 +535,15 @@ class RipLog {
     this.readMode,
     required this.status,
     this.noErrors,
+    required this.errors,
     this.accurateRipSummary,
     this.ctdbSummary,
-    required this.hasChecksum,
+    required this.checksum,
+    this.score,
+    required this.deductions,
+    this.language,
+    this.readOffset,
+    required this.driveOffsets,
     required this.tracks,
   });
 
@@ -447,9 +557,15 @@ class RipLog {
       readMode.hashCode ^
       status.hashCode ^
       noErrors.hashCode ^
+      errors.hashCode ^
       accurateRipSummary.hashCode ^
       ctdbSummary.hashCode ^
-      hasChecksum.hashCode ^
+      checksum.hashCode ^
+      score.hashCode ^
+      deductions.hashCode ^
+      language.hashCode ^
+      readOffset.hashCode ^
+      driveOffsets.hashCode ^
       tracks.hashCode;
 
   @override
@@ -465,10 +581,62 @@ class RipLog {
           readMode == other.readMode &&
           status == other.status &&
           noErrors == other.noErrors &&
+          errors == other.errors &&
           accurateRipSummary == other.accurateRipSummary &&
           ctdbSummary == other.ctdbSummary &&
-          hasChecksum == other.hasChecksum &&
+          checksum == other.checksum &&
+          score == other.score &&
+          deductions == other.deductions &&
+          language == other.language &&
+          readOffset == other.readOffset &&
+          driveOffsets == other.driveOffsets &&
           tracks == other.tracks;
+}
+
+/// How rip logs are judged. Applied to the parsed logs without reading them
+/// again, so changes take effect immediately.
+class RipRules {
+  /// Deduction kinds that flag a log; the others only count in the score.
+  final List<String> problemKinds;
+
+  /// An AccurateRip mismatch flags a log when the database has at least
+  /// this many submissions for the disc (0 = never).
+  final int arMismatchMinSubmissions;
+  final bool invalidSignatureIsProblem;
+
+  /// "Perfect" needs every track matched by AccurateRip with at least this
+  /// confidence (or by CTDB)...
+  final int perfectMinConfidence;
+
+  /// ...and, when the log has CTDB results, by CTDB as well.
+  final bool perfectNeedsBoth;
+
+  const RipRules({
+    required this.problemKinds,
+    required this.arMismatchMinSubmissions,
+    required this.invalidSignatureIsProblem,
+    required this.perfectMinConfidence,
+    required this.perfectNeedsBoth,
+  });
+
+  @override
+  int get hashCode =>
+      problemKinds.hashCode ^
+      arMismatchMinSubmissions.hashCode ^
+      invalidSignatureIsProblem.hashCode ^
+      perfectMinConfidence.hashCode ^
+      perfectNeedsBoth.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is RipRules &&
+          runtimeType == other.runtimeType &&
+          problemKinds == other.problemKinds &&
+          arMismatchMinSubmissions == other.arMismatchMinSubmissions &&
+          invalidSignatureIsProblem == other.invalidSignatureIsProblem &&
+          perfectMinConfidence == other.perfectMinConfidence &&
+          perfectNeedsBoth == other.perfectNeedsBoth;
 }
 
 /// Overall verdict of the rip logs of an album.
@@ -601,7 +769,17 @@ class TrackVerify {
 
   /// e.g. "AR v2 (5)", "CTDB 84/84"
   final String? accurateRip;
+
+  /// Verified by AccurateRip or CTDB.
   final bool? arOk;
+
+  /// AccurateRip alone: matched / didn't match.
+  final bool? accurateRipOk;
+
+  /// AccurateRip confidence: matching submissions, or for a mismatch the
+  /// submissions of the pressing in the database.
+  final int? arConfidence;
+  final bool? ctdbOk;
   final String? copyCrc;
   final String? testCrc;
   final bool? crcMatch;
@@ -610,6 +788,9 @@ class TrackVerify {
     required this.number,
     this.accurateRip,
     this.arOk,
+    this.accurateRipOk,
+    this.arConfidence,
+    this.ctdbOk,
     this.copyCrc,
     this.testCrc,
     this.crcMatch,
@@ -620,6 +801,9 @@ class TrackVerify {
       number.hashCode ^
       accurateRip.hashCode ^
       arOk.hashCode ^
+      accurateRipOk.hashCode ^
+      arConfidence.hashCode ^
+      ctdbOk.hashCode ^
       copyCrc.hashCode ^
       testCrc.hashCode ^
       crcMatch.hashCode;
@@ -632,6 +816,9 @@ class TrackVerify {
           number == other.number &&
           accurateRip == other.accurateRip &&
           arOk == other.arOk &&
+          accurateRipOk == other.accurateRipOk &&
+          arConfidence == other.arConfidence &&
+          ctdbOk == other.ctdbOk &&
           copyCrc == other.copyCrc &&
           testCrc == other.testCrc &&
           crcMatch == other.crcMatch;

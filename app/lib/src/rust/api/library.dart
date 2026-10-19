@@ -49,6 +49,11 @@ Future<String> getThumbnail({required String path, required int maxSize}) =>
 Future<String> readTextFile({required String path}) =>
     RustLib.instance.api.crateApiLibraryReadTextFile(path: path);
 
+/// An EAC log written in another UI language, translated to English; None
+/// when it is English already or the language isn't known.
+Future<String?> translateLog({required String path}) =>
+    RustLib.instance.api.crateApiLibraryTranslateLog(path: path);
+
 /// Converts every non-UTF-8 cue sheet of an album to UTF-8 (with BOM).
 /// The original is kept next to it as `*.cue.bak`.
 Future<Album> fixCueEncoding({required String id}) =>
@@ -67,6 +72,21 @@ Future<ScanRules> getScanRules() =>
 
 Future<ScanRules> defaultScanRules() =>
     RustLib.instance.api.crateApiLibraryDefaultScanRules();
+
+Future<RipRules> getRipRules() =>
+    RustLib.instance.api.crateApiLibraryGetRipRules();
+
+Future<RipRules> defaultRipRules() =>
+    RustLib.instance.api.crateApiLibraryDefaultRipRules();
+
+/// The log checker rules the user can count as problems or not.
+Future<List<DeductionKind>> ripDeductionKinds() =>
+    RustLib.instance.api.crateApiLibraryRipDeductionKinds();
+
+/// Applies new rip log rules to the whole library right away; returns the
+/// updated album summaries.
+Future<List<AlbumSummary>> setRipRules({required RipRules rules}) =>
+    RustLib.instance.api.crateApiLibrarySetRipRules(rules: rules);
 
 /// Fails with a readable message when a template is invalid.
 Future<void> setScanRules({required ScanRules rules}) =>

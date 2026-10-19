@@ -85,6 +85,10 @@ class SettingsController extends ChangeNotifier {
   /// Restore the library filters on the next launch.
   bool rememberFilters = false;
 
+  /// Show the OPS log score and every deduction on the rip log page. The
+  /// checks themselves run either way.
+  bool showLogScore = false;
+
   Set<T> _loadSet<T extends Enum>(String key, List<T> values) {
     final names = prefs.getStringList(key) ?? const [];
     return {
@@ -117,6 +121,7 @@ class SettingsController extends ChangeNotifier {
     dateStyle = _loadEnum('dateStyle', DateStyle.values, DateStyle.iso);
     hiddenPages = _loadSet('hiddenPages', HideablePage.values);
     rememberFilters = prefs.getBool('rememberFilters') ?? false;
+    showLogScore = prefs.getBool('showLogScore') ?? false;
   }
 
   void setThemeMode(ThemeMode m) {
@@ -193,6 +198,13 @@ class SettingsController extends ChangeNotifier {
     if (v == rememberFilters) return;
     rememberFilters = v;
     prefs.setBool('rememberFilters', v);
+    notifyListeners();
+  }
+
+  void setShowLogScore(bool v) {
+    if (v == showLogScore) return;
+    showLogScore = v;
+    prefs.setBool('showLogScore', v);
     notifyListeners();
   }
 }

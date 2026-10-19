@@ -70,6 +70,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   int dco_decode_box_autoadd_i_32(dynamic raw);
 
   @protected
+  RipRules dco_decode_box_autoadd_rip_rules(dynamic raw);
+
+  @protected
   ScanRules dco_decode_box_autoadd_scan_rules(dynamic raw);
 
   @protected
@@ -80,6 +83,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   CueInfo dco_decode_cue_info(dynamic raw);
+
+  @protected
+  DeductionKind dco_decode_deduction_kind(dynamic raw);
 
   @protected
   Disc dco_decode_disc(dynamic raw);
@@ -118,6 +124,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<CueInfo> dco_decode_list_cue_info(dynamic raw);
 
   @protected
+  List<DeductionKind> dco_decode_list_deduction_kind(dynamic raw);
+
+  @protected
   List<Disc> dco_decode_list_disc(dynamic raw);
 
   @protected
@@ -130,6 +139,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<Issue> dco_decode_list_issue(dynamic raw);
 
   @protected
+  List<LogDeduction> dco_decode_list_log_deduction(dynamic raw);
+
+  @protected
+  Int32List dco_decode_list_prim_i_32_strict(dynamic raw);
+
+  @protected
   Uint8List dco_decode_list_prim_u_8_strict(dynamic raw);
 
   @protected
@@ -140,6 +155,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<TrackVerify> dco_decode_list_track_verify(dynamic raw);
+
+  @protected
+  LogChecksum dco_decode_log_checksum(dynamic raw);
+
+  @protected
+  LogDeduction dco_decode_log_deduction(dynamic raw);
 
   @protected
   String? dco_decode_opt_String(dynamic raw);
@@ -164,6 +185,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   RipLog dco_decode_rip_log(dynamic raw);
+
+  @protected
+  RipRules dco_decode_rip_rules(dynamic raw);
 
   @protected
   RipStatus dco_decode_rip_status(dynamic raw);
@@ -242,6 +266,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   int sse_decode_box_autoadd_i_32(SseDeserializer deserializer);
 
   @protected
+  RipRules sse_decode_box_autoadd_rip_rules(SseDeserializer deserializer);
+
+  @protected
   ScanRules sse_decode_box_autoadd_scan_rules(SseDeserializer deserializer);
 
   @protected
@@ -252,6 +279,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   CueInfo sse_decode_cue_info(SseDeserializer deserializer);
+
+  @protected
+  DeductionKind sse_decode_deduction_kind(SseDeserializer deserializer);
 
   @protected
   Disc sse_decode_disc(SseDeserializer deserializer);
@@ -292,6 +322,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<CueInfo> sse_decode_list_cue_info(SseDeserializer deserializer);
 
   @protected
+  List<DeductionKind> sse_decode_list_deduction_kind(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   List<Disc> sse_decode_list_disc(SseDeserializer deserializer);
 
   @protected
@@ -304,6 +339,14 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<Issue> sse_decode_list_issue(SseDeserializer deserializer);
 
   @protected
+  List<LogDeduction> sse_decode_list_log_deduction(
+    SseDeserializer deserializer,
+  );
+
+  @protected
+  Int32List sse_decode_list_prim_i_32_strict(SseDeserializer deserializer);
+
+  @protected
   Uint8List sse_decode_list_prim_u_8_strict(SseDeserializer deserializer);
 
   @protected
@@ -314,6 +357,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   List<TrackVerify> sse_decode_list_track_verify(SseDeserializer deserializer);
+
+  @protected
+  LogChecksum sse_decode_log_checksum(SseDeserializer deserializer);
+
+  @protected
+  LogDeduction sse_decode_log_deduction(SseDeserializer deserializer);
 
   @protected
   String? sse_decode_opt_String(SseDeserializer deserializer);
@@ -340,6 +389,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   RipLog sse_decode_rip_log(SseDeserializer deserializer);
+
+  @protected
+  RipRules sse_decode_rip_rules(SseDeserializer deserializer);
 
   @protected
   RipStatus sse_decode_rip_status(SseDeserializer deserializer);
@@ -426,6 +478,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_box_autoadd_i_32(int self, SseSerializer serializer);
 
   @protected
+  void sse_encode_box_autoadd_rip_rules(
+    RipRules self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_box_autoadd_scan_rules(
     ScanRules self,
     SseSerializer serializer,
@@ -439,6 +497,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_cue_info(CueInfo self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_deduction_kind(DeductionKind self, SseSerializer serializer);
 
   @protected
   void sse_encode_disc(Disc self, SseSerializer serializer);
@@ -480,6 +541,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_list_cue_info(List<CueInfo> self, SseSerializer serializer);
 
   @protected
+  void sse_encode_list_deduction_kind(
+    List<DeductionKind> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_disc(List<Disc> self, SseSerializer serializer);
 
   @protected
@@ -498,6 +565,18 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   void sse_encode_list_issue(List<Issue> self, SseSerializer serializer);
 
   @protected
+  void sse_encode_list_log_deduction(
+    List<LogDeduction> self,
+    SseSerializer serializer,
+  );
+
+  @protected
+  void sse_encode_list_prim_i_32_strict(
+    Int32List self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_prim_u_8_strict(
     Uint8List self,
     SseSerializer serializer,
@@ -514,6 +593,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
     List<TrackVerify> self,
     SseSerializer serializer,
   );
+
+  @protected
+  void sse_encode_log_checksum(LogChecksum self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_log_deduction(LogDeduction self, SseSerializer serializer);
 
   @protected
   void sse_encode_opt_String(String? self, SseSerializer serializer);
@@ -541,6 +626,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_rip_log(RipLog self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_rip_rules(RipRules self, SseSerializer serializer);
 
   @protected
   void sse_encode_rip_status(RipStatus self, SseSerializer serializer);

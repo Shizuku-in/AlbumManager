@@ -4,16 +4,23 @@ import 'package:album_manager/src/rust/api/library.dart' as api;
 import 'package:album_manager/util/format.dart';
 import 'package:album_manager/util/system.dart';
 
-/// Shows a log / cue / txt file (encoding detected in Rust).
-Future<void> showTextFile(BuildContext context, String path) async {
-  final text = await api.readTextFile(path: path);
+/// Shows a log / cue / txt file (encoding detected in Rust). With
+/// [translated], an EAC log in another UI language is shown in English.
+Future<void> showTextFile(
+  BuildContext context,
+  String path, {
+  bool translated = false,
+}) async {
+  final text = translated
+      ? await api.translateLog(path: path) ?? await api.readTextFile(path: path)
+      : await api.readTextFile(path: path);
   if (!context.mounted) return;
   await showDialog(
     context: context,
     builder: (ctx) {
       final t = Theme.of(ctx);
       return AlertDialog(
-        title: Text(baseName(path)),
+        title: Text(translated ? '${baseName(path)}（英文译文）' : baseName(path)),
         contentPadding: const EdgeInsets.fromLTRB(24, 16, 24, 0),
         content: SizedBox(
           width: 820,

@@ -83,17 +83,17 @@ extension RipStatusX on RipStatus {
     RipStatus.noLog => '无日志',
     RipStatus.perfect => '完美',
     RipStatus.good => '无错误',
-    RipStatus.warning => '未完全校验',
+    RipStatus.warning => '有问题设置',
     RipStatus.error => '有错误',
     RipStatus.unknown => '无法判定',
   };
   String get description => switch (this) {
     RipStatus.notApplicable => '不是 CD 抓轨资源',
     RipStatus.noLog => '没有抓轨日志',
-    RipStatus.perfect => '无读取错误，AccurateRip / CTDB 全部校验通过',
-    RipStatus.good => '无读取错误，但数据库中无校验记录',
-    RipStatus.warning => '部分音轨未能通过 AccurateRip 校验',
-    RipStatus.error => '日志报告读取错误或 CRC 不一致',
+    RipStatus.perfect => '日志检查无问题，AccurateRip / CTDB 全部校验通过',
+    RipStatus.good => '日志检查无问题，但 AccurateRip / CTDB 未能确认',
+    RipStatus.warning => '抓轨设置有问题（如未用安全模式、偏移不对），或日志签名不符',
+    RipStatus.error => '日志报告读取错误、可疑位置或 CRC 不一致',
     RipStatus.unknown => '日志格式无法判定结果',
   };
   IconData get icon => switch (this) {
@@ -117,13 +117,23 @@ extension RipStatusX on RipStatus {
   }
 }
 
+extension LogChecksumX on LogChecksum {
+  /// Null when the ripper doesn't sign its logs.
+  String? get label => switch (this) {
+    LogChecksum.valid => '有效',
+    LogChecksum.invalid => '不符，日志可能被修改过',
+    LogChecksum.missing => '无签名',
+    LogChecksum.notApplicable => null,
+  };
+}
+
 extension IssueKindX on IssueKind {
   String get label => switch (this) {
     IssueKind.missingCover => '缺少封面',
     IssueKind.cueEncoding => 'CUE 非 UTF-8',
     IssueKind.cueMissingFile => 'CUE 引用失效',
     IssueKind.ripErrors => '抓轨错误',
-    IssueKind.ripUnverified => '未通过校验',
+    IssueKind.ripUnverified => '抓轨设置问题',
     IssueKind.missingLog => '缺少日志',
     IssueKind.nonStandardName => '命名不规范',
   };

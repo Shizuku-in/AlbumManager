@@ -10,7 +10,7 @@ String _description(IssueKind k) => switch (k) {
   IssueKind.cueEncoding => 'CUE 不是 UTF-8 编码，可在健康检查中一键转换',
   IssueKind.cueMissingFile => 'CUE 引用的音频文件不存在',
   IssueKind.ripErrors => '抓轨日志中记录了读取错误',
-  IssueKind.ripUnverified => '抓轨未通过 AccurateRip / CTDB 校验',
+  IssueKind.ripUnverified => '按 OPS 日志规则有影响可信度的设置（如未用安全模式、偏移不对），或日志签名不符',
   IssueKind.missingLog => 'CD 抓轨没有附带抓轨日志',
   IssueKind.nonStandardName => '文件夹名不符合 “识别规则” 中的命名格式（专辑详情页不显示此项）',
 };

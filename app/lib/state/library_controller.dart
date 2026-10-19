@@ -30,8 +30,10 @@ class LibraryController extends ChangeNotifier {
   /// indicators listen to it.
   final scanProgress = ValueNotifier<ScanProgress?>(null);
 
-  /// Bumped when one album changes so detail pages can reload.
+  /// Bumped when one album changes so detail pages can reload; [allAlbums]
+  /// when every album may have changed.
   final albumChanged = ValueNotifier<String?>(null);
+  static const allAlbums = '*';
 
   Future<void> init() async {
     final dir = await getApplicationSupportDirectory();
@@ -89,6 +91,15 @@ class LibraryController extends ChangeNotifier {
   void replaceAlbum(AlbumSummary s) {
     albums = [for (final a in albums) a.id == s.id ? s : a];
     albumChanged.value = s.id;
+    notifyListeners();
+  }
+
+  /// Applies new rip log rules: the library re-judges every album's logs.
+  Future<void> setRipRules(RipRules rules) async {
+    albums = await api.setRipRules(rules: rules);
+    // Open album pages reload their logs.
+    albumChanged.value = null;
+    albumChanged.value = allAlbums;
     notifyListeners();
   }
 

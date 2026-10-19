@@ -1,0 +1,36 @@
+# EAC UI wordings missing from cambia's table, added by hand from logs in the
+# wild. Same format as eac_lang.tsv. Values are matched with the ": " before
+# them so short words like 是 / 否 only change setting values.
+@繁體中文	EAC 擷取記錄檔從
+EAC 擷取記錄檔從	EAC extraction logfile from
+使用磁碟機  ：	Used drive  :
+使用磁碟機	Used drive
+讀取模式	Read mode
+可靠Secure	Secure
+使用精確流	Utilize accurate stream
+清空音訊快取	Defeat audio cache
+使用 C2 指示器	Make use of C2 pointers
+讀取位移更正：	Read offset correction
+讀取 Lead-In 和 Lead-Out	Overread into Lead-In and Lead-Out
+用靜音填充擷取中遺失位移的取樣	Fill up missing offset samples with silence
+去除首尾靜音塊	Delete leading and trailing silent blocks
+在CRC 計算中使用了空樣本	Null samples used in CRC calculations
+已用介面	Used interface
+所用輸出模式：	Used output format
+內部 WAV 函數	Internal WAV Routines
+樣本格式	Sample format
+已擷取 CD 的 TOC	TOC of the extracted CD
+範圍狀態及錯誤	Range status and errors
+已選擇範圍	Selected range
+檔案名	Filename
+峰值電平	Peak level
+擷取速度	Extraction speed
+範圍品質	Range quality
+音軌品質	Track quality
+測試 CRC	Test CRC
+複製 CRC	Copy CRC
+複製成功	Copy OK
+沒有錯誤發生	No errors occurred
+狀態報告結尾	End of status report
+: 是	: Yes
+: 否	: No

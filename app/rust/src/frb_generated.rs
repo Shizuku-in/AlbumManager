@@ -39,7 +39,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.13.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -2034446358;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = 1169207117;
 
 // Section: executor
 
@@ -147,6 +147,38 @@ fn wire__crate__api__library__clear_thumbnail_cache_impl(
         },
     )
 }
+fn wire__crate__api__library__default_rip_rules_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "default_rip_rules",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, ()>((move || {
+                    let output_ok = Ok::<_, ()>(crate::api::library::default_rip_rules())?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
 fn wire__crate__api__library__default_scan_rules_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -241,6 +273,38 @@ fn wire__crate__api__library__get_album_impl(
             move |context| {
                 transform_result_sse::<_, ()>((move || {
                     let output_ok = Ok::<_, ()>(crate::api::library::get_album(api_id))?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
+fn wire__crate__api__library__get_rip_rules_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "get_rip_rules",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, ()>((move || {
+                    let output_ok = Ok::<_, ()>(crate::api::library::get_rip_rules())?;
                     std::result::Result::Ok(output_ok)
                 })())
             }
@@ -454,6 +518,38 @@ fn wire__crate__api__library__rescan_album_impl(
         },
     )
 }
+fn wire__crate__api__library__rip_deduction_kinds_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "rip_deduction_kinds",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, ()>((move || {
+                    let output_ok = Ok::<_, ()>(crate::api::library::rip_deduction_kinds())?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
 fn wire__crate__api__library__scan_library_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -597,6 +693,41 @@ fn wire__crate__api__library__set_library_root_impl(
         },
     )
 }
+fn wire__crate__api__library__set_rip_rules_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "set_rip_rules",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_rules = <album_model::RipRules>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, flutter_rust_bridge::for_generated::anyhow::Error>(
+                    (move || {
+                        let output_ok = crate::api::library::set_rip_rules(api_rules)?;
+                        std::result::Result::Ok(output_ok)
+                    })(),
+                )
+            }
+        },
+    )
+}
 fn wire__crate__api__library__set_scan_rules_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -625,6 +756,41 @@ fn wire__crate__api__library__set_scan_rules_impl(
                 transform_result_sse::<_, flutter_rust_bridge::for_generated::anyhow::Error>(
                     (move || {
                         let output_ok = crate::api::library::set_scan_rules(api_rules)?;
+                        std::result::Result::Ok(output_ok)
+                    })(),
+                )
+            }
+        },
+    )
+}
+fn wire__crate__api__library__translate_log_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "translate_log",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_path = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, flutter_rust_bridge::for_generated::anyhow::Error>(
+                    (move || {
+                        let output_ok = crate::api::library::translate_log(api_path)?;
                         std::result::Result::Ok(output_ok)
                     })(),
                 )
@@ -695,6 +861,13 @@ const _: fn() = || {
         let _: Vec<String> = CueInfo.missing_files;
     }
     {
+        let DeductionKind = None::<album_model::DeductionKind>.unwrap();
+        let _: String = DeductionKind.id;
+        let _: String = DeductionKind.label;
+        let _: i32 = DeductionKind.points;
+        let _: bool = DeductionKind.problem_by_default;
+    }
+    {
         let Disc = None::<album_model::Disc>.unwrap();
         let _: i32 = Disc.number;
         let _: Option<String> = Disc.label;
@@ -719,6 +892,14 @@ const _: fn() = || {
         let _: Option<String> = Issue.path;
     }
     {
+        let LogDeduction = None::<album_model::LogDeduction>.unwrap();
+        let _: String = LogDeduction.kind;
+        let _: String = LogDeduction.message;
+        let _: i32 = LogDeduction.points;
+        let _: Option<i32> = LogDeduction.track;
+        let _: bool = LogDeduction.informational;
+    }
+    {
         let RipLog = None::<album_model::RipLog>.unwrap();
         let _: String = RipLog.path;
         let _: String = RipLog.ripper;
@@ -728,10 +909,24 @@ const _: fn() = || {
         let _: Option<String> = RipLog.read_mode;
         let _: album_model::RipStatus = RipLog.status;
         let _: Option<bool> = RipLog.no_errors;
+        let _: bool = RipLog.errors;
         let _: Option<String> = RipLog.accurate_rip_summary;
         let _: Option<String> = RipLog.ctdb_summary;
-        let _: bool = RipLog.has_checksum;
+        let _: album_model::LogChecksum = RipLog.checksum;
+        let _: Option<i32> = RipLog.score;
+        let _: Vec<album_model::LogDeduction> = RipLog.deductions;
+        let _: Option<String> = RipLog.language;
+        let _: Option<i32> = RipLog.read_offset;
+        let _: Vec<i32> = RipLog.drive_offsets;
         let _: Vec<album_model::TrackVerify> = RipLog.tracks;
+    }
+    {
+        let RipRules = None::<album_model::RipRules>.unwrap();
+        let _: Vec<String> = RipRules.problem_kinds;
+        let _: u32 = RipRules.ar_mismatch_min_submissions;
+        let _: bool = RipRules.invalid_signature_is_problem;
+        let _: u32 = RipRules.perfect_min_confidence;
+        let _: bool = RipRules.perfect_needs_both;
     }
     {
         let ScanRules = None::<album_model::ScanRules>.unwrap();
@@ -758,6 +953,9 @@ const _: fn() = || {
         let _: i32 = TrackVerify.number;
         let _: Option<String> = TrackVerify.accurate_rip;
         let _: Option<bool> = TrackVerify.ar_ok;
+        let _: Option<bool> = TrackVerify.accurate_rip_ok;
+        let _: Option<i32> = TrackVerify.ar_confidence;
+        let _: Option<bool> = TrackVerify.ctdb_ok;
         let _: Option<String> = TrackVerify.copy_crc;
         let _: Option<String> = TrackVerify.test_crc;
         let _: Option<bool> = TrackVerify.crc_match;
@@ -964,6 +1162,22 @@ impl SseDecode for album_model::CueInfo {
     }
 }
 
+impl SseDecode for album_model::DeductionKind {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_id = <String>::sse_decode(deserializer);
+        let mut var_label = <String>::sse_decode(deserializer);
+        let mut var_points = <i32>::sse_decode(deserializer);
+        let mut var_problemByDefault = <bool>::sse_decode(deserializer);
+        return album_model::DeductionKind {
+            id: var_id,
+            label: var_label,
+            points: var_points,
+            problem_by_default: var_problemByDefault,
+        };
+    }
+}
+
 impl SseDecode for album_model::Disc {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -1106,6 +1320,18 @@ impl SseDecode for Vec<album_model::CueInfo> {
     }
 }
 
+impl SseDecode for Vec<album_model::DeductionKind> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ {
+            ans_.push(<album_model::DeductionKind>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
 impl SseDecode for Vec<album_model::Disc> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -1149,6 +1375,30 @@ impl SseDecode for Vec<album_model::Issue> {
         let mut ans_ = Vec::with_capacity(len_ as usize);
         for idx_ in 0..len_ {
             ans_.push(<album_model::Issue>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
+impl SseDecode for Vec<album_model::LogDeduction> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ {
+            ans_.push(<album_model::LogDeduction>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
+impl SseDecode for Vec<i32> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ {
+            ans_.push(<i32>::sse_decode(deserializer));
         }
         return ans_;
     }
@@ -1199,6 +1449,38 @@ impl SseDecode for Vec<album_model::TrackVerify> {
             ans_.push(<album_model::TrackVerify>::sse_decode(deserializer));
         }
         return ans_;
+    }
+}
+
+impl SseDecode for album_model::LogChecksum {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => album_model::LogChecksum::Valid,
+            1 => album_model::LogChecksum::Invalid,
+            2 => album_model::LogChecksum::Missing,
+            3 => album_model::LogChecksum::NotApplicable,
+            _ => unreachable!("Invalid variant for LogChecksum: {}", inner),
+        };
+    }
+}
+
+impl SseDecode for album_model::LogDeduction {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_kind = <String>::sse_decode(deserializer);
+        let mut var_message = <String>::sse_decode(deserializer);
+        let mut var_points = <i32>::sse_decode(deserializer);
+        let mut var_track = <Option<i32>>::sse_decode(deserializer);
+        let mut var_informational = <bool>::sse_decode(deserializer);
+        return album_model::LogDeduction {
+            kind: var_kind,
+            message: var_message,
+            points: var_points,
+            track: var_track,
+            informational: var_informational,
+        };
     }
 }
 
@@ -1290,9 +1572,15 @@ impl SseDecode for album_model::RipLog {
         let mut var_readMode = <Option<String>>::sse_decode(deserializer);
         let mut var_status = <album_model::RipStatus>::sse_decode(deserializer);
         let mut var_noErrors = <Option<bool>>::sse_decode(deserializer);
+        let mut var_errors = <bool>::sse_decode(deserializer);
         let mut var_accurateRipSummary = <Option<String>>::sse_decode(deserializer);
         let mut var_ctdbSummary = <Option<String>>::sse_decode(deserializer);
-        let mut var_hasChecksum = <bool>::sse_decode(deserializer);
+        let mut var_checksum = <album_model::LogChecksum>::sse_decode(deserializer);
+        let mut var_score = <Option<i32>>::sse_decode(deserializer);
+        let mut var_deductions = <Vec<album_model::LogDeduction>>::sse_decode(deserializer);
+        let mut var_language = <Option<String>>::sse_decode(deserializer);
+        let mut var_readOffset = <Option<i32>>::sse_decode(deserializer);
+        let mut var_driveOffsets = <Vec<i32>>::sse_decode(deserializer);
         let mut var_tracks = <Vec<album_model::TrackVerify>>::sse_decode(deserializer);
         return album_model::RipLog {
             path: var_path,
@@ -1303,10 +1591,34 @@ impl SseDecode for album_model::RipLog {
             read_mode: var_readMode,
             status: var_status,
             no_errors: var_noErrors,
+            errors: var_errors,
             accurate_rip_summary: var_accurateRipSummary,
             ctdb_summary: var_ctdbSummary,
-            has_checksum: var_hasChecksum,
+            checksum: var_checksum,
+            score: var_score,
+            deductions: var_deductions,
+            language: var_language,
+            read_offset: var_readOffset,
+            drive_offsets: var_driveOffsets,
             tracks: var_tracks,
+        };
+    }
+}
+
+impl SseDecode for album_model::RipRules {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_problemKinds = <Vec<String>>::sse_decode(deserializer);
+        let mut var_arMismatchMinSubmissions = <u32>::sse_decode(deserializer);
+        let mut var_invalidSignatureIsProblem = <bool>::sse_decode(deserializer);
+        let mut var_perfectMinConfidence = <u32>::sse_decode(deserializer);
+        let mut var_perfectNeedsBoth = <bool>::sse_decode(deserializer);
+        return album_model::RipRules {
+            problem_kinds: var_problemKinds,
+            ar_mismatch_min_submissions: var_arMismatchMinSubmissions,
+            invalid_signature_is_problem: var_invalidSignatureIsProblem,
+            perfect_min_confidence: var_perfectMinConfidence,
+            perfect_needs_both: var_perfectNeedsBoth,
         };
     }
 }
@@ -1414,6 +1726,9 @@ impl SseDecode for album_model::TrackVerify {
         let mut var_number = <i32>::sse_decode(deserializer);
         let mut var_accurateRip = <Option<String>>::sse_decode(deserializer);
         let mut var_arOk = <Option<bool>>::sse_decode(deserializer);
+        let mut var_accurateRipOk = <Option<bool>>::sse_decode(deserializer);
+        let mut var_arConfidence = <Option<i32>>::sse_decode(deserializer);
+        let mut var_ctdbOk = <Option<bool>>::sse_decode(deserializer);
         let mut var_copyCrc = <Option<String>>::sse_decode(deserializer);
         let mut var_testCrc = <Option<String>>::sse_decode(deserializer);
         let mut var_crcMatch = <Option<bool>>::sse_decode(deserializer);
@@ -1421,6 +1736,9 @@ impl SseDecode for album_model::TrackVerify {
             number: var_number,
             accurate_rip: var_accurateRip,
             ar_ok: var_arOk,
+            accurate_rip_ok: var_accurateRipOk,
+            ar_confidence: var_arConfidence,
+            ctdb_ok: var_ctdbOk,
             copy_crc: var_copyCrc,
             test_crc: var_testCrc,
             crc_match: var_crcMatch,
@@ -1468,20 +1786,27 @@ fn pde_ffi_dispatcher_primary_impl(
         3 => {
             wire__crate__api__library__clear_thumbnail_cache_impl(port, ptr, rust_vec_len, data_len)
         }
-        4 => wire__crate__api__library__default_scan_rules_impl(port, ptr, rust_vec_len, data_len),
-        5 => wire__crate__api__library__fix_cue_encoding_impl(port, ptr, rust_vec_len, data_len),
-        6 => wire__crate__api__library__get_album_impl(port, ptr, rust_vec_len, data_len),
-        7 => wire__crate__api__library__get_scan_rules_impl(port, ptr, rust_vec_len, data_len),
-        8 => wire__crate__api__library__get_thumbnail_impl(port, ptr, rust_vec_len, data_len),
-        9 => wire__crate__api__init_app_impl(port, ptr, rust_vec_len, data_len),
-        10 => wire__crate__api__library__init_library_impl(port, ptr, rust_vec_len, data_len),
-        11 => wire__crate__api__library__read_text_file_impl(port, ptr, rust_vec_len, data_len),
-        12 => wire__crate__api__library__rescan_album_impl(port, ptr, rust_vec_len, data_len),
-        13 => wire__crate__api__library__scan_library_impl(port, ptr, rust_vec_len, data_len),
-        14 => wire__album_model__scan_rules_default_impl(port, ptr, rust_vec_len, data_len),
-        15 => wire__crate__api__library__set_album_override_impl(port, ptr, rust_vec_len, data_len),
-        16 => wire__crate__api__library__set_library_root_impl(port, ptr, rust_vec_len, data_len),
-        17 => wire__crate__api__library__set_scan_rules_impl(port, ptr, rust_vec_len, data_len),
+        4 => wire__crate__api__library__default_rip_rules_impl(port, ptr, rust_vec_len, data_len),
+        5 => wire__crate__api__library__default_scan_rules_impl(port, ptr, rust_vec_len, data_len),
+        6 => wire__crate__api__library__fix_cue_encoding_impl(port, ptr, rust_vec_len, data_len),
+        7 => wire__crate__api__library__get_album_impl(port, ptr, rust_vec_len, data_len),
+        8 => wire__crate__api__library__get_rip_rules_impl(port, ptr, rust_vec_len, data_len),
+        9 => wire__crate__api__library__get_scan_rules_impl(port, ptr, rust_vec_len, data_len),
+        10 => wire__crate__api__library__get_thumbnail_impl(port, ptr, rust_vec_len, data_len),
+        11 => wire__crate__api__init_app_impl(port, ptr, rust_vec_len, data_len),
+        12 => wire__crate__api__library__init_library_impl(port, ptr, rust_vec_len, data_len),
+        13 => wire__crate__api__library__read_text_file_impl(port, ptr, rust_vec_len, data_len),
+        14 => wire__crate__api__library__rescan_album_impl(port, ptr, rust_vec_len, data_len),
+        15 => {
+            wire__crate__api__library__rip_deduction_kinds_impl(port, ptr, rust_vec_len, data_len)
+        }
+        16 => wire__crate__api__library__scan_library_impl(port, ptr, rust_vec_len, data_len),
+        17 => wire__album_model__scan_rules_default_impl(port, ptr, rust_vec_len, data_len),
+        18 => wire__crate__api__library__set_album_override_impl(port, ptr, rust_vec_len, data_len),
+        19 => wire__crate__api__library__set_library_root_impl(port, ptr, rust_vec_len, data_len),
+        20 => wire__crate__api__library__set_rip_rules_impl(port, ptr, rust_vec_len, data_len),
+        21 => wire__crate__api__library__set_scan_rules_impl(port, ptr, rust_vec_len, data_len),
+        22 => wire__crate__api__library__translate_log_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -1684,6 +2009,29 @@ impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<album_model::CueInfo>> for alb
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<album_model::DeductionKind> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.0.id.into_into_dart().into_dart(),
+            self.0.label.into_into_dart().into_dart(),
+            self.0.points.into_into_dart().into_dart(),
+            self.0.problem_by_default.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for FrbWrapper<album_model::DeductionKind>
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<album_model::DeductionKind>>
+    for album_model::DeductionKind
+{
+    fn into_into_dart(self) -> FrbWrapper<album_model::DeductionKind> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
 impl flutter_rust_bridge::IntoDart for FrbWrapper<album_model::Disc> {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
@@ -1812,6 +2160,53 @@ impl flutter_rust_bridge::IntoIntoDart<crate::api::models::LibraryInfo>
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<album_model::LogChecksum> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self.0 {
+            album_model::LogChecksum::Valid => 0.into_dart(),
+            album_model::LogChecksum::Invalid => 1.into_dart(),
+            album_model::LogChecksum::Missing => 2.into_dart(),
+            album_model::LogChecksum::NotApplicable => 3.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for FrbWrapper<album_model::LogChecksum>
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<album_model::LogChecksum>>
+    for album_model::LogChecksum
+{
+    fn into_into_dart(self) -> FrbWrapper<album_model::LogChecksum> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<album_model::LogDeduction> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.0.kind.into_into_dart().into_dart(),
+            self.0.message.into_into_dart().into_dart(),
+            self.0.points.into_into_dart().into_dart(),
+            self.0.track.into_into_dart().into_dart(),
+            self.0.informational.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for FrbWrapper<album_model::LogDeduction>
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<album_model::LogDeduction>>
+    for album_model::LogDeduction
+{
+    fn into_into_dart(self) -> FrbWrapper<album_model::LogDeduction> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
 impl flutter_rust_bridge::IntoDart for FrbWrapper<album_model::RipLog> {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
@@ -1823,9 +2218,15 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<album_model::RipLog> {
             self.0.read_mode.into_into_dart().into_dart(),
             self.0.status.into_into_dart().into_dart(),
             self.0.no_errors.into_into_dart().into_dart(),
+            self.0.errors.into_into_dart().into_dart(),
             self.0.accurate_rip_summary.into_into_dart().into_dart(),
             self.0.ctdb_summary.into_into_dart().into_dart(),
-            self.0.has_checksum.into_into_dart().into_dart(),
+            self.0.checksum.into_into_dart().into_dart(),
+            self.0.score.into_into_dart().into_dart(),
+            self.0.deductions.into_into_dart().into_dart(),
+            self.0.language.into_into_dart().into_dart(),
+            self.0.read_offset.into_into_dart().into_dart(),
+            self.0.drive_offsets.into_into_dart().into_dart(),
             self.0.tracks.into_into_dart().into_dart(),
         ]
         .into_dart()
@@ -1837,6 +2238,36 @@ impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
 }
 impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<album_model::RipLog>> for album_model::RipLog {
     fn into_into_dart(self) -> FrbWrapper<album_model::RipLog> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<album_model::RipRules> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.0.problem_kinds.into_into_dart().into_dart(),
+            self.0
+                .ar_mismatch_min_submissions
+                .into_into_dart()
+                .into_dart(),
+            self.0
+                .invalid_signature_is_problem
+                .into_into_dart()
+                .into_dart(),
+            self.0.perfect_min_confidence.into_into_dart().into_dart(),
+            self.0.perfect_needs_both.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for FrbWrapper<album_model::RipRules>
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<album_model::RipRules>>
+    for album_model::RipRules
+{
+    fn into_into_dart(self) -> FrbWrapper<album_model::RipRules> {
         self.into()
     }
 }
@@ -1966,6 +2397,9 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<album_model::TrackVerify> {
             self.0.number.into_into_dart().into_dart(),
             self.0.accurate_rip.into_into_dart().into_dart(),
             self.0.ar_ok.into_into_dart().into_dart(),
+            self.0.accurate_rip_ok.into_into_dart().into_dart(),
+            self.0.ar_confidence.into_into_dart().into_dart(),
+            self.0.ctdb_ok.into_into_dart().into_dart(),
             self.0.copy_crc.into_into_dart().into_dart(),
             self.0.test_crc.into_into_dart().into_dart(),
             self.0.crc_match.into_into_dart().into_dart(),
@@ -2130,6 +2564,16 @@ impl SseEncode for album_model::CueInfo {
     }
 }
 
+impl SseEncode for album_model::DeductionKind {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.id, serializer);
+        <String>::sse_encode(self.label, serializer);
+        <i32>::sse_encode(self.points, serializer);
+        <bool>::sse_encode(self.problem_by_default, serializer);
+    }
+}
+
 impl SseEncode for album_model::Disc {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -2246,6 +2690,16 @@ impl SseEncode for Vec<album_model::CueInfo> {
     }
 }
 
+impl SseEncode for Vec<album_model::DeductionKind> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <album_model::DeductionKind>::sse_encode(item, serializer);
+        }
+    }
+}
+
 impl SseEncode for Vec<album_model::Disc> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -2282,6 +2736,26 @@ impl SseEncode for Vec<album_model::Issue> {
         <i32>::sse_encode(self.len() as _, serializer);
         for item in self {
             <album_model::Issue>::sse_encode(item, serializer);
+        }
+    }
+}
+
+impl SseEncode for Vec<album_model::LogDeduction> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <album_model::LogDeduction>::sse_encode(item, serializer);
+        }
+    }
+}
+
+impl SseEncode for Vec<i32> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <i32>::sse_encode(item, serializer);
         }
     }
 }
@@ -2323,6 +2797,35 @@ impl SseEncode for Vec<album_model::TrackVerify> {
         for item in self {
             <album_model::TrackVerify>::sse_encode(item, serializer);
         }
+    }
+}
+
+impl SseEncode for album_model::LogChecksum {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                album_model::LogChecksum::Valid => 0,
+                album_model::LogChecksum::Invalid => 1,
+                album_model::LogChecksum::Missing => 2,
+                album_model::LogChecksum::NotApplicable => 3,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
+    }
+}
+
+impl SseEncode for album_model::LogDeduction {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.kind, serializer);
+        <String>::sse_encode(self.message, serializer);
+        <i32>::sse_encode(self.points, serializer);
+        <Option<i32>>::sse_encode(self.track, serializer);
+        <bool>::sse_encode(self.informational, serializer);
     }
 }
 
@@ -2407,10 +2910,27 @@ impl SseEncode for album_model::RipLog {
         <Option<String>>::sse_encode(self.read_mode, serializer);
         <album_model::RipStatus>::sse_encode(self.status, serializer);
         <Option<bool>>::sse_encode(self.no_errors, serializer);
+        <bool>::sse_encode(self.errors, serializer);
         <Option<String>>::sse_encode(self.accurate_rip_summary, serializer);
         <Option<String>>::sse_encode(self.ctdb_summary, serializer);
-        <bool>::sse_encode(self.has_checksum, serializer);
+        <album_model::LogChecksum>::sse_encode(self.checksum, serializer);
+        <Option<i32>>::sse_encode(self.score, serializer);
+        <Vec<album_model::LogDeduction>>::sse_encode(self.deductions, serializer);
+        <Option<String>>::sse_encode(self.language, serializer);
+        <Option<i32>>::sse_encode(self.read_offset, serializer);
+        <Vec<i32>>::sse_encode(self.drive_offsets, serializer);
         <Vec<album_model::TrackVerify>>::sse_encode(self.tracks, serializer);
+    }
+}
+
+impl SseEncode for album_model::RipRules {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <Vec<String>>::sse_encode(self.problem_kinds, serializer);
+        <u32>::sse_encode(self.ar_mismatch_min_submissions, serializer);
+        <bool>::sse_encode(self.invalid_signature_is_problem, serializer);
+        <u32>::sse_encode(self.perfect_min_confidence, serializer);
+        <bool>::sse_encode(self.perfect_needs_both, serializer);
     }
 }
 
@@ -2502,6 +3022,9 @@ impl SseEncode for album_model::TrackVerify {
         <i32>::sse_encode(self.number, serializer);
         <Option<String>>::sse_encode(self.accurate_rip, serializer);
         <Option<bool>>::sse_encode(self.ar_ok, serializer);
+        <Option<bool>>::sse_encode(self.accurate_rip_ok, serializer);
+        <Option<i32>>::sse_encode(self.ar_confidence, serializer);
+        <Option<bool>>::sse_encode(self.ctdb_ok, serializer);
         <Option<String>>::sse_encode(self.copy_crc, serializer);
         <Option<String>>::sse_encode(self.test_crc, serializer);
         <Option<bool>>::sse_encode(self.crc_match, serializer);

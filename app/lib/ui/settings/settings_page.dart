@@ -8,6 +8,7 @@ import 'package:album_manager/ui/settings/appearance_settings_page.dart';
 import 'package:album_manager/ui/settings/display_settings_page.dart';
 import 'package:album_manager/ui/settings/health_settings_page.dart';
 import 'package:album_manager/ui/settings/library_settings_page.dart';
+import 'package:album_manager/ui/settings/rip_log_settings_page.dart';
 import 'package:album_manager/ui/settings/rules_page.dart';
 import 'package:album_manager/ui/settings/settings_widgets.dart';
 
@@ -54,6 +55,14 @@ class SettingsPage extends StatelessWidget {
                       '识别规则',
                       '封面、扫图、专辑文件夹命名格式',
                       const RulesPage(),
+                    ),
+                    category(
+                      Icons.fact_check_outlined,
+                      '抓轨日志',
+                      settings.showLogScore
+                          ? '显示 OPS 评分 · 判定规则'
+                          : '判定规则 · 评分未显示',
+                      const RipLogSettingsPage(),
                     ),
                     category(
                       Icons.health_and_safety_outlined,

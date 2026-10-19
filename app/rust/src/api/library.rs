@@ -3,7 +3,7 @@
 use crate::api::models::*;
 use crate::frb_generated::StreamSink;
 use album_core::{imaging, library, rules};
-use album_formats::text;
+use album_formats::{riplog, text};
 use anyhow::{anyhow, Result};
 use std::path::{Path, PathBuf};
 use std::sync::Mutex;
@@ -91,7 +91,23 @@ pub fn get_thumbnail(path: String, max_size: u32) -> Result<String> {
 
 /// Reads a text file (log / cue / txt) with encoding detection.
 pub fn read_text_file(path: String) -> Result<String> {
-    Ok(text::read_decoded(Path::new(&path))?.text)
+    let path = Path::new(&path);
+    let is_log = path
+        .extension()
+        .is_some_and(|e| e.eq_ignore_ascii_case("log"));
+    Ok(if is_log {
+        riplog::read(path)?
+    } else {
+        text::read_decoded(path)?
+    }
+    .text)
+}
+
+/// An EAC log written in another UI language, translated to English; None
+/// when it is English already or the language isn't known.
+pub fn translate_log(path: String) -> Result<Option<String>> {
+    let text = riplog::read(Path::new(&path))?.text;
+    Ok(riplog::translate(&text).map(|(_, english)| english))
 }
 
 /// Converts every non-UTF-8 cue sheet of an album to UTF-8 (with BOM).
@@ -155,6 +171,25 @@ pub fn get_scan_rules() -> ScanRules {
 
 pub fn default_scan_rules() -> ScanRules {
     rules::defaults()
+}
+
+pub fn get_rip_rules() -> RipRules {
+    rules::rip()
+}
+
+pub fn default_rip_rules() -> RipRules {
+    riplog::default_rules()
+}
+
+/// The log checker rules the user can count as problems or not.
+pub fn rip_deduction_kinds() -> Vec<DeductionKind> {
+    riplog::deduction_kinds()
+}
+
+/// Applies new rip log rules to the whole library right away; returns the
+/// updated album summaries.
+pub fn set_rip_rules(rules: RipRules) -> Result<Vec<AlbumSummary>> {
+    library::set_rip_rules(rules)
 }
 
 /// Fails with a readable message when a template is invalid.

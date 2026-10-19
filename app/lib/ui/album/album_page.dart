@@ -65,7 +65,8 @@ class _AlbumPageState extends State<AlbumPage> with TickerProviderStateMixin {
   }
 
   void _onChanged() {
-    if (library.albumChanged.value == _s.id) _load();
+    final changed = library.albumChanged.value;
+    if (changed == _s.id || changed == LibraryController.allAlbums) _load();
   }
 
   Future<void> _load() async {
