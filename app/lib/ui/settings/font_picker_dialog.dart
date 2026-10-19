@@ -122,7 +122,7 @@ class _FontPickerDialogState extends State<_FontPickerDialog> {
           onPressed: () => Navigator.pop(context),
           child: const Text('取消'),
         ),
-        TextButton(
+        FilledButton(
           onPressed: () {
             settings.setFontFamily(_selected == _bundled ? null : _selected);
             Navigator.pop(context);

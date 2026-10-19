@@ -78,7 +78,7 @@ Future<bool> confirmSetting(
           onPressed: () => Navigator.pop(ctx, false),
           child: const Text('取消'),
         ),
-        TextButton(
+        FilledButton(
           onPressed: () => Navigator.pop(ctx, true),
           child: Text(confirm),
         ),
