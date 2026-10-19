@@ -32,7 +32,7 @@ class WelcomePage extends StatelessWidget {
             ),
             const SizedBox(height: 12),
             Text(
-              '选择你的专辑库文件夹（例如 F:\\Music），开始整理抓轨与数字资源。',
+              '选择你的专辑库文件夹，开始整理抓轨与数字资源。',
               style: t.textTheme.bodyLarge?.copyWith(
                 color: t.colorScheme.onSurfaceVariant,
               ),

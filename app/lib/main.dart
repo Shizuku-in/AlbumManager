@@ -25,6 +25,7 @@ Future<void> main() async {
       center: true,
       title: 'Album Manager',
       titleBarStyle: TitleBarStyle.hidden, // replaced by the Material TitleBar
+      windowButtonVisibility: false,
     ),
     () async {
       await windowManager.show();

@@ -62,8 +62,8 @@ class _AlbumContextMenuState extends State<AlbumContextMenu> {
         ),
         MenuItemButton(
           leadingIcon: const Icon(Icons.open_in_new),
-          onPressed: () => revealInExplorer(a.path),
-          child: const Text('在资源管理器中定位'),
+          onPressed: () => revealInFileManager(a.path),
+          child: const Text('在文件管理器中定位'),
         ),
       ],
       child: GestureDetector(

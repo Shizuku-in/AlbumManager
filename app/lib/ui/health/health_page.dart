@@ -243,9 +243,9 @@ class _HealthPageState extends State<HealthPage>
                         ),
                         const SizedBox(width: 8),
                         IconButton(
-                          tooltip: '在资源管理器中显示',
+                          tooltip: '在文件管理器中显示',
                           onPressed: () => msgs.first.path != null
-                              ? revealInExplorer(msgs.first.path!)
+                              ? revealInFileManager(msgs.first.path!)
                               : openPath(a.path),
                           icon: const Icon(Icons.folder_open_outlined),
                         ),

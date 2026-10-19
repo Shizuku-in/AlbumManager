@@ -3,7 +3,7 @@
 use std::collections::BTreeSet;
 
 /// Family names of the installed fonts (machine-wide and per-user), sorted.
-/// Flutter resolves these names through DirectWrite.
+/// Uses the platform's installed font database.
 pub fn system_font_families() -> Vec<String> {
     let mut names = BTreeSet::new();
     #[cfg(windows)]
@@ -17,11 +17,18 @@ pub fn system_font_families() -> Vec<String> {
             names.extend(families(&entry));
         }
     }
+    #[cfg(any(target_os = "macos", target_os = "linux"))]
+    names.extend(
+        font_kit::source::SystemSource::new()
+            .all_families()
+            .unwrap_or_default(),
+    );
     names.into_iter().collect()
 }
 
 /// Style words that end a registry entry but aren't part of the family
 /// ("Segoe UI Semibold Italic" → "Segoe UI").
+#[cfg(windows)]
 const STYLES: &[&str] = &[
     "Regular",
     "Bold",
@@ -49,6 +56,7 @@ const STYLES: &[&str] = &[
 
 /// Families named by a registry entry such as
 /// "Microsoft YaHei & Microsoft YaHei UI (TrueType)".
+#[cfg(windows)]
 fn families(entry: &str) -> Vec<String> {
     if entry.contains("(All res)") {
         return Vec::new(); // bitmap fonts

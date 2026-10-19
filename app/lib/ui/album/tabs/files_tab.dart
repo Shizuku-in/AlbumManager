@@ -50,7 +50,7 @@ List<Widget> filesSlivers(BuildContext context, Album a) {
           title: Text(f.relPath, maxLines: 1, overflow: TextOverflow.ellipsis),
           trailing: Text(formatSize(f.size), style: t.textTheme.bodySmall),
           onTap: () =>
-              isText ? showTextFile(context, full) : revealInExplorer(full),
+              isText ? showTextFile(context, full) : revealInFileManager(full),
         );
       },
     ),

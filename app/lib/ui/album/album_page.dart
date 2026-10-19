@@ -220,8 +220,8 @@ class _AlbumPageState extends State<AlbumPage> with TickerProviderStateMixin {
                   ),
                   MenuItemButton(
                     leadingIcon: const Icon(Icons.open_in_new),
-                    onPressed: () => revealInExplorer(_s.path),
-                    child: const Text('在资源管理器中定位'),
+                    onPressed: () => revealInFileManager(_s.path),
+                    child: const Text('在文件管理器中定位'),
                   ),
                 ],
               ),
@@ -424,7 +424,7 @@ class _AlbumPageState extends State<AlbumPage> with TickerProviderStateMixin {
                     : IconButton(
                         tooltip: '定位文件',
                         icon: const Icon(Icons.folder_open_outlined),
-                        onPressed: () => revealInExplorer(i.path!),
+                        onPressed: () => revealInFileManager(i.path!),
                       ),
               ),
           ],

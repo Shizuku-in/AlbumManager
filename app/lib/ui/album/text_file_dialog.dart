@@ -38,8 +38,8 @@ Future<void> showTextFile(
         ),
         actions: [
           TextButton(
-            onPressed: () => revealInExplorer(path),
-            child: const Text('在资源管理器中显示'),
+            onPressed: () => revealInFileManager(path),
+            child: const Text('在文件管理器中显示'),
           ),
           TextButton(
             onPressed: () => Navigator.pop(ctx),
