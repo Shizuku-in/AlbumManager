@@ -21,7 +21,7 @@ fn real_library() {
         st.albums.len(),
         t.elapsed()
     );
-    let mut count = |label: &str, f: &dyn Fn(&Album) -> String| {
+    let count = |label: &str, f: &dyn Fn(&Album) -> String| {
         let mut m: HashMap<String, usize> = HashMap::new();
         for a in &st.albums {
             *m.entry(f(a)).or_default() += 1;
