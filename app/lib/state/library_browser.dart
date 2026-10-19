@@ -69,6 +69,9 @@ class TriFilter<T> {
     return TriFilter(m);
   }
 
+  /// Without any constraint on [option].
+  TriFilter<T> without(T option) => TriFilter({...modes}..remove(option));
+
   /// Some included option is among [values] (if any are included) and no
   /// excluded one is.
   bool matchesAny(Iterable<T> values) {
@@ -150,6 +153,20 @@ class AlbumFilters {
       formats.matchesAny(a.formats) &&
       ripStatuses.matchesAny([a.ripStatus]) &&
       flags.modes.entries.every((e) => e.key.matches(a) == (e.value == FilterMode.include));
+
+  AlbumFilters copyWith({
+    TriFilter<AlbumSource>? sources,
+    TriFilter<AudioQuality>? qualities,
+    TriFilter<String>? formats,
+    TriFilter<RipStatus>? ripStatuses,
+    TriFilter<ContentFlag>? flags,
+  }) => AlbumFilters(
+    sources: sources ?? this.sources,
+    qualities: qualities ?? this.qualities,
+    formats: formats ?? this.formats,
+    ripStatuses: ripStatuses ?? this.ripStatuses,
+    flags: flags ?? this.flags,
+  );
 
   AlbumFilters cycleSource(AlbumSource v) =>
       AlbumFilters(sources: sources.cycle(v), qualities: qualities, formats: formats, ripStatuses: ripStatuses, flags: flags);

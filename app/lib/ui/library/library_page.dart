@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'package:album_manager/src/rust/third_party/album_model.dart';
 import 'package:album_manager/state/library_browser.dart';
@@ -11,6 +12,10 @@ import 'package:album_manager/ui/common/smooth_scroll.dart';
 import 'package:album_manager/ui/library/album_card.dart';
 import 'package:album_manager/ui/library/filter_panel.dart';
 import 'package:album_manager/util/format.dart';
+import 'package:album_manager/util/labels.dart';
+
+/// Focus of the library search field, so Ctrl+F can reach it from anywhere.
+final librarySearchFocus = FocusNode(debugLabel: 'librarySearch');
 
 class LibraryPage extends StatefulWidget {
   const LibraryPage({super.key});
@@ -31,6 +36,48 @@ class _LibraryPageState extends State<LibraryPage> {
   }
 
   void _open(AlbumSummary a) => Navigator.of(context).push(AlbumPage.route(a));
+
+  void _clearSearch() {
+    _search.clear();
+    browser.setQuery('');
+  }
+
+  void _clearAll() {
+    _clearSearch();
+    browser.clearFilters();
+  }
+
+  /// Removable chips for the active filters (M3 input chips), so what is
+  /// narrowing the library stays visible without opening the panel.
+  List<Widget> _filterChips() {
+    final f = browser.filters;
+    Widget chip(String label, FilterMode mode, AlbumFilters next) {
+      final exclude = mode == FilterMode.exclude;
+      return InputChip(
+        avatar: exclude ? const Icon(Icons.block) : null,
+        label: Text(exclude ? '排除 $label' : label),
+        tooltip: '编辑筛选',
+        onPressed: () => showFilterPanel(context),
+        deleteButtonTooltipMessage: '移除此筛选',
+        onDeleted: () => browser.setFilters(next),
+      );
+    }
+
+    return [
+      if (browser.yearFilter != null)
+        InputChip(
+          avatar: const Icon(Icons.event_outlined),
+          label: Text('${browser.yearFilter} 年'),
+          deleteButtonTooltipMessage: '移除此筛选',
+          onDeleted: () => browser.setYear(null),
+        ),
+      for (final e in f.sources.modes.entries) chip(e.key.label, e.value, f.copyWith(sources: f.sources.without(e.key))),
+      for (final e in f.qualities.modes.entries) chip(e.key.label, e.value, f.copyWith(qualities: f.qualities.without(e.key))),
+      for (final e in f.formats.modes.entries) chip(e.key, e.value, f.copyWith(formats: f.formats.without(e.key))),
+      for (final e in f.ripStatuses.modes.entries) chip('抓轨${e.key.label}', e.value, f.copyWith(ripStatuses: f.ripStatuses.without(e.key))),
+      for (final e in f.flags.modes.entries) chip(e.key.label, e.value, f.copyWith(flags: f.flags.without(e.key))),
+    ];
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -71,60 +118,63 @@ class _LibraryPageState extends State<LibraryPage> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        SearchBar(
-                          controller: _search,
-                          hintText: '搜索标题、艺术家、文件夹',
-                          leading: const Icon(Icons.search),
-                          elevation: const WidgetStatePropertyAll(0),
-                          padding: const WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 16)),
-                          onChanged: browser.setQuery,
-                          trailing: [
-                            if (browser.query.isNotEmpty)
+                        CallbackShortcuts(
+                          bindings: {const SingleActivator(LogicalKeyboardKey.escape): _clearSearch},
+                          child: SearchBar(
+                            controller: _search,
+                            focusNode: librarySearchFocus,
+                            hintText: '搜索标题、艺术家、文件夹（Ctrl+F）',
+                            leading: const Icon(Icons.search),
+                            elevation: const WidgetStatePropertyAll(0),
+                            padding: const WidgetStatePropertyAll(EdgeInsets.symmetric(horizontal: 16)),
+                            onChanged: browser.setQuery,
+                            trailing: [
+                              if (browser.query.isNotEmpty) IconButton(tooltip: '清除搜索', icon: const Icon(Icons.close), onPressed: _clearSearch),
                               IconButton(
-                                tooltip: '清除',
-                                icon: const Icon(Icons.close),
-                                onPressed: () {
-                                  _search.clear();
-                                  browser.setQuery('');
-                                },
-                              ),
-                            IconButton(
-                              tooltip: '筛选',
-                              isSelected: filterCount > 0,
-                              onPressed: () => showFilterPanel(context),
-                              icon: Badge.count(count: filterCount, isLabelVisible: filterCount > 0, child: const Icon(Icons.filter_list)),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Text(
-                              '${albums.length} 张专辑 · ${formatHours(totalDur)} · ${formatSize(totalSize)}',
-                              style: t.textTheme.bodyMedium?.copyWith(color: t.colorScheme.onSurfaceVariant),
-                            ),
-                            if (filterCount > 0) ...[
-                              const SizedBox(width: 8),
-                              TextButton.icon(
-                                onPressed: browser.clearFilters,
-                                icon: const Icon(Icons.filter_list_off, size: 18),
-                                label: Text('清除 $filterCount 项筛选'),
+                                tooltip: '筛选',
+                                isSelected: filterCount > 0,
+                                onPressed: () => showFilterPanel(context),
+                                icon: Badge.count(count: filterCount, isLabelVisible: filterCount > 0, child: const Icon(Icons.filter_list)),
                               ),
                             ],
-                          ],
+                          ),
+                        ),
+                        if (filterCount > 0) ...[
+                          const SizedBox(height: 12),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            crossAxisAlignment: WrapCrossAlignment.center,
+                            children: [
+                              ..._filterChips(),
+                              if (filterCount > 1) TextButton(onPressed: browser.clearFilters, child: const Text('全部清除')),
+                            ],
+                          ),
+                        ],
+                        const SizedBox(height: 12),
+                        Text(
+                          '${albums.length} 张专辑 · ${formatHours(totalDur)} · ${formatSize(totalSize)}',
+                          style: t.textTheme.bodyMedium?.copyWith(color: t.colorScheme.onSurfaceVariant),
                         ),
                       ],
                     ),
                   ),
                 ),
                 if (albums.isEmpty)
-                  SliverFillRemaining(hasScrollBody: false, child: _Empty(scanning: library.scanning))
+                  SliverFillRemaining(
+                    hasScrollBody: false,
+                    child: _Empty(
+                      scanning: library.scanning,
+                      libraryEmpty: library.albums.isEmpty,
+                      onClear: _clearAll,
+                    ),
+                  )
                 else if (browser.gridView)
                   ..._gridSlivers(context, albums)
                 else
                   SliverList.builder(
                     itemCount: albums.length,
-                    itemBuilder: (context, i) => _marked(albums[i], AlbumTile(album: albums[i], onTap: () => _open(albums[i]))),
+                    itemBuilder: (context, i) => _marked(albums[i], _item(albums[i], AlbumTile(album: albums[i], onTap: () => _open(albums[i])))),
                   ),
                 const SliverToBoxAdapter(child: SizedBox(height: 24)),
               ],
@@ -137,6 +187,8 @@ class _LibraryPageState extends State<LibraryPage> {
 
   /// Tags an item so [ScrollLabel] can tell which album is at the top.
   static Widget _marked(AlbumSummary a, Widget child) => MetaData(metaData: a, behavior: HitTestBehavior.translucent, child: child);
+
+  Widget _item(AlbumSummary a, Widget child) => AlbumContextMenu(album: a, onOpen: () => _open(a), child: child);
 
   /// Fast-scroll bubble text, matching the current sort order.
   static ScrollLabelText? _scrollLabel(AlbumSummary a) {
@@ -161,7 +213,7 @@ class _LibraryPageState extends State<LibraryPage> {
       sliver: SliverGrid.builder(
         gridDelegate: gridDelegate,
         itemCount: items.length,
-        itemBuilder: (context, i) => _marked(items[i], AlbumCard(album: items[i], onTap: () => _open(items[i]))),
+        itemBuilder: (context, i) => _marked(items[i], _item(items[i], AlbumCard(album: items[i], onTap: () => _open(items[i])))),
       ),
     );
     if (!browser.sort.groupsByYear || browser.yearFilter != null) {
@@ -214,20 +266,43 @@ class _SortMenu extends StatelessWidget {
   }
 }
 
+/// Empty state that says why nothing is shown and offers the way out.
 class _Empty extends StatelessWidget {
   final bool scanning;
-  const _Empty({required this.scanning});
+
+  /// No albums at all (as opposed to none matching the search / filters).
+  final bool libraryEmpty;
+  final VoidCallback onClear;
+  const _Empty({required this.scanning, required this.libraryEmpty, required this.onClear});
 
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context);
+    final (icon, title, body, action) = scanning
+        ? (Icons.radar, '正在扫描专辑库…', '找到的专辑会显示在这里', null)
+        : libraryEmpty
+        ? (
+            Icons.library_music_outlined,
+            '专辑库中还没有专辑',
+            '确认专辑库位置是否正确，然后重新扫描',
+            FilledButton.tonalIcon(onPressed: () => library.rescan(), icon: const Icon(Icons.sync), label: const Text('重新扫描')),
+          )
+        : (
+            Icons.search_off,
+            '没有符合条件的专辑',
+            '试试其它关键词，或放宽筛选条件',
+            FilledButton.tonalIcon(onPressed: onClear, icon: const Icon(Icons.filter_list_off), label: const Text('清除搜索和筛选')),
+          );
     return Center(
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(scanning ? Icons.radar : Icons.search_off, size: 48, color: t.colorScheme.onSurfaceVariant),
+          Icon(icon, size: 48, color: t.colorScheme.onSurfaceVariant),
           const SizedBox(height: 16),
-          Text(scanning ? '正在扫描专辑库…' : '没有符合条件的专辑', style: t.textTheme.bodyLarge?.copyWith(color: t.colorScheme.onSurfaceVariant)),
+          Text(title, style: t.textTheme.titleMedium),
+          const SizedBox(height: 4),
+          Text(body, style: t.textTheme.bodyMedium?.copyWith(color: t.colorScheme.onSurfaceVariant)),
+          if (action != null) ...[const SizedBox(height: 24), action],
         ],
       ),
     );

@@ -73,16 +73,17 @@ class _CollapsingTitle extends StatelessWidget {
 }
 
 /// App bar background that fades to the M3 scrolled-under color. Use as a
-/// SliverAppBar's flexibleSpace, with the bar's own background transparent.
+/// SliverAppBar's flexibleSpace, with the bar's own background transparent,
+/// or pass [scrolledUnder] explicitly (e.g. for a pinned header below it).
 class ScrolledUnderBackground extends StatelessWidget {
+  final bool? scrolledUnder;
   final Widget? child;
-  const ScrolledUnderBackground({super.key, this.child});
+  const ScrolledUnderBackground({super.key, this.scrolledUnder, this.child});
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final s = context.dependOnInheritedWidgetOfExactType<FlexibleSpaceBarSettings>();
-    final scrolledUnder = s?.isScrolledUnder ?? false;
+    final scrolledUnder = this.scrolledUnder ?? context.dependOnInheritedWidgetOfExactType<FlexibleSpaceBarSettings>()?.isScrolledUnder ?? false;
     // Animate the scrolled-under amount, not the color: the colors are read
     // from the theme on every frame, so theme / accent changes (which the app
     // already animates) apply in lockstep instead of chasing a moving target.

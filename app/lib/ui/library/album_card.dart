@@ -9,6 +9,40 @@ import 'package:album_manager/ui/common/cover_image.dart';
 import 'package:album_manager/ui/common/tone_label.dart';
 import 'package:album_manager/util/format.dart';
 import 'package:album_manager/util/labels.dart';
+import 'package:album_manager/util/system.dart';
+
+/// Right-click menu for an album in the library (desktop convention).
+class AlbumContextMenu extends StatefulWidget {
+  final AlbumSummary album;
+  final VoidCallback onOpen;
+  final Widget child;
+  const AlbumContextMenu({super.key, required this.album, required this.onOpen, required this.child});
+
+  @override
+  State<AlbumContextMenu> createState() => _AlbumContextMenuState();
+}
+
+class _AlbumContextMenuState extends State<AlbumContextMenu> {
+  final _menu = MenuController();
+
+  @override
+  Widget build(BuildContext context) {
+    final a = widget.album;
+    return MenuAnchor(
+      controller: _menu,
+      consumeOutsideTap: true,
+      menuChildren: [
+        MenuItemButton(leadingIcon: const Icon(Icons.info_outlined), onPressed: widget.onOpen, child: const Text('查看详情')),
+        MenuItemButton(leadingIcon: const Icon(Icons.folder_open_outlined), onPressed: () => openPath(a.path), child: const Text('打开文件夹')),
+        MenuItemButton(leadingIcon: const Icon(Icons.open_in_new), onPressed: () => revealInExplorer(a.path), child: const Text('在资源管理器中定位')),
+      ],
+      child: GestureDetector(
+        onSecondaryTapUp: (d) => _menu.open(position: d.localPosition),
+        child: widget.child,
+      ),
+    );
+  }
+}
 
 /// M3 filled card: media on top, headline + supporting text below.
 class AlbumCard extends StatelessWidget {

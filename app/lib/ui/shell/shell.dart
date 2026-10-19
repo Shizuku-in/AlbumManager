@@ -1,4 +1,6 @@
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import 'package:album_manager/state/library_controller.dart';
 import 'package:album_manager/state/navigation.dart';
@@ -58,9 +60,40 @@ class _ShellState extends State<Shell> {
     navIndex.value = i;
   }
 
+  /// Mouse back button / Alt+←: back within the current destination.
+  void _back() => _navKeys[navIndex.value].currentState?.maybePop();
+
+  /// Ctrl+F: the library's search field, from anywhere.
+  void _search() {
+    _navKeys[0].currentState?.popUntil((r) => r.isFirst);
+    navIndex.value = 0;
+    // Once the library page is the visible one again.
+    WidgetsBinding.instance.addPostFrameCallback((_) => librarySearchFocus.requestFocus());
+  }
+
   @override
   Widget build(BuildContext context) {
     final wide = MediaQuery.sizeOf(context).width >= 1200;
+    // Dialogs live on the root navigator, outside this subtree, so neither
+    // the shortcuts nor the back button reach the page behind an open dialog.
+    return CallbackShortcuts(
+      bindings: {
+        const SingleActivator(LogicalKeyboardKey.arrowLeft, alt: true): _back,
+        const SingleActivator(LogicalKeyboardKey.keyF, control: true): _search,
+      },
+      child: Focus(
+        autofocus: true,
+        child: Listener(
+          onPointerDown: (e) {
+            if (e.buttons & kBackMouseButton != 0) _back();
+          },
+          child: _scaffold(wide),
+        ),
+      ),
+    );
+  }
+
+  Widget _scaffold(bool wide) {
     return Scaffold(
       body: Row(children: [
         ListenableBuilder(

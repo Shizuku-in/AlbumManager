@@ -13,7 +13,8 @@ Future<void> showFilterPanel(BuildContext context) {
     context: context,
     barrierDismissible: true,
     barrierLabel: '关闭筛选',
-    barrierColor: Colors.black26,
+    // M3 scrim: the scheme's scrim color at 32 %.
+    barrierColor: Theme.of(context).colorScheme.scrim.withValues(alpha: 0.32),
     transitionDuration: const Duration(milliseconds: 250),
     pageBuilder: (context, _, _) => const Align(
       alignment: Alignment.centerRight,

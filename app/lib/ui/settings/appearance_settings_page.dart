@@ -24,7 +24,7 @@ class AppearanceSettingsPage extends StatelessWidget {
         SettingsGroup(title: '主题', children: [
           ListTile(
             leading: const Icon(Icons.brightness_6_outlined),
-            title: const Text('主题'),
+            title: const Text('颜色模式'),
             trailing: SegmentedButton<ThemeMode>(
               segments: const [
                 ButtonSegment(value: ThemeMode.system, label: Text('跟随系统'), icon: Icon(Icons.brightness_auto_outlined)),
@@ -92,18 +92,28 @@ class _Swatch extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    return InkWell(
-      onTap: onTap,
-      customBorder: const CircleBorder(),
-      child: Container(
-        width: 32,
-        height: 32,
-        decoration: BoxDecoration(
-          color: color,
-          shape: BoxShape.circle,
-          border: selected ? Border.all(color: scheme.onSurface, width: 2) : null,
+    // Check mark that stays legible on light swatches (e.g. yellow).
+    final onColor = ThemeData.estimateBrightnessForColor(color) == Brightness.dark ? Colors.white : Colors.black;
+    return Semantics(
+      selected: selected,
+      button: true,
+      child: InkWell(
+        onTap: onTap,
+        customBorder: const CircleBorder(),
+        // 40 px target around a 32 px swatch.
+        child: Padding(
+          padding: const EdgeInsets.all(4),
+          child: Container(
+            width: 32,
+            height: 32,
+            decoration: BoxDecoration(
+              color: color,
+              shape: BoxShape.circle,
+              border: selected ? Border.all(color: scheme.onSurface, width: 2) : null,
+            ),
+            child: selected ? Icon(Icons.check, size: 18, color: onColor) : null,
+          ),
         ),
-        child: selected ? const Icon(Icons.check, size: 18, color: Colors.white) : null,
       ),
     );
   }

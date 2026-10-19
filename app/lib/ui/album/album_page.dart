@@ -121,9 +121,18 @@ class _AlbumPageState extends State<AlbumPage> with SingleTickerProviderStateMix
           surfaceTintColor: Colors.transparent,
           scrolledUnderElevation: 0,
           flexibleSpace: const ScrolledUnderBackground(),
-          title: Text(_s.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+          // The header shows the title in large type; the bar repeats it only
+          // once that has scrolled away.
+          title: ListenableBuilder(
+            listenable: _scroll,
+            builder: (context, child) => AnimatedOpacity(
+              opacity: _scroll.hasClients && _scroll.offset > 72 ? 1 : 0,
+              duration: const Duration(milliseconds: 150),
+              child: child,
+            ),
+            child: Text(_s.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+          ),
           actions: [
-            IconButton(tooltip: '打开文件夹', onPressed: () => openPath(_s.path), icon: const Icon(Icons.folder_open_outlined)),
             IconButton(
               tooltip: '重新扫描此专辑',
               onPressed: _busy ? null : () => _run(context, () => api.rescanAlbum(id: _s.id), '已重新扫描'),
@@ -158,13 +167,16 @@ class _AlbumPageState extends State<AlbumPage> with SingleTickerProviderStateMix
         ),
         SliverToBoxAdapter(child: _header(context, hasBadCue)),
         if (issues.isNotEmpty) SliverToBoxAdapter(child: _issues(context, issues)),
-        SliverToBoxAdapter(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: TabBar(
+        // M3 secondary tabs (they divide this page's content), pinned under
+        // the app bar so switching tabs never needs scrolling back up.
+        SliverPersistentHeader(
+          pinned: true,
+          delegate: _TabHeader(
+            TabBar.secondary(
               controller: _tabs,
               isScrollable: true,
               tabAlignment: TabAlignment.start,
+              padding: const EdgeInsets.symmetric(horizontal: 8),
               tabs: [
                 Tab(text: '曲目${a == null ? '' : ' (${a.discs.fold<int>(0, (n, d) => n + d.tracks.length)})'}'),
                 Tab(text: '抓轨日志${a == null ? '' : ' (${a.logs.length})'}'),
@@ -238,6 +250,11 @@ class _AlbumPageState extends State<AlbumPage> with SingleTickerProviderStateMix
             Wrap(spacing: 8, runSpacing: 8, children: [
               FilledButton.icon(onPressed: _album == null ? null : _play, icon: const Icon(Icons.play_arrow), label: const Text('播放')),
               FilledButton.tonalIcon(onPressed: () => openPath(s.path), icon: const Icon(Icons.folder_open_outlined), label: const Text('打开文件夹')),
+              OutlinedButton.icon(
+                onPressed: _album != null && !_busy ? () => _edit(context, _album!) : null,
+                icon: const Icon(Icons.edit_outlined),
+                label: const Text('编辑'),
+              ),
               if (hasBadCue)
                 OutlinedButton.icon(onPressed: _busy ? null : () => _fixCue(context), icon: const Icon(Icons.translate), label: const Text('修复 CUE 编码')),
             ]),
@@ -267,4 +284,25 @@ class _AlbumPageState extends State<AlbumPage> with SingleTickerProviderStateMix
       ),
     );
   }
+}
+
+/// Pinned tab bar whose background joins the app bar's scrolled-under color
+/// once content scrolls beneath it.
+class _TabHeader extends SliverPersistentHeaderDelegate {
+  final TabBar tabBar;
+  const _TabHeader(this.tabBar);
+
+  @override
+  double get minExtent => tabBar.preferredSize.height;
+
+  @override
+  double get maxExtent => tabBar.preferredSize.height;
+
+  @override
+  Widget build(BuildContext context, double shrinkOffset, bool overlapsContent) =>
+      ScrolledUnderBackground(scrolledUnder: overlapsContent, child: tabBar);
+
+  // The tab labels carry counts that change once the album loads.
+  @override
+  bool shouldRebuild(_TabHeader oldDelegate) => true;
 }

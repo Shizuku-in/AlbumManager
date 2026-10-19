@@ -48,6 +48,23 @@ class SettingsNote extends StatelessWidget {
   }
 }
 
+/// M3 basic dialog confirming an action that discards something.
+Future<bool> confirmSetting(BuildContext context, {required IconData icon, required String title, required String body, required String confirm}) async {
+  final r = await showDialog<bool>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      icon: Icon(icon),
+      title: Text(title),
+      content: ConstrainedBox(constraints: const BoxConstraints(maxWidth: 400), child: Text(body)),
+      actions: [
+        TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('取消')),
+        TextButton(onPressed: () => Navigator.pop(ctx, true), child: Text(confirm)),
+      ],
+    ),
+  );
+  return r ?? false;
+}
+
 /// Chip row under a tile title.
 Widget settingsChips(List<Widget> chips) => Padding(
   padding: const EdgeInsets.only(top: 8),

@@ -100,6 +100,14 @@ class _CacheTileState extends State<_CacheTile> {
   }
 
   Future<void> _rebuild() async {
+    final ok = await confirmSetting(
+      context,
+      icon: Icons.image_outlined,
+      title: '重建封面缓存？',
+      body: '将删除全部缩略图并完整重新扫描专辑库，期间封面会暂时显示为占位图。',
+      confirm: '重建',
+    );
+    if (!ok) return;
     await api.clearThumbnailCache();
     await _refresh();
     await library.rescan(force: true);

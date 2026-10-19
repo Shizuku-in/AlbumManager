@@ -34,6 +34,11 @@ ThemeData buildTheme(ColorScheme scheme) {
     snackBarTheme: const SnackBarThemeData(behavior: SnackBarBehavior.floating, width: 480),
     // Standard (non-modal) navigation drawer: flush with the window edge.
     drawerTheme: const DrawerThemeData(shape: RoundedRectangleBorder(), width: 280),
+    // Current M3 page transition (slide + fade). The Windows default zooms,
+    // and any scale that is not exactly identity renders text blurry.
+    pageTransitionsTheme: PageTransitionsTheme(
+      builders: {for (final p in TargetPlatform.values) p: const FadeForwardsPageTransitionsBuilder()},
+    ),
   );
 }
 

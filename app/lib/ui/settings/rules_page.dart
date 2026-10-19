@@ -68,6 +68,14 @@ class _RulesPageState extends State<RulesPage> {
   }
 
   Future<void> _resetDefaults() async {
+    final ok = await confirmSetting(
+      context,
+      icon: Icons.settings_backup_restore,
+      title: '恢复默认规则？',
+      body: '自定义的封面关键词、扫图关键词和文件夹命名格式都会被替换为默认值。',
+      confirm: '恢复默认',
+    );
+    if (!ok) return;
     final d = await api.defaultScanRules();
     await _save(coverKeywords: d.coverKeywords, nameTemplates: d.nameTemplates, scanFolderKeywords: d.scanFolderKeywords, scanMinImages: d.scanMinImages);
   }
@@ -118,12 +126,16 @@ class _RulesPageState extends State<RulesPage> {
           : [
               SettingsGroup(children: [
                 ListTile(
-                  leading: const Icon(Icons.info_outline),
+                  leading: Icon(_pending ? Icons.update : Icons.info_outline, color: _pending ? t.colorScheme.primary : null),
                   title: Text(_pending ? '规则已保存，完整重新扫描后生效' : '修改后需要完整重新扫描才会生效'),
                   trailing: Row(mainAxisSize: MainAxisSize.min, children: [
                     TextButton(onPressed: _resetDefaults, child: const Text('恢复默认')),
                     const SizedBox(width: 8),
-                    FilledButton.tonal(
+                    // Becomes the emphasized action while changes are waiting.
+                    FilledButton(
+                      style: _pending
+                          ? null
+                          : FilledButton.styleFrom(backgroundColor: t.colorScheme.secondaryContainer, foregroundColor: t.colorScheme.onSecondaryContainer),
                       onPressed: library.scanning
                           ? null
                           : () {
@@ -143,6 +155,7 @@ class _RulesPageState extends State<RulesPage> {
                     for (final (i, k) in rules.coverKeywords.indexed)
                       InputChip(
                         label: Text(k),
+                        tooltip: i == 0 ? '优先级最高' : '移到最前',
                         onPressed: i == 0 ? null : () => _save(coverKeywords: [k, ...rules.coverKeywords.where((x) => x != k)]),
                         onDeleted: () => _save(coverKeywords: rules.coverKeywords.where((x) => x != k).toList()),
                       ),
