@@ -101,6 +101,7 @@ class _LibraryPageState extends State<LibraryPage> with SingleTickerProviderStat
         final totalSize = albums.fold<int>(0, (n, a) => n + a.totalSize);
         final totalDur = albums.fold<double>(0, (n, a) => n + a.durationSecs);
         return Scaffold(
+          floatingActionButton: _BackToTop(controller: _scroll),
           body: ScrollLabel<AlbumSummary>(
             labelOf: _scrollLabel,
             child: CustomScrollView(
@@ -326,6 +327,49 @@ class _Empty extends StatelessWidget {
           Text(body, style: t.textTheme.bodyMedium?.copyWith(color: t.colorScheme.onSurfaceVariant)),
           if (action != null) ...[const SizedBox(height: 24), action],
         ],
+      ),
+    );
+  }
+}
+
+/// M3 FAB that scrolls the library back to the top; shown once the first
+/// screenful has scrolled away. Slides and fades rather than scaling, which
+/// would blur the icon.
+class _BackToTop extends StatelessWidget {
+  final ScrollController controller;
+  const _BackToTop({required this.controller});
+
+  void _toTop() {
+    final p = controller.position;
+    // From far down, skip most of the way first: animating through thousands
+    // of covers would decode them all on the way.
+    final near = p.viewportDimension * 2;
+    if (p.pixels > near) controller.jumpTo(near);
+    controller.animateTo(0, duration: const Duration(milliseconds: 400), curve: Curves.easeInOutCubicEmphasized);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ListenableBuilder(
+      listenable: controller,
+      builder: (context, child) {
+        final shown = controller.hasClients && controller.offset > controller.position.viewportDimension;
+        return IgnorePointer(
+          ignoring: !shown,
+          child: AnimatedSlide(
+            offset: shown ? Offset.zero : const Offset(0, 0.5),
+            duration: const Duration(milliseconds: 200),
+            curve: shown ? Easing.emphasizedDecelerate : Easing.emphasizedAccelerate,
+            child: AnimatedOpacity(opacity: shown ? 1 : 0, duration: const Duration(milliseconds: 200), child: child),
+          ),
+        );
+      },
+      child: FloatingActionButton(
+        heroTag: null,
+        shape: const CircleBorder(),
+        tooltip: '返回顶部',
+        onPressed: _toTop,
+        child: const Icon(Icons.arrow_upward),
       ),
     );
   }
