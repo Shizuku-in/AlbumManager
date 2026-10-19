@@ -402,7 +402,16 @@ class _AlbumPageState extends State<AlbumPage> with TickerProviderStateMixin {
     );
   }
 
+  /// [path] relative to the album folder (e.g. a disc's log), so issues of
+  /// the same kind tell apart which file they are about.
+  String _inAlbum(String path) => path.startsWith(_s.path)
+      ? path.substring(_s.path.length).replaceFirst(RegExp(r'^[\\/]'), '')
+      : path;
+
   Widget _issues(BuildContext context, List<Issue> issues) {
+    final fileStyle = TextStyle(
+      color: Theme.of(context).colorScheme.onSurfaceVariant,
+    );
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
       child: Card.outlined(
@@ -413,7 +422,20 @@ class _AlbumPageState extends State<AlbumPage> with TickerProviderStateMixin {
               ListTile(
                 dense: true,
                 leading: Icon(i.kind.icon, color: i.kind.tone(context).color),
-                title: Text(i.kind.label),
+                title: Text.rich(
+                  TextSpan(
+                    children: [
+                      TextSpan(text: i.kind.label),
+                      if (i.path != null)
+                        TextSpan(
+                          text: '  ${_inAlbum(i.path!)}',
+                          style: fileStyle,
+                        ),
+                    ],
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
                 subtitle: Text(
                   i.message,
                   maxLines: 1,

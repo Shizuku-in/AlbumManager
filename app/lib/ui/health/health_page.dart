@@ -32,6 +32,18 @@ Map<IssueKind, List<AlbumSummary>> _group(List<AlbumSummary> albums) {
 
 const _coverWidth = 120;
 
+/// One album's issues of a kind, each message once: the same problem in
+/// several files (e.g. every disc's log) reads "…（3 个文件）".
+String _describe(List<Issue> issues) {
+  final counts = <String, int>{};
+  for (final i in issues) {
+    counts.update(i.message, (n) => n + 1, ifAbsent: () => 1);
+  }
+  return counts.entries
+      .map((e) => e.value > 1 ? '${e.key}（${e.value} 个文件）' : e.key)
+      .join('；');
+}
+
 /// Rows on screen at most, whose covers are decoded before a switch.
 const _precacheRows = 24;
 
@@ -230,7 +242,7 @@ class _HealthPageState extends State<HealthPage>
                       overflow: TextOverflow.ellipsis,
                     ),
                     subtitle: Text(
-                      msgs.map((m) => m.message).join('；'),
+                      _describe(msgs),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
