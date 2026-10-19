@@ -112,8 +112,8 @@ jobs:
         shell: bash
         run: |
           bundle=app/build/macos/Build/Products/Release/album_manager.app
-          lipo -verify_arch arm64 x86_64 "$bundle/Contents/MacOS/album_manager"
-          lipo -verify_arch arm64 x86_64 "$bundle/Contents/Frameworks/App.framework/App"
+          lipo "$bundle/Contents/MacOS/album_manager" -verify_arch arm64 x86_64
+          lipo "$bundle/Contents/Frameworks/App.framework/App" -verify_arch arm64 x86_64
           mkdir -p dist staging
           ditto "$bundle" staging/album_manager.app
           cp LICENSE README.md staging/
