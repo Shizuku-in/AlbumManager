@@ -34,11 +34,10 @@ extension ContentFlagX on ContentFlag {
   bool matches(AlbumSummary a) => switch (this) {
     ContentFlag.hasIssues => settings.issuesOf(a).isNotEmpty,
     ContentFlag.missingCover => a.coverThumb == null,
-    // More than one image: a cover alone isn't a scan.
-    ContentFlag.hasScans => a.imageCount > 1,
+    ContentFlag.hasScans => a.hasScans,
     ContentFlag.hasCue => a.hasCue,
     ContentFlag.multiDisc => a.discCount > 1,
-    ContentFlag.edited => a.overrides.source != null || a.overrides.coverPath != null,
+    ContentFlag.edited => a.overrides.source != null || a.overrides.coverPath != null || a.overrides.hasScans != null,
   };
 }
 

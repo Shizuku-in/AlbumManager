@@ -35,7 +35,7 @@ class SettingsPage extends StatelessWidget {
               children: [
                 SettingsGroup(title: '专辑库', children: [
                   category(Icons.folder_outlined, '位置与扫描', library.root ?? '尚未设置专辑库位置', const LibrarySettingsPage()),
-                  category(Icons.rule_folder_outlined, '识别规则', '封面文件名关键词、专辑文件夹命名格式', const RulesPage()),
+                  category(Icons.rule_folder_outlined, '识别规则', '封面、扫图、专辑文件夹命名格式', const RulesPage()),
                   category(
                     Icons.health_and_safety_outlined,
                     '健康检查',

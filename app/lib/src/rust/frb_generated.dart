@@ -72,7 +72,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.13.0';
 
   @override
-  int get rustContentHash => -1140823237;
+  int get rustContentHash => -2034446358;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -112,6 +112,8 @@ abstract class RustLibApi extends BaseApi {
   Future<Album> crateApiLibraryRescanAlbum({required String id});
 
   Stream<ScanEvent> crateApiLibraryScanLibrary({required bool force});
+
+  Future<ScanRules> albumModelScanRulesDefault();
 
   Future<Album> crateApiLibrarySetAlbumOverride({
     required String id,
@@ -504,6 +506,33 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   );
 
   @override
+  Future<ScanRules> albumModelScanRulesDefault() {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 14,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_scan_rules,
+          decodeErrorData: null,
+        ),
+        constMeta: kAlbumModelScanRulesDefaultConstMeta,
+        argValues: [],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kAlbumModelScanRulesDefaultConstMeta =>
+      const TaskConstMeta(debugName: "scan_rules_default", argNames: []);
+
+  @override
   Future<Album> crateApiLibrarySetAlbumOverride({
     required String id,
     required AlbumOverride overrides,
@@ -517,7 +546,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 14,
+            funcId: 15,
             port: port_,
           );
         },
@@ -548,7 +577,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 15,
+            funcId: 16,
             port: port_,
           );
         },
@@ -576,7 +605,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 16,
+            funcId: 17,
             port: port_,
           );
         },
@@ -633,11 +662,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   AlbumOverride dco_decode_album_override(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 2)
-      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
     return AlbumOverride(
       source: dco_decode_opt_box_autoadd_album_source(arr[0]),
       coverPath: dco_decode_opt_String(arr[1]),
+      hasScans: dco_decode_opt_box_autoadd_bool(arr[2]),
     );
   }
 
@@ -651,8 +681,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   AlbumSummary dco_decode_album_summary(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 30)
-      throw Exception('unexpected arr length: expect 30 but see ${arr.length}');
+    if (arr.length != 31)
+      throw Exception('unexpected arr length: expect 31 but see ${arr.length}');
     return AlbumSummary(
       id: dco_decode_String(arr[0]),
       path: dco_decode_String(arr[1]),
@@ -674,16 +704,17 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       totalSize: dco_decode_i_64(arr[17]),
       audioSize: dco_decode_i_64(arr[18]),
       imageCount: dco_decode_i_32(arr[19]),
-      hasCue: dco_decode_bool(arr[20]),
-      hasLog: dco_decode_bool(arr[21]),
-      ripStatus: dco_decode_rip_status(arr[22]),
-      coverPath: dco_decode_opt_String(arr[23]),
-      coverThumb: dco_decode_opt_String(arr[24]),
-      accentColor: dco_decode_opt_box_autoadd_u_32(arr[25]),
-      addedAt: dco_decode_i_64(arr[26]),
-      modifiedAt: dco_decode_i_64(arr[27]),
-      issues: dco_decode_list_issue(arr[28]),
-      overrides: dco_decode_album_override(arr[29]),
+      hasScans: dco_decode_bool(arr[20]),
+      hasCue: dco_decode_bool(arr[21]),
+      hasLog: dco_decode_bool(arr[22]),
+      ripStatus: dco_decode_rip_status(arr[23]),
+      coverPath: dco_decode_opt_String(arr[24]),
+      coverThumb: dco_decode_opt_String(arr[25]),
+      accentColor: dco_decode_opt_box_autoadd_u_32(arr[26]),
+      addedAt: dco_decode_i_64(arr[27]),
+      modifiedAt: dco_decode_i_64(arr[28]),
+      issues: dco_decode_list_issue(arr[29]),
+      overrides: dco_decode_album_override(arr[30]),
     );
   }
 
@@ -1025,11 +1056,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ScanRules dco_decode_scan_rules(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 2)
-      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    if (arr.length != 4)
+      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
     return ScanRules(
       coverKeywords: dco_decode_list_String(arr[0]),
       nameTemplates: dco_decode_list_String(arr[1]),
+      scanFolderKeywords: dco_decode_list_String(arr[2]),
+      scanMinImages: dco_decode_u_32(arr[3]),
     );
   }
 
@@ -1141,7 +1174,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_source = sse_decode_opt_box_autoadd_album_source(deserializer);
     var var_coverPath = sse_decode_opt_String(deserializer);
-    return AlbumOverride(source: var_source, coverPath: var_coverPath);
+    var var_hasScans = sse_decode_opt_box_autoadd_bool(deserializer);
+    return AlbumOverride(
+      source: var_source,
+      coverPath: var_coverPath,
+      hasScans: var_hasScans,
+    );
   }
 
   @protected
@@ -1174,6 +1212,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_totalSize = sse_decode_i_64(deserializer);
     var var_audioSize = sse_decode_i_64(deserializer);
     var var_imageCount = sse_decode_i_32(deserializer);
+    var var_hasScans = sse_decode_bool(deserializer);
     var var_hasCue = sse_decode_bool(deserializer);
     var var_hasLog = sse_decode_bool(deserializer);
     var var_ripStatus = sse_decode_rip_status(deserializer);
@@ -1205,6 +1244,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       totalSize: var_totalSize,
       audioSize: var_audioSize,
       imageCount: var_imageCount,
+      hasScans: var_hasScans,
       hasCue: var_hasCue,
       hasLog: var_hasLog,
       ripStatus: var_ripStatus,
@@ -1668,9 +1708,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var var_coverKeywords = sse_decode_list_String(deserializer);
     var var_nameTemplates = sse_decode_list_String(deserializer);
+    var var_scanFolderKeywords = sse_decode_list_String(deserializer);
+    var var_scanMinImages = sse_decode_u_32(deserializer);
     return ScanRules(
       coverKeywords: var_coverKeywords,
       nameTemplates: var_nameTemplates,
+      scanFolderKeywords: var_scanFolderKeywords,
+      scanMinImages: var_scanMinImages,
     );
   }
 
@@ -1792,6 +1836,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_opt_box_autoadd_album_source(self.source, serializer);
     sse_encode_opt_String(self.coverPath, serializer);
+    sse_encode_opt_box_autoadd_bool(self.hasScans, serializer);
   }
 
   @protected
@@ -1823,6 +1868,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_i_64(self.totalSize, serializer);
     sse_encode_i_64(self.audioSize, serializer);
     sse_encode_i_32(self.imageCount, serializer);
+    sse_encode_bool(self.hasScans, serializer);
     sse_encode_bool(self.hasCue, serializer);
     sse_encode_bool(self.hasLog, serializer);
     sse_encode_rip_status(self.ripStatus, serializer);
@@ -2225,6 +2271,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     // Codec=Sse (Serialization based), see doc to use other codecs
     sse_encode_list_String(self.coverKeywords, serializer);
     sse_encode_list_String(self.nameTemplates, serializer);
+    sse_encode_list_String(self.scanFolderKeywords, serializer);
+    sse_encode_u_32(self.scanMinImages, serializer);
   }
 
   @protected

@@ -270,6 +270,7 @@ pub fn analyze_files(root: &Path, dir: &Path, cache_dir: &Path, fingerprint: u64
         total_size: files.iter().map(|f| f.size as i64).sum(),
         audio_size: audio_files.iter().map(|f| f.size as i64).sum(),
         image_count: images.len() as i32,
+        has_scans: rules.has_scans(image_files.iter().map(|f| f.rel.as_str())),
         has_cue: !cue_files.is_empty(),
         has_log: !logs.is_empty(),
         // Set by apply_source below.

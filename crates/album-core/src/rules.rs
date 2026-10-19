@@ -7,16 +7,15 @@ use regex::Regex;
 use std::sync::{Arc, LazyLock, RwLock};
 
 pub fn defaults() -> ScanRules {
-    ScanRules {
-        cover_keywords: ["cover", "folder", "front", "jacket", "album", "ジャケット", "封面"].map(String::from).to_vec(),
-        name_templates: vec!["[{date}] {title}".into()],
-    }
+    ScanRules::default()
 }
 
 pub struct Rules {
     pub source: ScanRules,
     /// Lowercased cover keywords, in priority order.
     cover: Vec<String>,
+    /// Lowercased scan folder keywords.
+    scan_folders: Vec<String>,
     names: Vec<Regex>,
 }
 
@@ -95,8 +94,10 @@ pub fn parse_date(code: &str) -> (Option<String>, Option<i32>) {
 impl Rules {
     pub fn compile(source: ScanRules) -> Result<Self> {
         let names = source.name_templates.iter().filter(|t| !t.trim().is_empty()).map(|t| compile_template(t)).collect::<Result<_>>()?;
-        let cover = source.cover_keywords.iter().map(|k| k.trim().to_lowercase()).filter(|k| !k.is_empty()).collect();
-        Ok(Self { source, cover, names })
+        let lower = |list: &[String]| list.iter().map(|k| k.trim().to_lowercase()).filter(|k| !k.is_empty()).collect();
+        let cover = lower(&source.cover_keywords);
+        let scan_folders = lower(&source.scan_folder_keywords);
+        Ok(Self { source, cover, scan_folders, names })
     }
 
     /// Priority of an image file name as a cover (lower is better).
@@ -115,6 +116,19 @@ impl Rules {
                 _ => (None, None),
             };
             Some(NameMatch { date, year, title })
+        })
+    }
+
+    /// Whether an album's images (paths relative to the album folder, `/`
+    /// separated) include scans.
+    pub fn has_scans<'a>(&self, image_rels: impl ExactSizeIterator<Item = &'a str>) -> bool {
+        let n = self.source.scan_min_images as usize;
+        if n > 0 && image_rels.len() >= n {
+            return true;
+        }
+        image_rels.filter_map(|rel| rel.rsplit_once('/')).any(|(dir, _)| {
+            let dir = dir.to_lowercase();
+            self.scan_folders.iter().any(|k| dir.contains(k.as_str()))
         })
     }
 

@@ -93,6 +93,9 @@ pub struct AlbumSummary {
     pub total_size: i64,
     pub audio_size: i64,
     pub image_count: i32,
+    /// Booklet / disc scans present (detected by [ScanRules], or set by hand).
+    #[serde(default)]
+    pub has_scans: bool,
     pub has_cue: bool,
     pub has_log: bool,
     pub rip_status: RipStatus,
@@ -117,15 +120,43 @@ pub struct ScanRules {
     /// Album folder name templates using `{date}`, `{year}` and `{title}`,
     /// tried in order.
     pub name_templates: Vec<String>,
+    /// An album has scans when an image sits in a subfolder whose name
+    /// contains one of these words (case-insensitive)...
+    #[serde(default = "default_scan_folder_keywords")]
+    pub scan_folder_keywords: Vec<String>,
+    /// ...or when it has at least this many images (0 = never by count).
+    #[serde(default = "default_scan_min_images")]
+    pub scan_min_images: u32,
+}
+
+fn default_scan_folder_keywords() -> Vec<String> {
+    ["scan", "bk", "booklet", "artwork", "扫图", "掃圖", "スキャン"].map(String::from).to_vec()
+}
+
+fn default_scan_min_images() -> u32 {
+    5
+}
+
+impl Default for ScanRules {
+    fn default() -> Self {
+        Self {
+            cover_keywords: ["cover", "folder", "front", "jacket", "album", "ジャケット", "封面"].map(String::from).to_vec(),
+            name_templates: vec!["[{date}] {title}".into()],
+            scan_folder_keywords: default_scan_folder_keywords(),
+            scan_min_images: default_scan_min_images(),
+        }
+    }
 }
 
 /// Hand-edited album values, kept apart from the scan results so a rescan
 /// re-applies them. `None` = use the detected value.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(default)]
 pub struct AlbumOverride {
     pub source: Option<AlbumSource>,
     /// An image file of the album to use as cover.
     pub cover_path: Option<String>,
+    pub has_scans: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

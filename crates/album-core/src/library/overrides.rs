@@ -36,5 +36,8 @@ pub fn apply(album: &mut Album, ov: &AlbumOverride, cache_dir: &Path) {
         // A cover that was moved or deleted falls back to the detected one.
         analyze::apply_cover(&mut album.summary, Path::new(cover), cache_dir);
     }
+    if let Some(v) = ov.has_scans {
+        album.summary.has_scans = v;
+    }
     album.summary.overrides = ov.clone();
 }

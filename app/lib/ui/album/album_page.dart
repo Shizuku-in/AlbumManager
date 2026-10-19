@@ -202,7 +202,8 @@ class _AlbumPageState extends State<AlbumPage> with SingleTickerProviderStateMix
       Chip(avatar: const Icon(Icons.queue_music), label: Text('${s.trackCount} 首')),
       if (s.durationSecs > 0) Chip(avatar: const Icon(Icons.schedule), label: Text(formatDuration(s.durationSecs, long: true))),
       Chip(avatar: const Icon(Icons.storage), label: Text(formatSize(s.totalSize))),
-      if (s.imageCount > 0) Chip(avatar: const Icon(Icons.photo_library_outlined), label: Text('${s.imageCount} 张图片')),
+      if (s.imageCount > 0)
+        Chip(avatar: const Icon(Icons.photo_library_outlined), label: Text(s.hasScans ? '含扫图 · ${s.imageCount} 张图片' : '${s.imageCount} 张图片')),
       if (s.genre != null) Chip(avatar: const Icon(Icons.sell_outlined), label: Text(s.genre!)),
     ];
     return Padding(

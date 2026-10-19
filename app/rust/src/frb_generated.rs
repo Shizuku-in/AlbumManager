@@ -39,7 +39,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.13.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -1140823237;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -2034446358;
 
 // Section: executor
 
@@ -493,6 +493,38 @@ fn wire__crate__api__library__scan_library_impl(
         },
     )
 }
+fn wire__album_model__scan_rules_default_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "scan_rules_default",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, ()>((move || {
+                    let output_ok = Ok::<_, ()>(album_model::ScanRules::default())?;
+                    std::result::Result::Ok(output_ok)
+                })())
+            }
+        },
+    )
+}
 fn wire__crate__api__library__set_album_override_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -619,6 +651,7 @@ const _: fn() = || {
         let AlbumOverride = None::<album_model::AlbumOverride>.unwrap();
         let _: Option<album_model::AlbumSource> = AlbumOverride.source;
         let _: Option<String> = AlbumOverride.cover_path;
+        let _: Option<bool> = AlbumOverride.has_scans;
     }
     {
         let AlbumSummary = None::<album_model::AlbumSummary>.unwrap();
@@ -642,6 +675,7 @@ const _: fn() = || {
         let _: i64 = AlbumSummary.total_size;
         let _: i64 = AlbumSummary.audio_size;
         let _: i32 = AlbumSummary.image_count;
+        let _: bool = AlbumSummary.has_scans;
         let _: bool = AlbumSummary.has_cue;
         let _: bool = AlbumSummary.has_log;
         let _: album_model::RipStatus = AlbumSummary.rip_status;
@@ -703,6 +737,8 @@ const _: fn() = || {
         let ScanRules = None::<album_model::ScanRules>.unwrap();
         let _: Vec<String> = ScanRules.cover_keywords;
         let _: Vec<String> = ScanRules.name_templates;
+        let _: Vec<String> = ScanRules.scan_folder_keywords;
+        let _: u32 = ScanRules.scan_min_images;
     }
     {
         let Track = None::<album_model::Track>.unwrap();
@@ -783,9 +819,11 @@ impl SseDecode for album_model::AlbumOverride {
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut var_source = <Option<album_model::AlbumSource>>::sse_decode(deserializer);
         let mut var_coverPath = <Option<String>>::sse_decode(deserializer);
+        let mut var_hasScans = <Option<bool>>::sse_decode(deserializer);
         return album_model::AlbumOverride {
             source: var_source,
             cover_path: var_coverPath,
+            has_scans: var_hasScans,
         };
     }
 }
@@ -827,6 +865,7 @@ impl SseDecode for album_model::AlbumSummary {
         let mut var_totalSize = <i64>::sse_decode(deserializer);
         let mut var_audioSize = <i64>::sse_decode(deserializer);
         let mut var_imageCount = <i32>::sse_decode(deserializer);
+        let mut var_hasScans = <bool>::sse_decode(deserializer);
         let mut var_hasCue = <bool>::sse_decode(deserializer);
         let mut var_hasLog = <bool>::sse_decode(deserializer);
         let mut var_ripStatus = <album_model::RipStatus>::sse_decode(deserializer);
@@ -858,6 +897,7 @@ impl SseDecode for album_model::AlbumSummary {
             total_size: var_totalSize,
             audio_size: var_audioSize,
             image_count: var_imageCount,
+            has_scans: var_hasScans,
             has_cue: var_hasCue,
             has_log: var_hasLog,
             rip_status: var_ripStatus,
@@ -1329,9 +1369,13 @@ impl SseDecode for album_model::ScanRules {
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
         let mut var_coverKeywords = <Vec<String>>::sse_decode(deserializer);
         let mut var_nameTemplates = <Vec<String>>::sse_decode(deserializer);
+        let mut var_scanFolderKeywords = <Vec<String>>::sse_decode(deserializer);
+        let mut var_scanMinImages = <u32>::sse_decode(deserializer);
         return album_model::ScanRules {
             cover_keywords: var_coverKeywords,
             name_templates: var_nameTemplates,
+            scan_folder_keywords: var_scanFolderKeywords,
+            scan_min_images: var_scanMinImages,
         };
     }
 }
@@ -1434,9 +1478,10 @@ fn pde_ffi_dispatcher_primary_impl(
         11 => wire__crate__api__library__read_text_file_impl(port, ptr, rust_vec_len, data_len),
         12 => wire__crate__api__library__rescan_album_impl(port, ptr, rust_vec_len, data_len),
         13 => wire__crate__api__library__scan_library_impl(port, ptr, rust_vec_len, data_len),
-        14 => wire__crate__api__library__set_album_override_impl(port, ptr, rust_vec_len, data_len),
-        15 => wire__crate__api__library__set_library_root_impl(port, ptr, rust_vec_len, data_len),
-        16 => wire__crate__api__library__set_scan_rules_impl(port, ptr, rust_vec_len, data_len),
+        14 => wire__album_model__scan_rules_default_impl(port, ptr, rust_vec_len, data_len),
+        15 => wire__crate__api__library__set_album_override_impl(port, ptr, rust_vec_len, data_len),
+        16 => wire__crate__api__library__set_library_root_impl(port, ptr, rust_vec_len, data_len),
+        17 => wire__crate__api__library__set_scan_rules_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -1485,6 +1530,7 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<album_model::AlbumOverride> {
         [
             self.0.source.into_into_dart().into_dart(),
             self.0.cover_path.into_into_dart().into_dart(),
+            self.0.has_scans.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
@@ -1547,6 +1593,7 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<album_model::AlbumSummary> {
             self.0.total_size.into_into_dart().into_dart(),
             self.0.audio_size.into_into_dart().into_dart(),
             self.0.image_count.into_into_dart().into_dart(),
+            self.0.has_scans.into_into_dart().into_dart(),
             self.0.has_cue.into_into_dart().into_dart(),
             self.0.has_log.into_into_dart().into_dart(),
             self.0.rip_status.into_into_dart().into_dart(),
@@ -1868,6 +1915,8 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<album_model::ScanRules> {
         [
             self.0.cover_keywords.into_into_dart().into_dart(),
             self.0.name_templates.into_into_dart().into_dart(),
+            self.0.scan_folder_keywords.into_into_dart().into_dart(),
+            self.0.scan_min_images.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
@@ -1977,6 +2026,7 @@ impl SseEncode for album_model::AlbumOverride {
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <Option<album_model::AlbumSource>>::sse_encode(self.source, serializer);
         <Option<String>>::sse_encode(self.cover_path, serializer);
+        <Option<bool>>::sse_encode(self.has_scans, serializer);
     }
 }
 
@@ -2021,6 +2071,7 @@ impl SseEncode for album_model::AlbumSummary {
         <i64>::sse_encode(self.total_size, serializer);
         <i64>::sse_encode(self.audio_size, serializer);
         <i32>::sse_encode(self.image_count, serializer);
+        <bool>::sse_encode(self.has_scans, serializer);
         <bool>::sse_encode(self.has_cue, serializer);
         <bool>::sse_encode(self.has_log, serializer);
         <album_model::RipStatus>::sse_encode(self.rip_status, serializer);
@@ -2424,6 +2475,8 @@ impl SseEncode for album_model::ScanRules {
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
         <Vec<String>>::sse_encode(self.cover_keywords, serializer);
         <Vec<String>>::sse_encode(self.name_templates, serializer);
+        <Vec<String>>::sse_encode(self.scan_folder_keywords, serializer);
+        <u32>::sse_encode(self.scan_min_images, serializer);
     }
 }
 

@@ -64,14 +64,15 @@ class AlbumOverride {
 
   /// An image file of the album to use as cover.
   final String? coverPath;
+  final bool? hasScans;
 
-  const AlbumOverride({this.source, this.coverPath});
+  const AlbumOverride({this.source, this.coverPath, this.hasScans});
 
   static Future<AlbumOverride> default_() =>
       RustLib.instance.api.albumModelAlbumOverrideDefault();
 
   @override
-  int get hashCode => source.hashCode ^ coverPath.hashCode;
+  int get hashCode => source.hashCode ^ coverPath.hashCode ^ hasScans.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -79,7 +80,8 @@ class AlbumOverride {
       other is AlbumOverride &&
           runtimeType == other.runtimeType &&
           source == other.source &&
-          coverPath == other.coverPath;
+          coverPath == other.coverPath &&
+          hasScans == other.hasScans;
 }
 
 /// Where an album came from.
@@ -122,6 +124,9 @@ class AlbumSummary {
   final PlatformInt64 totalSize;
   final PlatformInt64 audioSize;
   final int imageCount;
+
+  /// Booklet / disc scans present (detected by [ScanRules], or set by hand).
+  final bool hasScans;
   final bool hasCue;
   final bool hasLog;
   final RipStatus ripStatus;
@@ -160,6 +165,7 @@ class AlbumSummary {
     required this.totalSize,
     required this.audioSize,
     required this.imageCount,
+    required this.hasScans,
     required this.hasCue,
     required this.hasLog,
     required this.ripStatus,
@@ -194,6 +200,7 @@ class AlbumSummary {
       totalSize.hashCode ^
       audioSize.hashCode ^
       imageCount.hashCode ^
+      hasScans.hashCode ^
       hasCue.hashCode ^
       hasLog.hashCode ^
       ripStatus.hashCode ^
@@ -230,6 +237,7 @@ class AlbumSummary {
           totalSize == other.totalSize &&
           audioSize == other.audioSize &&
           imageCount == other.imageCount &&
+          hasScans == other.hasScans &&
           hasCue == other.hasCue &&
           hasLog == other.hasLog &&
           ripStatus == other.ripStatus &&
@@ -496,10 +504,29 @@ class ScanRules {
   /// tried in order.
   final List<String> nameTemplates;
 
-  const ScanRules({required this.coverKeywords, required this.nameTemplates});
+  /// An album has scans when an image sits in a subfolder whose name
+  /// contains one of these words (case-insensitive)...
+  final List<String> scanFolderKeywords;
+
+  /// ...or when it has at least this many images (0 = never by count).
+  final int scanMinImages;
+
+  const ScanRules({
+    required this.coverKeywords,
+    required this.nameTemplates,
+    required this.scanFolderKeywords,
+    required this.scanMinImages,
+  });
+
+  static Future<ScanRules> default_() =>
+      RustLib.instance.api.albumModelScanRulesDefault();
 
   @override
-  int get hashCode => coverKeywords.hashCode ^ nameTemplates.hashCode;
+  int get hashCode =>
+      coverKeywords.hashCode ^
+      nameTemplates.hashCode ^
+      scanFolderKeywords.hashCode ^
+      scanMinImages.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -507,7 +534,9 @@ class ScanRules {
       other is ScanRules &&
           runtimeType == other.runtimeType &&
           coverKeywords == other.coverKeywords &&
-          nameTemplates == other.nameTemplates;
+          nameTemplates == other.nameTemplates &&
+          scanFolderKeywords == other.scanFolderKeywords &&
+          scanMinImages == other.scanMinImages;
 }
 
 class Track {

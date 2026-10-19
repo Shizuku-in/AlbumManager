@@ -22,6 +22,7 @@ class _EditAlbumDialog extends StatefulWidget {
 class _EditAlbumDialogState extends State<_EditAlbumDialog> {
   late AlbumSource? _source = widget.album.summary.overrides.source;
   late String? _cover = widget.album.summary.overrides.coverPath;
+  late bool? _hasScans = widget.album.summary.overrides.hasScans;
 
   @override
   Widget build(BuildContext context) {
@@ -44,6 +45,18 @@ class _EditAlbumDialogState extends State<_EditAlbumDialog> {
             ],
             selected: {_source},
             onSelectionChanged: (s) => setState(() => _source = s.first),
+          ),
+          const SizedBox(height: 24),
+          label('扫图'),
+          SegmentedButton<bool?>(
+            showSelectedIcon: false,
+            segments: const [
+              ButtonSegment(value: null, label: Text('自动'), icon: Icon(Icons.auto_awesome_outlined)),
+              ButtonSegment(value: true, label: Text('有扫图'), icon: Icon(Icons.photo_library_outlined)),
+              ButtonSegment(value: false, label: Text('无扫图'), icon: Icon(Icons.hide_image_outlined)),
+            ],
+            selected: {_hasScans},
+            onSelectionChanged: (s) => setState(() => _hasScans = s.first),
           ),
           const SizedBox(height: 24),
           label('封面'),
@@ -83,7 +96,7 @@ class _EditAlbumDialogState extends State<_EditAlbumDialog> {
       actions: [
         TextButton(onPressed: () => Navigator.pop(context), child: const Text('取消')),
         FilledButton(
-          onPressed: () => Navigator.pop(context, AlbumOverride(source: _source, coverPath: _cover)),
+          onPressed: () => Navigator.pop(context, AlbumOverride(source: _source, coverPath: _cover, hasScans: _hasScans)),
           child: const Text('保存'),
         ),
       ],
