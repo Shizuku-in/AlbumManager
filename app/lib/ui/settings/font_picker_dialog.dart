@@ -69,10 +69,9 @@ class _FontPickerDialogState extends State<_FontPickerDialog> {
                     return const Center(child: CircularProgressIndicator());
                   }
                   final fonts = [
-                    if (appFont.toLowerCase().contains(_query)) _default,
-                    // The default font is listed once, as the first entry.
+                    if (_query.isEmpty) _default,
                     ...snap.data!.where(
-                      (f) => f != appFont && f.toLowerCase().contains(_query),
+                      (f) => f.toLowerCase().contains(_query),
                     ),
                   ];
                   // The tiles' hover / selection ink paints on the nearest
@@ -89,18 +88,15 @@ class _FontPickerDialogState extends State<_FontPickerDialog> {
                         itemCount: fonts.length,
                         itemBuilder: (context, i) {
                           final f = fonts[i];
-                          final family = f == _default ? appFont : f;
+                          final family = f == _default ? platformFont : f;
                           TextStyle? preview(TextStyle? s) => s?.copyWith(
                             fontFamily: family,
-                            fontFamilyFallback: const [
-                              appFont,
-                              ...appFontFallback,
-                            ],
+                            fontFamilyFallback: appFontFallback,
                           );
                           return RadioListTile<String>(
                             value: f,
                             title: Text(
-                              f == _default ? '$appFont（默认）' : f,
+                              f == _default ? '系统默认' : f,
                               style: preview(t.textTheme.bodyLarge),
                             ),
                             subtitle: Text(

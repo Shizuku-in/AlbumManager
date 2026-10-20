@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 import 'package:album_manager/state/settings_controller.dart';
@@ -21,25 +22,34 @@ const seedPresets = [
   Color(0xFF795548), // brown
 ];
 
-/// Default UI font (system, not bundled). Fallbacks cover Japanese-only
-/// kanji etc. and the CJK fonts of macOS / Linux, which lack YaHei.
-const appFont = 'Microsoft YaHei UI';
-const appFontFallback = [
-  'Yu Gothic UI',
-  'Segoe UI',
-  'PingFang SC',
-  'Noto Sans CJK SC',
+/// Flutter's platform text style: Segoe UI, SF Pro, or Roboto with Linux
+/// fallbacks. The default UI font, so none is bundled.
+final _platformText = Typography.material2021(platform: defaultTargetPlatform)
+    .black
+    .bodyMedium!;
+
+/// The platform UI font, for previewing the default in settings.
+final platformFont = _platformText.fontFamily!;
+
+/// The platform's CJK UI fonts after the UI font (which has none, nor has
+/// a chosen Western font): text falls back per character, so Latin keeps
+/// the UI font. Japanese fonts fill in kanji used only in Japanese.
+final appFontFallback = [
+  ...?_platformText.fontFamilyFallback,
+  ...switch (defaultTargetPlatform) {
+    TargetPlatform.windows => ['Microsoft YaHei UI', 'Yu Gothic UI'],
+    TargetPlatform.macOS => ['PingFang SC', 'Hiragino Sans'],
+    TargetPlatform.linux => ['Noto Sans CJK SC', 'Noto Sans CJK JP'],
+    _ => <String>[],
+  },
 ];
 
 ThemeData buildTheme(ColorScheme scheme, {String? font}) {
   return ThemeData(
     useMaterial3: true,
     colorScheme: scheme,
-    fontFamily: font ?? appFont,
-    // A chosen font may lack CJK characters; the default font fills those in.
-    fontFamilyFallback: font == null
-        ? appFontFallback
-        : const [appFont, ...appFontFallback],
+    fontFamily: font,
+    fontFamilyFallback: appFontFallback,
     visualDensity: VisualDensity.standard,
     extensions: [AppColors.forScheme(scheme)],
     snackBarTheme: const SnackBarThemeData(
