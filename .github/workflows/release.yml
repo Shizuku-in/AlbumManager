@@ -37,6 +37,7 @@ jobs:
           fi
 
   build:
+    name: Build ${{ matrix.platform }}
     needs: version
     strategy:
       fail-fast: false

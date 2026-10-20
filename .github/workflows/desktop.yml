@@ -8,6 +8,7 @@ on:
 
 jobs:
   build:
+    name: Build ${{ matrix.platform }}
     strategy:
       fail-fast: false
       matrix:
