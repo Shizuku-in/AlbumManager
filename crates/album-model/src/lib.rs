@@ -184,6 +184,11 @@ pub struct AlbumOverride {
     /// An image file of the album to use as cover.
     pub cover_path: Option<String>,
     pub has_scans: Option<bool>,
+    pub title: Option<String>,
+    pub artist: Option<String>,
+    /// As typed: `2024`, `2024-03-15`, `240315` and the like.
+    pub date: Option<String>,
+    pub genre: Option<String>,
     pub catalog: Option<String>,
     pub event: Option<String>,
 }

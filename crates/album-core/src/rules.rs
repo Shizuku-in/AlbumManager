@@ -131,6 +131,25 @@ pub fn parse_date(code: &str) -> (Option<String>, Option<i32>) {
     (Some(s), Some(y))
 }
 
+/// A date typed by hand: `2024`, or anything `{date}` accepts. Returns
+/// (ISO date, year), or None when it isn't one.
+pub fn parse_typed_date(s: &str) -> Option<(String, i32)> {
+    static DATE: LazyLock<Regex> = LazyLock::new(|| {
+        Regex::new(r"^(?:\d{8}|\d{6}|\d{4}[-./]\d{1,2}(?:[-./]\d{1,2})?)$").unwrap()
+    });
+    let s = s.trim();
+    if s.len() == 4 && s.bytes().all(|b| b.is_ascii_digit()) {
+        return Some((s.to_string(), s.parse().ok()?));
+    }
+    if !DATE.is_match(s) {
+        return None;
+    }
+    match parse_date(s) {
+        (Some(d), Some(y)) => Some((d, y)),
+        _ => None,
+    }
+}
+
 impl Rules {
     pub fn compile(source: ScanRules) -> Result<Self> {
         let names = source

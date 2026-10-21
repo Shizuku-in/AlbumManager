@@ -65,6 +65,12 @@ class AlbumOverride {
   /// An image file of the album to use as cover.
   final String? coverPath;
   final bool? hasScans;
+  final String? title;
+  final String? artist;
+
+  /// As typed: `2024`, `2024-03-15`, `240315` and the like.
+  final String? date;
+  final String? genre;
   final String? catalog;
   final String? event;
 
@@ -72,6 +78,10 @@ class AlbumOverride {
     this.source,
     this.coverPath,
     this.hasScans,
+    this.title,
+    this.artist,
+    this.date,
+    this.genre,
     this.catalog,
     this.event,
   });
@@ -84,6 +94,10 @@ class AlbumOverride {
       source.hashCode ^
       coverPath.hashCode ^
       hasScans.hashCode ^
+      title.hashCode ^
+      artist.hashCode ^
+      date.hashCode ^
+      genre.hashCode ^
       catalog.hashCode ^
       event.hashCode;
 
@@ -95,6 +109,10 @@ class AlbumOverride {
           source == other.source &&
           coverPath == other.coverPath &&
           hasScans == other.hasScans &&
+          title == other.title &&
+          artist == other.artist &&
+          date == other.date &&
+          genre == other.genre &&
           catalog == other.catalog &&
           event == other.event;
 }

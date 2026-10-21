@@ -856,14 +856,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   AlbumOverride dco_decode_album_override(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 5)
-      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
+    if (arr.length != 9)
+      throw Exception('unexpected arr length: expect 9 but see ${arr.length}');
     return AlbumOverride(
       source: dco_decode_opt_box_autoadd_album_source(arr[0]),
       coverPath: dco_decode_opt_String(arr[1]),
       hasScans: dco_decode_opt_box_autoadd_bool(arr[2]),
-      catalog: dco_decode_opt_String(arr[3]),
-      event: dco_decode_opt_String(arr[4]),
+      title: dco_decode_opt_String(arr[3]),
+      artist: dco_decode_opt_String(arr[4]),
+      date: dco_decode_opt_String(arr[5]),
+      genre: dco_decode_opt_String(arr[6]),
+      catalog: dco_decode_opt_String(arr[7]),
+      event: dco_decode_opt_String(arr[8]),
     );
   }
 
@@ -1457,12 +1461,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_source = sse_decode_opt_box_autoadd_album_source(deserializer);
     var var_coverPath = sse_decode_opt_String(deserializer);
     var var_hasScans = sse_decode_opt_box_autoadd_bool(deserializer);
+    var var_title = sse_decode_opt_String(deserializer);
+    var var_artist = sse_decode_opt_String(deserializer);
+    var var_date = sse_decode_opt_String(deserializer);
+    var var_genre = sse_decode_opt_String(deserializer);
     var var_catalog = sse_decode_opt_String(deserializer);
     var var_event = sse_decode_opt_String(deserializer);
     return AlbumOverride(
       source: var_source,
       coverPath: var_coverPath,
       hasScans: var_hasScans,
+      title: var_title,
+      artist: var_artist,
+      date: var_date,
+      genre: var_genre,
       catalog: var_catalog,
       event: var_event,
     );
@@ -2244,6 +2256,10 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_opt_box_autoadd_album_source(self.source, serializer);
     sse_encode_opt_String(self.coverPath, serializer);
     sse_encode_opt_box_autoadd_bool(self.hasScans, serializer);
+    sse_encode_opt_String(self.title, serializer);
+    sse_encode_opt_String(self.artist, serializer);
+    sse_encode_opt_String(self.date, serializer);
+    sse_encode_opt_String(self.genre, serializer);
     sse_encode_opt_String(self.catalog, serializer);
     sse_encode_opt_String(self.event, serializer);
   }

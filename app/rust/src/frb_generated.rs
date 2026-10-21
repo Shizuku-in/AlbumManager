@@ -856,6 +856,10 @@ const _: fn() = || {
         let _: Option<album_model::AlbumSource> = AlbumOverride.source;
         let _: Option<String> = AlbumOverride.cover_path;
         let _: Option<bool> = AlbumOverride.has_scans;
+        let _: Option<String> = AlbumOverride.title;
+        let _: Option<String> = AlbumOverride.artist;
+        let _: Option<String> = AlbumOverride.date;
+        let _: Option<String> = AlbumOverride.genre;
         let _: Option<String> = AlbumOverride.catalog;
         let _: Option<String> = AlbumOverride.event;
     }
@@ -1061,12 +1065,20 @@ impl SseDecode for album_model::AlbumOverride {
         let mut var_source = <Option<album_model::AlbumSource>>::sse_decode(deserializer);
         let mut var_coverPath = <Option<String>>::sse_decode(deserializer);
         let mut var_hasScans = <Option<bool>>::sse_decode(deserializer);
+        let mut var_title = <Option<String>>::sse_decode(deserializer);
+        let mut var_artist = <Option<String>>::sse_decode(deserializer);
+        let mut var_date = <Option<String>>::sse_decode(deserializer);
+        let mut var_genre = <Option<String>>::sse_decode(deserializer);
         let mut var_catalog = <Option<String>>::sse_decode(deserializer);
         let mut var_event = <Option<String>>::sse_decode(deserializer);
         return album_model::AlbumOverride {
             source: var_source,
             cover_path: var_coverPath,
             has_scans: var_hasScans,
+            title: var_title,
+            artist: var_artist,
+            date: var_date,
+            genre: var_genre,
             catalog: var_catalog,
             event: var_event,
         };
@@ -1911,6 +1923,10 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<album_model::AlbumOverride> {
             self.0.source.into_into_dart().into_dart(),
             self.0.cover_path.into_into_dart().into_dart(),
             self.0.has_scans.into_into_dart().into_dart(),
+            self.0.title.into_into_dart().into_dart(),
+            self.0.artist.into_into_dart().into_dart(),
+            self.0.date.into_into_dart().into_dart(),
+            self.0.genre.into_into_dart().into_dart(),
             self.0.catalog.into_into_dart().into_dart(),
             self.0.event.into_into_dart().into_dart(),
         ]
@@ -2522,6 +2538,10 @@ impl SseEncode for album_model::AlbumOverride {
         <Option<album_model::AlbumSource>>::sse_encode(self.source, serializer);
         <Option<String>>::sse_encode(self.cover_path, serializer);
         <Option<bool>>::sse_encode(self.has_scans, serializer);
+        <Option<String>>::sse_encode(self.title, serializer);
+        <Option<String>>::sse_encode(self.artist, serializer);
+        <Option<String>>::sse_encode(self.date, serializer);
+        <Option<String>>::sse_encode(self.genre, serializer);
         <Option<String>>::sse_encode(self.catalog, serializer);
         <Option<String>>::sse_encode(self.event, serializer);
     }

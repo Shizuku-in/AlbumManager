@@ -26,21 +26,31 @@ class _EditAlbumDialogState extends State<_EditAlbumDialog> {
   late AlbumSource? _source = widget.album.summary.overrides.source;
   late String? _cover = widget.album.summary.overrides.coverPath;
   late bool? _hasScans = widget.album.summary.overrides.hasScans;
-  late final _catalog = TextEditingController(
-    text: widget.album.summary.overrides.catalog,
+  late final _ov = widget.album.summary.overrides;
+  late final _title = TextEditingController(text: _ov.title);
+  late final _artist = TextEditingController(text: _ov.artist);
+  late final _date = TextEditingController(text: _ov.date);
+  late final _genre = TextEditingController(text: _ov.genre);
+  late final _catalog = TextEditingController(text: _ov.catalog);
+  late final _event = TextEditingController(text: _ov.event);
+
+  /// What the scan accepts as a date: `2024`, or what `{date}` matches.
+  static final _validDate = RegExp(
+    r'^(\d{4}|\d{6}|\d{8}|\d{4}[-./]\d{1,2}([-./]\d{1,2})?)$',
   );
-  late final _event = TextEditingController(
-    text: widget.album.summary.overrides.event,
-  );
+
+  bool get _dateOk =>
+      _date.text.trim().isEmpty || _validDate.hasMatch(_date.text.trim());
 
   @override
   void dispose() {
-    _catalog.dispose();
-    _event.dispose();
+    for (final c in [_title, _artist, _date, _genre, _catalog, _event]) {
+      c.dispose();
+    }
     super.dispose();
   }
 
-  /// Empty = the value read from the folder name.
+  /// Empty = the detected value.
   String? _text(TextEditingController c) =>
       c.text.trim().isEmpty ? null : c.text.trim();
 
@@ -61,6 +71,9 @@ class _EditAlbumDialogState extends State<_EditAlbumDialog> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            label('信息'),
+            ..._fields(context),
+            const SizedBox(height: 24),
             label('来源'),
             SegmentedButton<AlbumSource?>(
               showSelectedIcon: false,
@@ -107,28 +120,6 @@ class _EditAlbumDialogState extends State<_EditAlbumDialog> {
               ],
               selected: {_hasScans},
               onSelectionChanged: (s) => setState(() => _hasScans = s.first),
-            ),
-            const SizedBox(height: 24),
-            Row(
-              children: [
-                for (final (i, (c, name)) in [
-                  (_catalog, '品番'),
-                  (_event, '展会'),
-                ].indexed) ...[
-                  if (i > 0) const SizedBox(width: 16),
-                  Expanded(
-                    child: TextField(
-                      controller: c,
-                      decoration: InputDecoration(
-                        labelText: name,
-                        hintText: '留空则从文件夹名识别',
-                        floatingLabelBehavior: FloatingLabelBehavior.always,
-                        border: const OutlineInputBorder(),
-                      ),
-                    ),
-                  ),
-                ],
-              ],
             ),
             const SizedBox(height: 24),
             label('封面'),
@@ -204,20 +195,77 @@ class _EditAlbumDialogState extends State<_EditAlbumDialog> {
           child: const Text('取消'),
         ),
         FilledButton(
-          onPressed: () => Navigator.pop(
-            context,
-            AlbumOverride(
-              source: _source,
-              coverPath: _cover,
-              hasScans: _hasScans,
-              catalog: _text(_catalog),
-              event: _text(_event),
-            ),
-          ),
+          onPressed: !_dateOk
+              ? null
+              : () => Navigator.pop(
+                  context,
+                  AlbumOverride(
+                    source: _source,
+                    coverPath: _cover,
+                    hasScans: _hasScans,
+                    title: _text(_title),
+                    artist: _text(_artist),
+                    date: _text(_date),
+                    genre: _text(_genre),
+                    catalog: _text(_catalog),
+                    event: _text(_event),
+                  ),
+                ),
           child: const Text('保存'),
         ),
       ],
     );
+  }
+
+  /// Text fields in rows; an empty field shows the detected value as its
+  /// hint (when no hand-set value hides it).
+  List<Widget> _fields(BuildContext context) {
+    final s = widget.album.summary;
+    Widget field(
+      TextEditingController c,
+      String label,
+      String? detected, {
+      String? error,
+    }) => Expanded(
+      child: TextField(
+        controller: c,
+        // The date is checked as it's typed.
+        onChanged: c == _date ? (_) => setState(() {}) : null,
+        decoration: InputDecoration(
+          isDense: true,
+          labelText: label,
+          hintText: detected ?? '自动识别',
+          errorText: error,
+          floatingLabelBehavior: FloatingLabelBehavior.always,
+          border: const OutlineInputBorder(),
+        ),
+      ),
+    );
+    Widget row(List<Widget> children) => Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      spacing: 16,
+      children: children,
+    );
+    return [
+      const SizedBox(height: 8),
+      row([field(_title, '标题', _ov.title == null ? s.title : null)]),
+      const SizedBox(height: 16),
+      row([
+        field(_artist, '艺术家', _ov.artist == null ? s.artist : null),
+        field(_genre, '流派', _ov.genre == null ? s.genre : null),
+      ]),
+      const SizedBox(height: 16),
+      row([
+        field(
+          _date,
+          '日期',
+          _ov.date == null ? (s.date ?? s.year?.toString()) : null,
+          error: _dateOk ? null : '如 2024、2024-03-15、240315',
+        ),
+        field(_catalog, '品番', _ov.catalog == null ? s.catalog : null),
+        field(_event, '展会', _ov.event == null ? s.event : null),
+      ]),
+    ];
   }
 }
 

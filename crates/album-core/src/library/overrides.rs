@@ -1,6 +1,7 @@
 //! Hand-edited album values (`overrides.json`), re-applied on top of every
 //! analysis so rescans keep them.
 
+use crate::rules;
 use crate::scanner::analyze;
 use album_model::{Album, AlbumOverride};
 use anyhow::Result;
@@ -38,6 +39,19 @@ pub fn apply(album: &mut Album, ov: &AlbumOverride, cache_dir: &Path) {
     }
     if let Some(v) = ov.has_scans {
         album.summary.has_scans = v;
+    }
+    if let Some(v) = &ov.title {
+        album.summary.title = v.clone();
+    }
+    if let Some(v) = &ov.artist {
+        album.summary.artist = Some(v.clone());
+    }
+    if let Some((date, year)) = ov.date.as_deref().and_then(rules::parse_typed_date) {
+        album.summary.date = Some(date);
+        album.summary.year = Some(year);
+    }
+    if let Some(v) = &ov.genre {
+        album.summary.genre = Some(v.clone());
     }
     if let Some(v) = &ov.catalog {
         album.summary.catalog = Some(v.clone());
