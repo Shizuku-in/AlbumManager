@@ -20,7 +20,13 @@ flutter_rust_bridge = "=2.13.0"
 
 # Installed font list (already in the dependency tree via other crates).
 [target.'cfg(windows)'.dependencies]
-windows-sys = { version = "0.61", features = ["Win32_System_Registry"] }
+windows-sys = { version = "0.61", features = [
+    "Win32_System_Com",
+    "Win32_System_Registry",
+    "Win32_UI_Shell",
+    "Win32_UI_Shell_Common",
+    "Win32_UI_WindowsAndMessaging",
+] }
 
 [target.'cfg(any(target_os = "macos", target_os = "linux"))'.dependencies]
 font-kit = "0.14.3"

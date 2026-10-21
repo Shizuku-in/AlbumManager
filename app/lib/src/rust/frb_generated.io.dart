@@ -6,6 +6,7 @@
 import 'api/fonts.dart';
 import 'api/library.dart';
 import 'api/models.dart';
+import 'api/shell.dart';
 
 import 'dart:async';
 import 'dart:convert';

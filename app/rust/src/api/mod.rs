@@ -1,6 +1,7 @@
 pub mod fonts;
 pub mod library;
 pub mod models;
+pub mod shell;
 
 #[flutter_rust_bridge::frb(init)]
 pub fn init_app() {

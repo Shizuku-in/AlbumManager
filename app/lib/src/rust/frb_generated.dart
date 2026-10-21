@@ -6,6 +6,7 @@
 import 'api/fonts.dart';
 import 'api/library.dart';
 import 'api/models.dart';
+import 'api/shell.dart';
 
 import 'dart:async';
 import 'dart:convert';
@@ -73,7 +74,7 @@ class RustLib extends BaseEntrypoint<RustLibApi, RustLibApiImpl, RustLibWire> {
   String get codegenVersion => '2.13.0';
 
   @override
-  int get rustContentHash => -585964288;
+  int get rustContentHash => 1997148378;
 
   static const kDefaultExternalLibraryLoaderConfig =
       ExternalLibraryLoaderConfig(
@@ -138,6 +139,10 @@ abstract class RustLibApi extends BaseApi {
   });
 
   Future<void> crateApiLibrarySetScanRules({required ScanRules rules});
+
+  Future<void> crateApiShellShellOpen({required String target});
+
+  Future<void> crateApiShellShellReveal({required String path});
 
   Future<List<String>> crateApiFontsSystemFontFamilies();
 
@@ -763,6 +768,62 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "set_scan_rules", argNames: ["rules"]);
 
   @override
+  Future<void> crateApiShellShellOpen({required String target}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(target, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 22,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_AnyhowException,
+        ),
+        constMeta: kCrateApiShellShellOpenConstMeta,
+        argValues: [target],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiShellShellOpenConstMeta =>
+      const TaskConstMeta(debugName: "shell_open", argNames: ["target"]);
+
+  @override
+  Future<void> crateApiShellShellReveal({required String path}) {
+    return handler.executeNormal(
+      NormalTask(
+        callFfi: (port_) {
+          final serializer = SseSerializer(generalizedFrbRustBinding);
+          sse_encode_String(path, serializer);
+          pdeCallFfi(
+            generalizedFrbRustBinding,
+            serializer,
+            funcId: 23,
+            port: port_,
+          );
+        },
+        codec: SseCodec(
+          decodeSuccessData: sse_decode_unit,
+          decodeErrorData: sse_decode_AnyhowException,
+        ),
+        constMeta: kCrateApiShellShellRevealConstMeta,
+        argValues: [path],
+        apiImpl: this,
+      ),
+    );
+  }
+
+  TaskConstMeta get kCrateApiShellShellRevealConstMeta =>
+      const TaskConstMeta(debugName: "shell_reveal", argNames: ["path"]);
+
+  @override
   Future<List<String>> crateApiFontsSystemFontFamilies() {
     return handler.executeNormal(
       NormalTask(
@@ -771,7 +832,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 22,
+            funcId: 24,
             port: port_,
           );
         },
@@ -799,7 +860,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
-            funcId: 23,
+            funcId: 25,
             port: port_,
           );
         },

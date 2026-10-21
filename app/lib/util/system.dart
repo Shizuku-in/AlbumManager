@@ -1,5 +1,10 @@
 import 'dart:io';
 
+import 'package:album_manager/src/rust/api/shell.dart' as shell;
+
+// Windows goes through the shell API: spawning explorer.exe leaves a
+// "/factory,{...} -Embedding" host process running after every call.
+
 /// Opens a file or folder with the desktop's default application.
 Future<void> openPath(String path) async {
   await _open(File(path).absolute.path);
@@ -9,7 +14,7 @@ Future<void> openPath(String path) async {
 Future<void> revealInFileManager(String path) async {
   final absolute = File(path).absolute.path;
   if (Platform.isWindows) {
-    await Process.run('explorer.exe', ['/select,', absolute]);
+    await shell.shellReveal(path: absolute);
   } else if (Platform.isMacOS) {
     await _run('open', ['-R', absolute]);
   } else if (Platform.isLinux) {
@@ -30,8 +35,7 @@ Future<void> openUrl(String url) async {
 
 Future<void> _open(String target) async {
   if (Platform.isWindows) {
-    // Explorer may return a nonzero status after handing off successfully.
-    await Process.run('explorer.exe', [target]);
+    await shell.shellOpen(target: target);
   } else if (Platform.isMacOS) {
     await _run('open', [target]);
   } else if (Platform.isLinux) {
