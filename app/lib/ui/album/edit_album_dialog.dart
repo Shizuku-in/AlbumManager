@@ -101,51 +101,59 @@ class _EditAlbumDialogState extends State<_EditAlbumDialog> {
                 ),
               )
             else
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 280),
-                child: GridView.builder(
-                  shrinkWrap: true,
-                  gridDelegate: const SliverGridDelegateWithMaxCrossAxisExtent(
-                    maxCrossAxisExtent: 120,
-                    mainAxisSpacing: 8,
-                    crossAxisSpacing: 8,
-                  ),
-                  itemCount: images.length + 1,
-                  itemBuilder: (context, i) => i == 0
-                      ? _CoverOption(
-                          selected: _cover == null,
-                          tooltip: '自动识别',
-                          onTap: () => setState(() => _cover = null),
-                          child: ColoredBox(
-                            color: t.colorScheme.surfaceContainerHighest,
-                            child: Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.auto_awesome_outlined,
-                                  color: t.colorScheme.onSurfaceVariant,
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  '自动',
-                                  style: t.textTheme.labelMedium?.copyWith(
+              // Flexible lets the grid shrink on short windows instead of
+              // overflowing under the action buttons.
+              Flexible(
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: 280),
+                  child: GridView.builder(
+                    shrinkWrap: true,
+                    gridDelegate:
+                        const SliverGridDelegateWithMaxCrossAxisExtent(
+                          maxCrossAxisExtent: 120,
+                          mainAxisSpacing: 8,
+                          crossAxisSpacing: 8,
+                        ),
+                    itemCount: images.length + 1,
+                    itemBuilder: (context, i) => i == 0
+                        ? _CoverOption(
+                            selected: _cover == null,
+                            tooltip: '自动识别',
+                            onTap: () => setState(() => _cover = null),
+                            child: ColoredBox(
+                              color: t.colorScheme.surfaceContainerHighest,
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.auto_awesome_outlined,
                                     color: t.colorScheme.onSurfaceVariant,
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    '自动',
+                                    style: t.textTheme.labelMedium?.copyWith(
+                                      color: t.colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          )
+                        : _CoverOption(
+                            selected: _cover == images[i - 1].path,
+                            tooltip: [
+                              images[i - 1].group,
+                              baseName(images[i - 1].path),
+                            ].where((s) => s.isNotEmpty).join('/'),
+                            onTap: () =>
+                                setState(() => _cover = images[i - 1].path),
+                            child: LazyThumb(
+                              path: images[i - 1].path,
+                              size: 240,
                             ),
                           ),
-                        )
-                      : _CoverOption(
-                          selected: _cover == images[i - 1].path,
-                          tooltip: [
-                            images[i - 1].group,
-                            baseName(images[i - 1].path),
-                          ].where((s) => s.isNotEmpty).join('/'),
-                          onTap: () =>
-                              setState(() => _cover = images[i - 1].path),
-                          child: LazyThumb(path: images[i - 1].path, size: 240),
-                        ),
+                  ),
                 ),
               ),
           ],

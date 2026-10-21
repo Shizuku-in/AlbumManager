@@ -90,6 +90,10 @@ fn file_name(f: &FileRec) -> &str {
     f.rel.rsplit('/').next().unwrap_or("")
 }
 
+fn depth(f: &FileRec) -> usize {
+    f.rel.matches('/').count()
+}
+
 fn pick_cover<'a>(images: &[&'a FileRec], rules: &Rules) -> Option<&'a FileRec> {
     let root: Vec<_> = images
         .iter()
@@ -103,12 +107,26 @@ fn pick_cover<'a>(images: &[&'a FileRec], rules: &Rules) -> Option<&'a FileRec> 
         .min_by_key(|(rank, _)| *rank)
         .map(|(_, f)| f)
         .or_else(|| root.first().copied())
+        // In subfolders a cover keyword (e.g. Disc1/Cover.jpg) beats a
+        // scan-like name (e.g. BK/1.tif); ties go to the shallower file.
         .or_else(|| {
-            images.iter().copied().find(|f| {
-                let name = file_name(f);
-                let stem = name.rsplit_once('.').map(|s| s.0).unwrap_or(name);
-                rules.cover_rank(name).is_some() || SCAN_COVER_NAME.is_match(stem)
-            })
+            images
+                .iter()
+                .copied()
+                .filter_map(|f| Some(((rules.cover_rank(file_name(f))?, depth(f)), f)))
+                .min_by_key(|(key, _)| *key)
+                .map(|(_, f)| f)
+        })
+        .or_else(|| {
+            images
+                .iter()
+                .copied()
+                .filter(|f| {
+                    let name = file_name(f);
+                    let stem = name.rsplit_once('.').map(|s| s.0).unwrap_or(name);
+                    SCAN_COVER_NAME.is_match(stem)
+                })
+                .min_by_key(|f| depth(f))
         })
         .or_else(|| images.first().copied())
 }
