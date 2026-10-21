@@ -408,7 +408,9 @@ class LibraryBrowser extends ChangeNotifier {
         return a.title.toLowerCase().contains(q) ||
             (a.artist?.toLowerCase().contains(q) ?? false) ||
             a.folderName.toLowerCase().contains(q) ||
-            (a.genre?.toLowerCase().contains(q) ?? false);
+            (a.genre?.toLowerCase().contains(q) ?? false) ||
+            (a.catalog?.toLowerCase().contains(q) ?? false) ||
+            (a.event?.toLowerCase().contains(q) ?? false);
       }).toList();
       int byDate(AlbumSummary a, AlbumSummary b) =>
           (a.date ?? '${a.year ?? 0}').compareTo(b.date ?? '${b.year ?? 0}');

@@ -59,7 +59,7 @@ pub enum IssueKind {
     RipErrors,
     RipUnverified,
     MissingLog,
-    /// Folder name does not follow "[YYMMDD] Title".
+    /// Folder name matches none of the name templates.
     NonStandardName,
 }
 
@@ -83,6 +83,10 @@ pub struct AlbumSummary {
     pub date: Option<String>,
     pub year: Option<i32>,
     pub genre: Option<String>,
+    /// Catalog number (e.g. "LACA-15800"), from the folder name.
+    pub catalog: Option<String>,
+    /// Event the album was released at (e.g. "C103"), from the folder name.
+    pub event: Option<String>,
     pub source: AlbumSource,
     pub quality: AudioQuality,
     /// e.g. "FLAC · 24bit / 96kHz"
@@ -120,8 +124,8 @@ pub struct AlbumSummary {
 pub struct ScanRules {
     /// Cover image file name prefixes, highest priority first.
     pub cover_keywords: Vec<String>,
-    /// Album folder name templates using `{date}`, `{year}` and `{title}`,
-    /// tried in order.
+    /// Album folder name templates using `{date}` or `{year}`, `{catalog}`,
+    /// `{artist}`, `{event}`, `{*}` and `{title}`, tried in order.
     pub name_templates: Vec<String>,
     /// An album has scans when an image sits in a subfolder whose name
     /// contains one of these words (case-insensitive)...
@@ -180,6 +184,8 @@ pub struct AlbumOverride {
     /// An image file of the album to use as cover.
     pub cover_path: Option<String>,
     pub has_scans: Option<bool>,
+    pub catalog: Option<String>,
+    pub event: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

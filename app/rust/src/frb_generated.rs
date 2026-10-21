@@ -856,6 +856,8 @@ const _: fn() = || {
         let _: Option<album_model::AlbumSource> = AlbumOverride.source;
         let _: Option<String> = AlbumOverride.cover_path;
         let _: Option<bool> = AlbumOverride.has_scans;
+        let _: Option<String> = AlbumOverride.catalog;
+        let _: Option<String> = AlbumOverride.event;
     }
     {
         let AlbumSummary = None::<album_model::AlbumSummary>.unwrap();
@@ -867,6 +869,8 @@ const _: fn() = || {
         let _: Option<String> = AlbumSummary.date;
         let _: Option<i32> = AlbumSummary.year;
         let _: Option<String> = AlbumSummary.genre;
+        let _: Option<String> = AlbumSummary.catalog;
+        let _: Option<String> = AlbumSummary.event;
         let _: album_model::AlbumSource = AlbumSummary.source;
         let _: album_model::AudioQuality = AlbumSummary.quality;
         let _: String = AlbumSummary.quality_label;
@@ -1057,10 +1061,14 @@ impl SseDecode for album_model::AlbumOverride {
         let mut var_source = <Option<album_model::AlbumSource>>::sse_decode(deserializer);
         let mut var_coverPath = <Option<String>>::sse_decode(deserializer);
         let mut var_hasScans = <Option<bool>>::sse_decode(deserializer);
+        let mut var_catalog = <Option<String>>::sse_decode(deserializer);
+        let mut var_event = <Option<String>>::sse_decode(deserializer);
         return album_model::AlbumOverride {
             source: var_source,
             cover_path: var_coverPath,
             has_scans: var_hasScans,
+            catalog: var_catalog,
+            event: var_event,
         };
     }
 }
@@ -1090,6 +1098,8 @@ impl SseDecode for album_model::AlbumSummary {
         let mut var_date = <Option<String>>::sse_decode(deserializer);
         let mut var_year = <Option<i32>>::sse_decode(deserializer);
         let mut var_genre = <Option<String>>::sse_decode(deserializer);
+        let mut var_catalog = <Option<String>>::sse_decode(deserializer);
+        let mut var_event = <Option<String>>::sse_decode(deserializer);
         let mut var_source = <album_model::AlbumSource>::sse_decode(deserializer);
         let mut var_quality = <album_model::AudioQuality>::sse_decode(deserializer);
         let mut var_qualityLabel = <String>::sse_decode(deserializer);
@@ -1122,6 +1132,8 @@ impl SseDecode for album_model::AlbumSummary {
             date: var_date,
             year: var_year,
             genre: var_genre,
+            catalog: var_catalog,
+            event: var_event,
             source: var_source,
             quality: var_quality,
             quality_label: var_qualityLabel,
@@ -1899,6 +1911,8 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<album_model::AlbumOverride> {
             self.0.source.into_into_dart().into_dart(),
             self.0.cover_path.into_into_dart().into_dart(),
             self.0.has_scans.into_into_dart().into_dart(),
+            self.0.catalog.into_into_dart().into_dart(),
+            self.0.event.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
@@ -1949,6 +1963,8 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<album_model::AlbumSummary> {
             self.0.date.into_into_dart().into_dart(),
             self.0.year.into_into_dart().into_dart(),
             self.0.genre.into_into_dart().into_dart(),
+            self.0.catalog.into_into_dart().into_dart(),
+            self.0.event.into_into_dart().into_dart(),
             self.0.source.into_into_dart().into_dart(),
             self.0.quality.into_into_dart().into_dart(),
             self.0.quality_label.into_into_dart().into_dart(),
@@ -2506,6 +2522,8 @@ impl SseEncode for album_model::AlbumOverride {
         <Option<album_model::AlbumSource>>::sse_encode(self.source, serializer);
         <Option<String>>::sse_encode(self.cover_path, serializer);
         <Option<bool>>::sse_encode(self.has_scans, serializer);
+        <Option<String>>::sse_encode(self.catalog, serializer);
+        <Option<String>>::sse_encode(self.event, serializer);
     }
 }
 
@@ -2538,6 +2556,8 @@ impl SseEncode for album_model::AlbumSummary {
         <Option<String>>::sse_encode(self.date, serializer);
         <Option<i32>>::sse_encode(self.year, serializer);
         <Option<String>>::sse_encode(self.genre, serializer);
+        <Option<String>>::sse_encode(self.catalog, serializer);
+        <Option<String>>::sse_encode(self.event, serializer);
         <album_model::AlbumSource>::sse_encode(self.source, serializer);
         <album_model::AudioQuality>::sse_encode(self.quality, serializer);
         <String>::sse_encode(self.quality_label, serializer);

@@ -8,8 +8,16 @@ import 'package:album_manager/ui/common/section_header.dart';
 /// Outlined card holding one titled group of settings tiles.
 class SettingsGroup extends StatelessWidget {
   final String? title;
+
+  /// Shown at the end of the title row, e.g. a help button.
+  final Widget? trailing;
   final List<Widget> children;
-  const SettingsGroup({super.key, this.title, required this.children});
+  const SettingsGroup({
+    super.key,
+    this.title,
+    this.trailing,
+    required this.children,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -21,7 +29,14 @@ class SettingsGroup extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            if (title != null)
+            if (title != null && trailing != null)
+              // Same height as a plain header with a compact icon button.
+              SectionHeader(
+                title!,
+                trailing: trailing,
+                padding: const EdgeInsets.fromLTRB(16, 8, 8, 4),
+              )
+            else if (title != null)
               SectionHeader(title!)
             else
               const SizedBox(height: 8),

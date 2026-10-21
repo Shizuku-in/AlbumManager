@@ -181,9 +181,11 @@ pub fn analyze_files(
 
     // ---- metadata ----
     let (mut date, mut year, mut title) = (None, None, folder_name.clone());
+    let (mut catalog, mut name_artist, mut event) = (None, None, None);
     let rules = rules::current();
     let standard_name = if let Some(m) = rules.parse_name(&folder_name) {
         (date, year, title) = (m.date, m.year, m.title);
+        (catalog, name_artist, event) = (m.catalog, m.artist, m.event);
         true
     } else {
         false
@@ -225,7 +227,8 @@ pub fn analyze_files(
                 .iter()
                 .flat_map(|c| c.tracks.iter().filter_map(|t| t.performer.as_deref()));
             most_common(performers).map(|x| x.0)
-        });
+        })
+        .or(name_artist);
     let genre = built
         .cue_sheets
         .iter()
@@ -377,6 +380,8 @@ pub fn analyze_files(
         date,
         year,
         genre,
+        catalog,
+        event,
         source,
         quality,
         quality_label: if !audio_files.is_empty() {

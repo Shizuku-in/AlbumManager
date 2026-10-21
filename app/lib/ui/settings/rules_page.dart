@@ -7,15 +7,103 @@ import 'package:album_manager/src/rust/third_party/album_model.dart';
 import 'package:album_manager/state/library_controller.dart';
 import 'package:album_manager/ui/settings/settings_widgets.dart';
 
-const _templatePresets = [
-  '[{date}] {title}',
-  '{date} {title}',
-  '{title} ({year})',
-  '{title} [{year}]',
-  '{year} - {title}',
-];
-
 String _minImagesLabel(int n) => n == 0 ? '不按数量判断' : '至少 $n 张';
+
+/// What each folder name placeholder matches and how templates are applied.
+void _showTemplateHelp(BuildContext context) {
+  final t = Theme.of(context);
+  final mono = t.textTheme.bodyMedium?.copyWith(
+    fontFamily: 'Consolas',
+    color: t.colorScheme.primary,
+  );
+  final muted = t.textTheme.bodyMedium?.copyWith(
+    color: t.colorScheme.onSurfaceVariant,
+  );
+  Widget heading(String s) => Padding(
+    padding: const EdgeInsets.only(top: 16, bottom: 8),
+    child: Text(s, style: t.textTheme.titleSmall),
+  );
+  // Two columns: code on the left, explanation on the right.
+  Widget table(List<(String, String)> rows) => Table(
+    columnWidths: const {0: IntrinsicColumnWidth(), 1: FlexColumnWidth()},
+    children: [
+      for (final (code, text) in rows)
+        TableRow(
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(right: 16, bottom: 6),
+              child: Text(code, style: mono),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Text(text),
+            ),
+          ],
+        ),
+    ],
+  );
+  showDialog<void>(
+    context: context,
+    builder: (ctx) => AlertDialog(
+      icon: const Icon(Icons.help_outline),
+      title: const Text('文件夹命名格式'),
+      content: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 560),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '用占位符描述专辑文件夹名。符合格式的文件夹会被识别为专辑并读取下列信息，'
+                '不符合任何格式的会标为“命名不规范”。',
+                style: muted,
+              ),
+              heading('占位符'),
+              table(const [
+                ('{title}', '标题，必须有且只有一个，取其余占位符之外剩下的文字'),
+                (
+                  '{date}',
+                  '日期：240315、20240315、2024.03.15、2024-03-15、2024-03 等',
+                ),
+                ('{year}', '年份：2024，与 {date} 二选一'),
+                ('{catalog}', '品番：LACA-15800、SVWC-70501~2 等，显示在专辑页并可搜索'),
+                ('{artist}', '艺术家：音频标签和 CUE 中都没有艺术家时使用'),
+                ('{event}', '展会：C103、M3-52、例大祭21 等，显示在专辑页并可搜索'),
+                ('{*}', '跳过任意内容，如 [FLAC]、(24bit_96kHz)'),
+              ]),
+              heading('规则'),
+              Text(
+                '· 除 {title} 外至少要有 {date}、{year}、{catalog}、{artist}、{event} 之一，每个最多出现一次\n'
+                '· 其他字符按原样匹配，空格可匹配任意多个空格\n'
+                '· 多个格式按列表顺序尝试，使用第一个匹配的\n'
+                '· 格式越宽松（如只有 {artist}），越容易把普通文件夹也当成专辑\n'
+                '· 修改后需要完整重新扫描；编辑专辑时可手动修改品番和展会',
+                style: muted,
+              ),
+              heading('示例'),
+              table(const [
+                ('[{date}] {title}', '[240315] 专辑名'),
+                ('[{date}][{catalog}] {title}', '[240315][LACA-15800] 专辑名'),
+                (
+                  '({event}) [{artist}] {title} [{*}]',
+                  '(C103) [社团名] 专辑名 [FLAC]',
+                ),
+                ('{year} - {title}', '2024 - 专辑名'),
+              ]),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(ctx),
+          child: const Text('知道了'),
+        ),
+      ],
+    ),
+  );
+}
 
 /// Editors for the cover keywords and folder name templates. Rules live in
 /// the Rust config; changes apply on the next full scan.
@@ -271,6 +359,12 @@ class _RulesPageState extends State<RulesPage> {
               ),
               SettingsGroup(
                 title: '文件夹命名',
+                trailing: IconButton(
+                  tooltip: '格式说明',
+                  visualDensity: VisualDensity.compact,
+                  onPressed: () => _showTemplateHelp(context),
+                  icon: const Icon(Icons.help_outline),
+                ),
                 children: [
                   ListTile(
                     leading: const Icon(Icons.drive_file_rename_outline),
@@ -292,29 +386,9 @@ class _RulesPageState extends State<RulesPage> {
                       ),
                     ]),
                   ),
-                  if (_templatePresets.any(
-                    (p) => !rules.nameTemplates.contains(p),
-                  ))
-                    ListTile(
-                      leading: const Icon(Icons.playlist_add),
-                      title: const Text('常用格式'),
-                      subtitle: settingsChips([
-                        for (final p in _templatePresets.where(
-                          (p) => !rules.nameTemplates.contains(p),
-                        ))
-                          ActionChip(
-                            avatar: const Icon(Icons.add),
-                            label: Text(p),
-                            onPressed: () => _addTemplate(p),
-                          ),
-                      ]),
-                    ),
                   if (_error != null)
                     SettingsNote(_error!, color: t.colorScheme.error),
-                  const SettingsNote(
-                    '用 {date}（240315、20240315、2024.03.15 等）或 {year}，加上 {title} 描述文件夹名，按顺序匹配。'
-                    '符合格式的文件夹会被识别为专辑并读取日期和标题，不符合的会标为 “命名不规范”。',
-                  ),
+                  const SettingsNote('符合格式的文件夹会被识别为专辑，不符合的会标为“命名不规范”。'),
                 ],
               ),
             ],

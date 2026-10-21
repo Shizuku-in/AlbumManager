@@ -305,6 +305,13 @@ class _AlbumPageState extends State<AlbumPage> with TickerProviderStateMixin {
     final t = Theme.of(context);
     final s = _s;
     final chips = <Widget>[
+      if (s.catalog != null)
+        Chip(avatar: const Icon(Icons.tag), label: Text(s.catalog!)),
+      if (s.event != null)
+        Chip(
+          avatar: const Icon(Icons.storefront_outlined),
+          label: Text(s.event!),
+        ),
       if (s.qualityLabel.isNotEmpty)
         Chip(avatar: const Icon(Icons.graphic_eq), label: Text(s.qualityLabel)),
       if (s.source == AlbumSource.cdRip)

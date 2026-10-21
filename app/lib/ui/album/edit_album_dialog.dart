@@ -26,6 +26,23 @@ class _EditAlbumDialogState extends State<_EditAlbumDialog> {
   late AlbumSource? _source = widget.album.summary.overrides.source;
   late String? _cover = widget.album.summary.overrides.coverPath;
   late bool? _hasScans = widget.album.summary.overrides.hasScans;
+  late final _catalog = TextEditingController(
+    text: widget.album.summary.overrides.catalog,
+  );
+  late final _event = TextEditingController(
+    text: widget.album.summary.overrides.event,
+  );
+
+  @override
+  void dispose() {
+    _catalog.dispose();
+    _event.dispose();
+    super.dispose();
+  }
+
+  /// Empty = the value read from the folder name.
+  String? _text(TextEditingController c) =>
+      c.text.trim().isEmpty ? null : c.text.trim();
 
   @override
   Widget build(BuildContext context) {
@@ -90,6 +107,28 @@ class _EditAlbumDialogState extends State<_EditAlbumDialog> {
               ],
               selected: {_hasScans},
               onSelectionChanged: (s) => setState(() => _hasScans = s.first),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                for (final (i, (c, name)) in [
+                  (_catalog, '品番'),
+                  (_event, '展会'),
+                ].indexed) ...[
+                  if (i > 0) const SizedBox(width: 16),
+                  Expanded(
+                    child: TextField(
+                      controller: c,
+                      decoration: InputDecoration(
+                        labelText: name,
+                        hintText: '留空则从文件夹名识别',
+                        floatingLabelBehavior: FloatingLabelBehavior.always,
+                        border: const OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                ],
+              ],
             ),
             const SizedBox(height: 24),
             label('封面'),
@@ -171,6 +210,8 @@ class _EditAlbumDialogState extends State<_EditAlbumDialog> {
               source: _source,
               coverPath: _cover,
               hasScans: _hasScans,
+              catalog: _text(_catalog),
+              event: _text(_event),
             ),
           ),
           child: const Text('保存'),

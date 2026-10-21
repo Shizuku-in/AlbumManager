@@ -39,5 +39,11 @@ pub fn apply(album: &mut Album, ov: &AlbumOverride, cache_dir: &Path) {
     if let Some(v) = ov.has_scans {
         album.summary.has_scans = v;
     }
+    if let Some(v) = &ov.catalog {
+        album.summary.catalog = Some(v.clone());
+    }
+    if let Some(v) = &ov.event {
+        album.summary.event = Some(v.clone());
+    }
     album.summary.overrides = ov.clone();
 }

@@ -856,12 +856,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   AlbumOverride dco_decode_album_override(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 3)
-      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
     return AlbumOverride(
       source: dco_decode_opt_box_autoadd_album_source(arr[0]),
       coverPath: dco_decode_opt_String(arr[1]),
       hasScans: dco_decode_opt_box_autoadd_bool(arr[2]),
+      catalog: dco_decode_opt_String(arr[3]),
+      event: dco_decode_opt_String(arr[4]),
     );
   }
 
@@ -875,8 +877,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   AlbumSummary dco_decode_album_summary(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 31)
-      throw Exception('unexpected arr length: expect 31 but see ${arr.length}');
+    if (arr.length != 33)
+      throw Exception('unexpected arr length: expect 33 but see ${arr.length}');
     return AlbumSummary(
       id: dco_decode_String(arr[0]),
       path: dco_decode_String(arr[1]),
@@ -886,29 +888,31 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       date: dco_decode_opt_String(arr[5]),
       year: dco_decode_opt_box_autoadd_i_32(arr[6]),
       genre: dco_decode_opt_String(arr[7]),
-      source: dco_decode_album_source(arr[8]),
-      quality: dco_decode_audio_quality(arr[9]),
-      qualityLabel: dco_decode_String(arr[10]),
-      formats: dco_decode_list_String(arr[11]),
-      sampleRate: dco_decode_i_32(arr[12]),
-      bitDepth: dco_decode_i_32(arr[13]),
-      discCount: dco_decode_i_32(arr[14]),
-      trackCount: dco_decode_i_32(arr[15]),
-      durationSecs: dco_decode_f_64(arr[16]),
-      totalSize: dco_decode_i_64(arr[17]),
-      audioSize: dco_decode_i_64(arr[18]),
-      imageCount: dco_decode_i_32(arr[19]),
-      hasScans: dco_decode_bool(arr[20]),
-      hasCue: dco_decode_bool(arr[21]),
-      hasLog: dco_decode_bool(arr[22]),
-      ripStatus: dco_decode_rip_status(arr[23]),
-      coverPath: dco_decode_opt_String(arr[24]),
-      coverThumb: dco_decode_opt_String(arr[25]),
-      accentColor: dco_decode_opt_box_autoadd_u_32(arr[26]),
-      addedAt: dco_decode_i_64(arr[27]),
-      modifiedAt: dco_decode_i_64(arr[28]),
-      issues: dco_decode_list_issue(arr[29]),
-      overrides: dco_decode_album_override(arr[30]),
+      catalog: dco_decode_opt_String(arr[8]),
+      event: dco_decode_opt_String(arr[9]),
+      source: dco_decode_album_source(arr[10]),
+      quality: dco_decode_audio_quality(arr[11]),
+      qualityLabel: dco_decode_String(arr[12]),
+      formats: dco_decode_list_String(arr[13]),
+      sampleRate: dco_decode_i_32(arr[14]),
+      bitDepth: dco_decode_i_32(arr[15]),
+      discCount: dco_decode_i_32(arr[16]),
+      trackCount: dco_decode_i_32(arr[17]),
+      durationSecs: dco_decode_f_64(arr[18]),
+      totalSize: dco_decode_i_64(arr[19]),
+      audioSize: dco_decode_i_64(arr[20]),
+      imageCount: dco_decode_i_32(arr[21]),
+      hasScans: dco_decode_bool(arr[22]),
+      hasCue: dco_decode_bool(arr[23]),
+      hasLog: dco_decode_bool(arr[24]),
+      ripStatus: dco_decode_rip_status(arr[25]),
+      coverPath: dco_decode_opt_String(arr[26]),
+      coverThumb: dco_decode_opt_String(arr[27]),
+      accentColor: dco_decode_opt_box_autoadd_u_32(arr[28]),
+      addedAt: dco_decode_i_64(arr[29]),
+      modifiedAt: dco_decode_i_64(arr[30]),
+      issues: dco_decode_list_issue(arr[31]),
+      overrides: dco_decode_album_override(arr[32]),
     );
   }
 
@@ -1453,10 +1457,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_source = sse_decode_opt_box_autoadd_album_source(deserializer);
     var var_coverPath = sse_decode_opt_String(deserializer);
     var var_hasScans = sse_decode_opt_box_autoadd_bool(deserializer);
+    var var_catalog = sse_decode_opt_String(deserializer);
+    var var_event = sse_decode_opt_String(deserializer);
     return AlbumOverride(
       source: var_source,
       coverPath: var_coverPath,
       hasScans: var_hasScans,
+      catalog: var_catalog,
+      event: var_event,
     );
   }
 
@@ -1478,6 +1486,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_date = sse_decode_opt_String(deserializer);
     var var_year = sse_decode_opt_box_autoadd_i_32(deserializer);
     var var_genre = sse_decode_opt_String(deserializer);
+    var var_catalog = sse_decode_opt_String(deserializer);
+    var var_event = sse_decode_opt_String(deserializer);
     var var_source = sse_decode_album_source(deserializer);
     var var_quality = sse_decode_audio_quality(deserializer);
     var var_qualityLabel = sse_decode_String(deserializer);
@@ -1510,6 +1520,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       date: var_date,
       year: var_year,
       genre: var_genre,
+      catalog: var_catalog,
+      event: var_event,
       source: var_source,
       quality: var_quality,
       qualityLabel: var_qualityLabel,
@@ -2232,6 +2244,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_opt_box_autoadd_album_source(self.source, serializer);
     sse_encode_opt_String(self.coverPath, serializer);
     sse_encode_opt_box_autoadd_bool(self.hasScans, serializer);
+    sse_encode_opt_String(self.catalog, serializer);
+    sse_encode_opt_String(self.event, serializer);
   }
 
   @protected
@@ -2251,6 +2265,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_opt_String(self.date, serializer);
     sse_encode_opt_box_autoadd_i_32(self.year, serializer);
     sse_encode_opt_String(self.genre, serializer);
+    sse_encode_opt_String(self.catalog, serializer);
+    sse_encode_opt_String(self.event, serializer);
     sse_encode_album_source(self.source, serializer);
     sse_encode_audio_quality(self.quality, serializer);
     sse_encode_String(self.qualityLabel, serializer);

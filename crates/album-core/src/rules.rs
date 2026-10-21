@@ -19,15 +19,33 @@ pub struct Rules {
     names: Vec<Regex>,
 }
 
-/// Date and title read from a folder name.
+/// Values read from a folder name.
 pub struct NameMatch {
     pub date: Option<String>,
     pub year: Option<i32>,
     pub title: String,
+    pub catalog: Option<String>,
+    pub artist: Option<String>,
+    pub event: Option<String>,
 }
 
-const DATE_RE: &str = r"\d{8}|\d{6}|\d{4}[-./]\d{1,2}(?:[-./]\d{1,2})?";
-const YEAR_RE: &str = r"(?:19|20)\d{2}";
+/// Template placeholders and their regexes. `{date}` takes 240315,
+/// 20240315 or 2024-03[-15] (any of `-./`); `{catalog}` takes catalog
+/// numbers such as LACA-15800, SVWC70501~2 or KICA-1234～5; `{*}` matches
+/// text that is skipped (e.g. `[FLAC]`). Free text other than the title
+/// matches as little as it can, so the title gets the rest.
+const PLACEHOLDERS: [(&str, &str); 7] = [
+    (
+        "{date}",
+        r"(?P<date>\d{8}|\d{6}|\d{4}[-./]\d{1,2}(?:[-./]\d{1,2})?)",
+    ),
+    ("{year}", r"(?P<year>(?:19|20)\d{2})"),
+    ("{catalog}", r"(?P<catalog>[A-Za-z]{2,6}-?\d{2,6}(?:[~～]\d{1,6})?)"),
+    ("{artist}", "(?P<artist>.+?)"),
+    ("{event}", "(?P<event>.+?)"),
+    ("{title}", "(?P<title>.+)"),
+    ("{*}", ".*?"),
+];
 
 /// Turns a template like `[{date}] {title}` into an anchored regex. Runs of
 /// whitespace match any amount of whitespace.
@@ -37,30 +55,40 @@ fn compile_template(t: &str) -> Result<Regex> {
     if count("{title}") != 1 {
         return Err(anyhow!("“{t}” 需要包含一个 {{title}}"));
     }
-    if count("{date}") + count("{year}") != 1 {
-        return Err(anyhow!("“{t}” 需要包含一个 {{date}} 或 {{year}}"));
+    for tok in ["{date}", "{year}", "{catalog}", "{artist}", "{event}"] {
+        if count(tok) > 1 {
+            return Err(anyhow!("“{t}” 中 {tok} 只能出现一次"));
+        }
+    }
+    if count("{date}") + count("{year}") > 1 {
+        return Err(anyhow!("“{t}” 不能同时包含 {{date}} 和 {{year}}"));
+    }
+    // A bare `{title}` would make every folder an album.
+    if ["{date}", "{year}", "{catalog}", "{artist}", "{event}"]
+        .iter()
+        .all(|tok| count(tok) == 0)
+    {
+        return Err(anyhow!(
+            "“{t}” 除 {{title}} 外还需要 {{date}}、{{year}}、{{catalog}}、{{artist}} 或 {{event}} 之一"
+        ));
     }
     let mut re = String::from("^");
     let mut rest = t;
-    while !rest.is_empty() {
-        if let Some(r) = rest.strip_prefix("{date}") {
-            re += &format!("(?P<date>{DATE_RE})");
-            rest = r;
-        } else if let Some(r) = rest.strip_prefix("{year}") {
-            re += &format!("(?P<year>{YEAR_RE})");
-            rest = r;
-        } else if let Some(r) = rest.strip_prefix("{title}") {
-            re += "(?P<title>.+)";
-            rest = r;
-        } else {
-            let c = rest.chars().next().unwrap();
-            if c.is_whitespace() {
-                re += r"\s*";
-                rest = rest.trim_start();
-            } else {
-                re += &regex::escape(&c.to_string());
-                rest = &rest[c.len_utf8()..];
+    'outer: while !rest.is_empty() {
+        for (tok, pat) in PLACEHOLDERS {
+            if let Some(r) = rest.strip_prefix(tok) {
+                re += pat;
+                rest = r;
+                continue 'outer;
             }
+        }
+        let c = rest.chars().next().unwrap();
+        if c.is_whitespace() {
+            re += r"\s*";
+            rest = rest.trim_start();
+        } else {
+            re += &regex::escape(&c.to_string());
+            rest = &rest[c.len_utf8()..];
         }
     }
     re += "$";
@@ -142,7 +170,19 @@ impl Rules {
                 (_, Some(y)) => (Some(y.as_str().to_string()), y.as_str().parse().ok()),
                 _ => (None, None),
             };
-            Some(NameMatch { date, year, title })
+            let text = |name| {
+                c.name(name)
+                    .map(|m| m.as_str().trim().to_string())
+                    .filter(|s| !s.is_empty())
+            };
+            Some(NameMatch {
+                date,
+                year,
+                title,
+                catalog: text("catalog").map(|s| s.to_uppercase()),
+                artist: text("artist"),
+                event: text("event"),
+            })
         })
     }
 

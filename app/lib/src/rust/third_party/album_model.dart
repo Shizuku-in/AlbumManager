@@ -65,14 +65,27 @@ class AlbumOverride {
   /// An image file of the album to use as cover.
   final String? coverPath;
   final bool? hasScans;
+  final String? catalog;
+  final String? event;
 
-  const AlbumOverride({this.source, this.coverPath, this.hasScans});
+  const AlbumOverride({
+    this.source,
+    this.coverPath,
+    this.hasScans,
+    this.catalog,
+    this.event,
+  });
 
   static Future<AlbumOverride> default_() =>
       RustLib.instance.api.albumModelAlbumOverrideDefault();
 
   @override
-  int get hashCode => source.hashCode ^ coverPath.hashCode ^ hasScans.hashCode;
+  int get hashCode =>
+      source.hashCode ^
+      coverPath.hashCode ^
+      hasScans.hashCode ^
+      catalog.hashCode ^
+      event.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -81,7 +94,9 @@ class AlbumOverride {
           runtimeType == other.runtimeType &&
           source == other.source &&
           coverPath == other.coverPath &&
-          hasScans == other.hasScans;
+          hasScans == other.hasScans &&
+          catalog == other.catalog &&
+          event == other.event;
 }
 
 /// Where an album came from.
@@ -110,6 +125,12 @@ class AlbumSummary {
   final String? date;
   final int? year;
   final String? genre;
+
+  /// Catalog number (e.g. "LACA-15800"), from the folder name.
+  final String? catalog;
+
+  /// Event the album was released at (e.g. "C103"), from the folder name.
+  final String? event;
   final AlbumSource source;
   final AudioQuality quality;
 
@@ -153,6 +174,8 @@ class AlbumSummary {
     this.date,
     this.year,
     this.genre,
+    this.catalog,
+    this.event,
     required this.source,
     required this.quality,
     required this.qualityLabel,
@@ -188,6 +211,8 @@ class AlbumSummary {
       date.hashCode ^
       year.hashCode ^
       genre.hashCode ^
+      catalog.hashCode ^
+      event.hashCode ^
       source.hashCode ^
       quality.hashCode ^
       qualityLabel.hashCode ^
@@ -225,6 +250,8 @@ class AlbumSummary {
           date == other.date &&
           year == other.year &&
           genre == other.genre &&
+          catalog == other.catalog &&
+          event == other.event &&
           source == other.source &&
           quality == other.quality &&
           qualityLabel == other.qualityLabel &&
@@ -443,7 +470,7 @@ enum IssueKind {
   ripUnverified,
   missingLog,
 
-  /// Folder name does not follow "[YYMMDD] Title".
+  /// Folder name matches none of the name templates.
   nonStandardName,
 }
 
@@ -679,8 +706,8 @@ class ScanRules {
   /// Cover image file name prefixes, highest priority first.
   final List<String> coverKeywords;
 
-  /// Album folder name templates using `{date}`, `{year}` and `{title}`,
-  /// tried in order.
+  /// Album folder name templates using `{date}` or `{year}`, `{catalog}`,
+  /// `{artist}`, `{event}`, `{*}` and `{title}`, tried in order.
   final List<String> nameTemplates;
 
   /// An album has scans when an image sits in a subfolder whose name
