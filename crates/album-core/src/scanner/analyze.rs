@@ -163,7 +163,7 @@ pub fn analyze_files(
         .any(|f| matches!(f.ext.as_str(), "iso" | "mds" | "mdf" | "m2ts"));
 
     let infos = discs::probe_all(&audio_files);
-    let built = discs::build(&audio_files, &infos, &cue_files);
+    let built = discs::build(&audio_files, &infos, &cue_files, &files);
 
     let mut logs: Vec<RipLog> = log_files
         .iter()

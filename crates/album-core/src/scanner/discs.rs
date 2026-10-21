@@ -40,6 +40,21 @@ fn file_name(rel: &str) -> &str {
     rel.rsplit('/').next().unwrap_or(rel)
 }
 
+/// Resolves "." and ".." segments ("./SACD/x.iso" -> "SACD/x.iso").
+fn normalize_rel(rel: &str) -> String {
+    let mut parts: Vec<&str> = Vec::new();
+    for seg in rel.split('/') {
+        match seg {
+            "" | "." => {}
+            ".." => {
+                parts.pop();
+            }
+            s => parts.push(s),
+        }
+    }
+    parts.join("/")
+}
+
 /// Lowercased name without extension, ignoring whitespace and characters that are
 /// forbidden in Windows file names (ASCII or their full-width replacements).
 fn loose_stem(name: &str) -> String {
@@ -77,8 +92,15 @@ fn make_track(
     }
 }
 
-/// `audio` is indexed like `audio_files`.
-pub fn build(audio_files: &[&FileRec], audio: &[AudioInfo], cue_files: &[&FileRec]) -> DiscBuild {
+/// `audio` is indexed like `audio_files`; `all_files` is every file in the album, so
+/// a cue pointing at a non-audio file that exists (an SACD .iso) isn't reported missing.
+pub fn build(
+    audio_files: &[&FileRec],
+    audio: &[AudioInfo],
+    cue_files: &[&FileRec],
+    all_files: &[FileRec],
+) -> DiscBuild {
+    let all_rel_lower: HashSet<String> = all_files.iter().map(|f| f.rel.to_lowercase()).collect();
     let by_rel_lower: HashMap<String, usize> = audio_files
         .iter()
         .enumerate()
@@ -114,11 +136,11 @@ pub fn build(audio_files: &[&FileRec], audio: &[AudioInfo], cue_files: &[&FileRe
         let mut missing = Vec::new();
         for name in &sheet.files {
             let name_norm = name.replace('\\', "/");
-            let rel = if dir.is_empty() {
+            let rel = normalize_rel(&if dir.is_empty() {
                 name_norm.clone()
             } else {
                 format!("{dir}/{name_norm}")
-            };
+            });
             let mut hit = by_rel_lower.get(&rel.to_lowercase()).copied();
             // Loose name: tolerates a changed extension (wav -> flac) and characters that
             // can't be used in file names ("A / B" in the cue vs "A ／ B" on disk).
@@ -156,7 +178,7 @@ pub fn build(audio_files: &[&FileRec], audio: &[AudioInfo], cue_files: &[&FileRe
                     hit = Some(here[0]);
                 }
             }
-            if hit.is_none() {
+            if hit.is_none() && !all_rel_lower.contains(&rel.to_lowercase()) {
                 missing.push(name.clone());
             }
             resolved.push(hit);

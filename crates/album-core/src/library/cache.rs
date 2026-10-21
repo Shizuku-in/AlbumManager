@@ -6,7 +6,7 @@ use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
-const CACHE_VERSION: u32 = 9;
+const CACHE_VERSION: u32 = 10;
 
 #[derive(Serialize, Deserialize, Default)]
 pub struct Config {
