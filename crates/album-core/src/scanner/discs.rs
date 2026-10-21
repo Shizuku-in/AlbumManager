@@ -88,9 +88,23 @@ pub fn build(audio_files: &[&FileRec], audio: &[AudioInfo], cue_files: &[&FileRe
     let mut discs = Vec::new();
     let mut cues = Vec::new();
     let mut sheets = Vec::new();
+    // Names and tags of the audio files, which a cue sheet usually repeats:
+    // they tell apart legacy encodings that all decode it cleanly.
+    let hints: Vec<String> = audio_files
+        .iter()
+        .map(|f| stem(&f.rel))
+        .chain(audio.iter().flat_map(|a| {
+            [&a.title, &a.artist, &a.album, &a.album_artist]
+                .into_iter()
+                .flatten()
+                .cloned()
+        }))
+        .collect::<HashSet<_>>()
+        .into_iter()
+        .collect();
 
     for (ci, cf) in cue_files.iter().enumerate() {
-        let decoded = match text::read_decoded(&cf.path) {
+        let decoded = match text::read_decoded_with_hints(&cf.path, &hints) {
             Ok(d) => d,
             Err(_) => continue,
         };
