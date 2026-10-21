@@ -34,6 +34,38 @@ class SettingsGroup extends StatelessWidget {
   }
 }
 
+/// A setting that only applies while the one above has a certain value:
+/// unfolds downward from it while fading when [shown] turns true.
+class SettingsReveal extends StatelessWidget {
+  final bool shown;
+  final Widget child;
+  const SettingsReveal({super.key, required this.shown, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 200),
+      switchInCurve: Curves.easeOutCubic,
+      switchOutCurve: Curves.easeInCubic,
+      transitionBuilder: (child, anim) => FadeTransition(
+        opacity: anim,
+        child: SizeTransition(
+          sizeFactor: anim,
+          alignment: Alignment.topCenter,
+          child: child,
+        ),
+      ),
+      layoutBuilder: (current, previous) => Stack(
+        alignment: Alignment.topCenter,
+        children: [...previous, ?current],
+      ),
+      child: shown
+          ? KeyedSubtree(key: const ValueKey(true), child: child)
+          : const SizedBox(key: ValueKey(false), width: double.infinity),
+    );
+  }
+}
+
 /// Small explanatory text aligned with the tile text above (16 padding +
 /// 24 icon + 16 gap).
 class SettingsNote extends StatelessWidget {

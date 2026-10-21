@@ -49,6 +49,9 @@ class _AlbumPageState extends State<AlbumPage> with TickerProviderStateMixin {
   bool _busy = false;
   final _scroll = SmoothScrollController();
 
+  /// Folder shown on the 文件 tab while browsing folder by folder.
+  final _fileDir = ValueNotifier('');
+
   @override
   void initState() {
     super.initState();
@@ -62,6 +65,7 @@ class _AlbumPageState extends State<AlbumPage> with TickerProviderStateMixin {
     _tabs.dispose();
     _tabSwitch.dispose();
     _scroll.dispose();
+    _fileDir.dispose();
     super.dispose();
   }
 
@@ -146,136 +150,153 @@ class _AlbumPageState extends State<AlbumPage> with TickerProviderStateMixin {
         .issuesOf(_s)
         .where((i) => i.kind != IssueKind.nonStandardName)
         .toList();
-    return Scaffold(
-      body: CustomScrollView(
-        controller: _scroll,
-        slivers: [
-          SliverAppBar(
-            pinned: true,
-            // Background drawn by flexibleSpace so the scrolled-under change fades.
-            backgroundColor: Colors.transparent,
-            surfaceTintColor: Colors.transparent,
-            scrolledUnderElevation: 0,
-            flexibleSpace: const ScrolledUnderBackground(),
-            // The header shows the title in large type; the bar repeats it only
-            // once that has scrolled away.
-            title: ListenableBuilder(
-              listenable: _scroll,
-              builder: (context, child) => AnimatedOpacity(
-                opacity: _scroll.hasClients && _scroll.offset > 72 ? 1 : 0,
-                duration: const Duration(milliseconds: 150),
-                child: child,
-              ),
-              child: Text(
-                _s.title,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
-            actions: [
-              ListenableBuilder(
-                listenable: favorites,
-                builder: (context, _) {
-                  final starred = favorites.contains(_s);
-                  return IconButton(
-                    tooltip: starred ? '取消收藏' : '收藏',
-                    isSelected: starred,
-                    onPressed: () => favorites.toggle(_s),
-                    icon: const Icon(Icons.favorite_border),
-                    selectedIcon: const Icon(Icons.favorite),
-                  );
-                },
-              ),
-              IconButton(
-                tooltip: '重新扫描此专辑',
-                onPressed: _busy
-                    ? null
-                    : () => _run(
-                        context,
-                        () => api.rescanAlbum(id: _s.id),
-                        '已重新扫描',
-                      ),
-                icon: const Icon(Icons.refresh),
-              ),
-              MenuAnchor(
-                builder: (context, c, _) => IconButton(
-                  tooltip: '更多',
-                  onPressed: () => c.isOpen ? c.close() : c.open(),
-                  icon: const Icon(Icons.more_vert),
+    // While the 文件 tab browses a subfolder, "back" goes up a folder first.
+    return ListenableBuilder(
+      listenable: _fileDir,
+      builder: (context, child) {
+        final up = _tabSwitch.shown == 3 && browsingSubfolder(_fileDir.value);
+        return PopScope(
+          canPop: !up,
+          onPopInvokedWithResult: (didPop, _) {
+            if (!didPop && up) _fileDir.value = parentDir(_fileDir.value);
+          },
+          child: child!,
+        );
+      },
+      child: Scaffold(
+        body: CustomScrollView(
+          controller: _scroll,
+          slivers: [
+            SliverAppBar(
+              pinned: true,
+              // Background drawn by flexibleSpace so the scrolled-under change fades.
+              backgroundColor: Colors.transparent,
+              surfaceTintColor: Colors.transparent,
+              scrolledUnderElevation: 0,
+              flexibleSpace: const ScrolledUnderBackground(),
+              // The header shows the title in large type; the bar repeats it only
+              // once that has scrolled away.
+              title: ListenableBuilder(
+                listenable: _scroll,
+                builder: (context, child) => AnimatedOpacity(
+                  opacity: _scroll.hasClients && _scroll.offset > 72 ? 1 : 0,
+                  duration: const Duration(milliseconds: 150),
+                  child: child,
                 ),
-                menuChildren: [
-                  MenuItemButton(
-                    leadingIcon: const Icon(Icons.edit_outlined),
-                    onPressed: a != null && !_busy
-                        ? () => _edit(context, a)
-                        : null,
-                    child: const Text('编辑专辑'),
-                  ),
-                  MenuItemButton(
-                    leadingIcon: const Icon(Icons.translate),
-                    onPressed: hasBadCue && !_busy
-                        ? () => _fixCue(context)
-                        : null,
-                    child: const Text('修复 CUE 编码'),
-                  ),
-                  MenuItemButton(
-                    leadingIcon: const Icon(Icons.open_in_new),
-                    onPressed: () => revealInFileManager(_s.path),
-                    child: const Text('在文件管理器中定位'),
-                  ),
-                ],
+                child: Text(
+                  _s.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-              const SizedBox(width: 8),
-            ],
-          ),
-          SliverToBoxAdapter(child: _header(context, hasBadCue)),
-          if (issues.isNotEmpty)
-            SliverToBoxAdapter(child: _issues(context, issues)),
-          // M3 secondary tabs (they divide this page's content), pinned under
-          // the app bar so switching tabs never needs scrolling back up.
-          SliverPersistentHeader(
-            pinned: true,
-            delegate: _TabHeader(
-              TabBar.secondary(
-                controller: _tabs,
-                isScrollable: true,
-                tabAlignment: TabAlignment.start,
-                padding: const EdgeInsets.symmetric(horizontal: 8),
-                tabs: [
-                  Tab(
-                    text:
-                        '曲目${a == null ? '' : ' (${a.discs.fold<int>(0, (n, d) => n + d.tracks.length)})'}',
+              actions: [
+                ListenableBuilder(
+                  listenable: favorites,
+                  builder: (context, _) {
+                    final starred = favorites.contains(_s);
+                    return IconButton(
+                      tooltip: starred ? '取消收藏' : '收藏',
+                      isSelected: starred,
+                      onPressed: () => favorites.toggle(_s),
+                      icon: const Icon(Icons.favorite_border),
+                      selectedIcon: const Icon(Icons.favorite),
+                    );
+                  },
+                ),
+                IconButton(
+                  tooltip: '重新扫描此专辑',
+                  onPressed: _busy
+                      ? null
+                      : () => _run(
+                          context,
+                          () => api.rescanAlbum(id: _s.id),
+                          '已重新扫描',
+                        ),
+                  icon: const Icon(Icons.refresh),
+                ),
+                MenuAnchor(
+                  builder: (context, c, _) => IconButton(
+                    tooltip: '更多',
+                    onPressed: () => c.isOpen ? c.close() : c.open(),
+                    icon: const Icon(Icons.more_vert),
                   ),
-                  Tab(text: '抓轨日志${a == null ? '' : ' (${a.logs.length})'}'),
-                  Tab(text: '扫图${a == null ? '' : ' (${a.images.length})'}'),
-                  Tab(text: '文件${a == null ? '' : ' (${a.files.length})'}'),
-                ],
+                  menuChildren: [
+                    MenuItemButton(
+                      leadingIcon: const Icon(Icons.edit_outlined),
+                      onPressed: a != null && !_busy
+                          ? () => _edit(context, a)
+                          : null,
+                      child: const Text('编辑专辑'),
+                    ),
+                    MenuItemButton(
+                      leadingIcon: const Icon(Icons.translate),
+                      onPressed: hasBadCue && !_busy
+                          ? () => _fixCue(context)
+                          : null,
+                      child: const Text('修复 CUE 编码'),
+                    ),
+                    MenuItemButton(
+                      leadingIcon: const Icon(Icons.open_in_new),
+                      onPressed: () => revealInFileManager(_s.path),
+                      child: const Text('在文件管理器中定位'),
+                    ),
+                  ],
+                ),
+                const SizedBox(width: 8),
+              ],
+            ),
+            SliverToBoxAdapter(child: _header(context, hasBadCue)),
+            if (issues.isNotEmpty)
+              SliverToBoxAdapter(child: _issues(context, issues)),
+            // M3 secondary tabs (they divide this page's content), pinned under
+            // the app bar so switching tabs never needs scrolling back up.
+            SliverPersistentHeader(
+              pinned: true,
+              delegate: _TabHeader(
+                TabBar.secondary(
+                  controller: _tabs,
+                  isScrollable: true,
+                  tabAlignment: TabAlignment.start,
+                  padding: const EdgeInsets.symmetric(horizontal: 8),
+                  tabs: [
+                    Tab(
+                      text:
+                          '曲目${a == null ? '' : ' (${a.discs.fold<int>(0, (n, d) => n + d.tracks.length)})'}',
+                    ),
+                    Tab(text: '抓轨日志${a == null ? '' : ' (${a.logs.length})'}'),
+                    Tab(text: '扫图${a == null ? '' : ' (${a.images.length})'}'),
+                    Tab(text: '文件${a == null ? '' : ' (${a.files.length})'}'),
+                  ],
+                ),
               ),
             ),
-          ),
-          if (a == null)
-            const SliverFillRemaining(
-              hasScrollBody: false,
-              child: Center(child: CircularProgressIndicator()),
-            )
-          else
-            AnimatedBuilder(
-              animation: _tabSwitch.controller,
-              builder: (context, child) => SliverOpacity(
-                opacity: _tabSwitch.opacity,
-                sliver: SliverTranslateX(dx: _tabSwitch.shift, sliver: child!),
+            if (a == null)
+              const SliverFillRemaining(
+                hasScrollBody: false,
+                child: Center(child: CircularProgressIndicator()),
+              )
+            else
+              AnimatedBuilder(
+                animation: _tabSwitch.controller,
+                builder: (context, child) => SliverOpacity(
+                  opacity: _tabSwitch.opacity,
+                  sliver: SliverTranslateX(
+                    dx: _tabSwitch.shift,
+                    sliver: child!,
+                  ),
+                ),
+                child: SliverMainAxisGroup(
+                  slivers: switch (_tabSwitch.shown) {
+                    0 => tracksSlivers(context, a),
+                    1 => logsSlivers(context, a),
+                    2 => scansSlivers(context, a),
+                    _ => filesSlivers(context, a, _fileDir),
+                  },
+                ),
               ),
-              child: SliverMainAxisGroup(
-                slivers: switch (_tabSwitch.shown) {
-                  0 => tracksSlivers(context, a),
-                  1 => logsSlivers(context, a),
-                  2 => scansSlivers(context, a),
-                  _ => filesSlivers(context, a),
-                },
-              ),
-            ),
-          const SliverToBoxAdapter(child: SizedBox(height: 24)),
-        ],
+            const SliverToBoxAdapter(child: SizedBox(height: 24)),
+          ],
+        ),
       ),
     );
   }

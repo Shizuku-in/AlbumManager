@@ -50,6 +50,24 @@ enum DateStyle {
   }
 }
 
+/// How the album page's 文件 tab lists files.
+enum FileListMode {
+  flat('平铺完整路径'),
+  tree('保持目录层级');
+
+  const FileListMode(this.label);
+  final String label;
+}
+
+/// How [FileListMode.tree] shows folders.
+enum FolderView {
+  expanded('全部展开'),
+  browse('逐层浏览');
+
+  const FolderView(this.label);
+  final String label;
+}
+
 /// Navigation destinations the user can hide.
 enum HideablePage {
   timeline('时间线'),
@@ -87,6 +105,8 @@ class SettingsController extends ChangeNotifier {
   CardSize cardSize = CardSize.medium;
   Set<CardField> hiddenCardFields = const {};
   DateStyle dateStyle = DateStyle.iso;
+  FileListMode fileListMode = FileListMode.flat;
+  FolderView folderView = FolderView.expanded;
   Set<HideablePage> hiddenPages = const {};
 
   /// Restore the library filters on the next launch.
@@ -133,6 +153,16 @@ class SettingsController extends ChangeNotifier {
     cardSize = _loadEnum('cardSize', CardSize.values, CardSize.medium);
     hiddenCardFields = _loadSet('hiddenCardFields', CardField.values);
     dateStyle = _loadEnum('dateStyle', DateStyle.values, DateStyle.iso);
+    fileListMode = _loadEnum(
+      'fileListMode',
+      FileListMode.values,
+      FileListMode.flat,
+    );
+    folderView = _loadEnum(
+      'folderView',
+      FolderView.values,
+      FolderView.expanded,
+    );
     hiddenPages = _loadSet('hiddenPages', HideablePage.values);
     rememberFilters = prefs.getBool('rememberFilters') ?? false;
     showLogScore = prefs.getBool('showLogScore') ?? false;
@@ -155,8 +185,14 @@ class SettingsController extends ChangeNotifier {
     'fontFamily',
     'hiddenPages',
   ]);
-  Future<void> resetDisplay() =>
-      _reset(['cardSize', 'hiddenCardFields', 'dateStyle', 'rememberFilters']);
+  Future<void> resetDisplay() => _reset([
+    'cardSize',
+    'hiddenCardFields',
+    'dateStyle',
+    'fileListMode',
+    'folderView',
+    'rememberFilters',
+  ]);
   Future<void> resetHealthChecks() => _reset(['hiddenIssues', 'overwriteCue']);
   Future<void> resetScanning() => _reset(['scanOnStartup']);
   Future<void> resetLogDisplay() => _reset(['showLogScore']);
@@ -244,6 +280,20 @@ class SettingsController extends ChangeNotifier {
 
   /// A release date in the chosen style.
   String? formatDate(String? date) => dateStyle.format(date);
+
+  void setFileListMode(FileListMode m) {
+    if (m == fileListMode) return;
+    fileListMode = m;
+    prefs.setString('fileListMode', m.name);
+    notifyListeners();
+  }
+
+  void setFolderView(FolderView v) {
+    if (v == folderView) return;
+    folderView = v;
+    prefs.setString('folderView', v.name);
+    notifyListeners();
+  }
 
   void setPageShown(HideablePage p, bool shown) {
     if (shown != hiddenPages.contains(p)) return;

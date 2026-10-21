@@ -64,6 +64,38 @@ class DisplaySettingsPage extends StatelessWidget {
           ],
         ),
         SettingsGroup(
+          title: '专辑页',
+          children: [
+            ListTile(
+              leading: const Icon(Icons.account_tree_outlined),
+              title: const Text('文件列表'),
+              subtitle: settingsChips([
+                for (final m in FileListMode.values)
+                  ChoiceChip(
+                    label: Text(m.label),
+                    selected: settings.fileListMode == m,
+                    onSelected: (_) => settings.setFileListMode(m),
+                  ),
+              ]),
+            ),
+            SettingsReveal(
+              shown: settings.fileListMode == FileListMode.tree,
+              child: ListTile(
+                leading: const Icon(Icons.folder_open_outlined),
+                title: const Text('目录显示'),
+                subtitle: settingsChips([
+                  for (final v in FolderView.values)
+                    ChoiceChip(
+                      label: Text(v.label),
+                      selected: settings.folderView == v,
+                      onSelected: (_) => settings.setFolderView(v),
+                    ),
+                ]),
+              ),
+            ),
+          ],
+        ),
+        SettingsGroup(
           title: '浏览',
           children: [
             SwitchListTile(
