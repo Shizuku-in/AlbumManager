@@ -6,7 +6,7 @@ import 'package:album_manager/state/navigation.dart';
 import 'package:album_manager/state/settings_controller.dart';
 import 'package:album_manager/util/memo.dart';
 
-enum SortMode { dateDesc, dateAsc, addedDesc, title, artist, size }
+enum SortMode { dateDesc, dateAsc, addedDesc, title, artist, catalog, size }
 
 extension SortModeX on SortMode {
   String get label => switch (this) {
@@ -15,6 +15,7 @@ extension SortModeX on SortMode {
     SortMode.addedDesc => '最近添加',
     SortMode.title => '标题',
     SortMode.artist => '艺术家',
+    SortMode.catalog => '品番',
     SortMode.size => '占用空间',
   };
   bool get groupsByYear =>
@@ -427,6 +428,8 @@ class LibraryBrowser extends ChangeNotifier {
           );
         case SortMode.artist:
           list.sort((a, b) => (a.artist ?? '￿').compareTo(b.artist ?? '￿'));
+        case SortMode.catalog:
+          list.sort(_byCatalog);
         case SortMode.size:
           list.sort((a, b) => b.totalSize.compareTo(a.totalSize));
       }
@@ -443,3 +446,26 @@ class LibraryBrowser extends ChangeNotifier {
 }
 
 final browser = LibraryBrowser();
+
+final _catalogParts = RegExp(r'^([A-Za-z]+)-?(\d+)');
+
+/// The label part of a catalog number ("LACA" of "LACA-15800").
+String? catalogPrefix(String? catalog) {
+  if (catalog == null) return null;
+  return (_catalogParts.firstMatch(catalog)?[1] ?? catalog).toUpperCase();
+}
+
+/// By label, then numerically (LACA-9999 before LACA-10000); albums
+/// without a catalog number last.
+int _byCatalog(AlbumSummary a, AlbumSummary b) {
+  final x = a.catalog?.toUpperCase(), y = b.catalog?.toUpperCase();
+  if (x == null || y == null) return x == y ? 0 : (x == null ? 1 : -1);
+  final mx = _catalogParts.firstMatch(x), my = _catalogParts.firstMatch(y);
+  if (mx != null && my != null) {
+    final c = mx[1]!.compareTo(my[1]!);
+    if (c != 0) return c;
+    final n = int.parse(mx[2]!).compareTo(int.parse(my[2]!));
+    if (n != 0) return n;
+  }
+  return x.compareTo(y);
+}

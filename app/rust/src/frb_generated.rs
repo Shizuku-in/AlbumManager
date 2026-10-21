@@ -981,6 +981,7 @@ const _: fn() = || {
         let _: Vec<String> = ScanRules.name_templates;
         let _: Vec<String> = ScanRules.scan_folder_keywords;
         let _: u32 = ScanRules.scan_min_images;
+        let _: Vec<String> = ScanRules.ignore_folders;
     }
     {
         let Track = None::<album_model::Track>.unwrap();
@@ -1749,11 +1750,13 @@ impl SseDecode for album_model::ScanRules {
         let mut var_nameTemplates = <Vec<String>>::sse_decode(deserializer);
         let mut var_scanFolderKeywords = <Vec<String>>::sse_decode(deserializer);
         let mut var_scanMinImages = <u32>::sse_decode(deserializer);
+        let mut var_ignoreFolders = <Vec<String>>::sse_decode(deserializer);
         return album_model::ScanRules {
             cover_keywords: var_coverKeywords,
             name_templates: var_nameTemplates,
             scan_folder_keywords: var_scanFolderKeywords,
             scan_min_images: var_scanMinImages,
+            ignore_folders: var_ignoreFolders,
         };
     }
 }
@@ -2425,6 +2428,7 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<album_model::ScanRules> {
             self.0.name_templates.into_into_dart().into_dart(),
             self.0.scan_folder_keywords.into_into_dart().into_dart(),
             self.0.scan_min_images.into_into_dart().into_dart(),
+            self.0.ignore_folders.into_into_dart().into_dart(),
         ]
         .into_dart()
     }
@@ -3084,6 +3088,7 @@ impl SseEncode for album_model::ScanRules {
         <Vec<String>>::sse_encode(self.name_templates, serializer);
         <Vec<String>>::sse_encode(self.scan_folder_keywords, serializer);
         <u32>::sse_encode(self.scan_min_images, serializer);
+        <Vec<String>>::sse_encode(self.ignore_folders, serializer);
     }
 }
 

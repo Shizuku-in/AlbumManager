@@ -8,6 +8,8 @@ IconData _fieldIcon(CardField f) => switch (f) {
   CardField.quality => Icons.high_quality_outlined,
   CardField.artist => Icons.person_outline,
   CardField.date => Icons.event_outlined,
+  CardField.catalog => Icons.tag,
+  CardField.event => Icons.storefront_outlined,
   CardField.ripStatus => Icons.verified_outlined,
 };
 

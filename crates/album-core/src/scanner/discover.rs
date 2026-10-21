@@ -21,10 +21,19 @@ fn is_hidden(p: &Path) -> bool {
         .unwrap_or(true)
 }
 
-fn subtree_has_media(dir: &Path) -> bool {
+/// Whether a walk should go into this entry: not an ignored folder. The
+/// starting folder (depth 0) is always entered.
+fn walk_into(e: &walkdir::DirEntry, rules: &Rules) -> bool {
+    e.depth() == 0
+        || !e.file_type().is_dir()
+        || !rules.ignores_dir(&e.file_name().to_string_lossy())
+}
+
+fn subtree_has_media(dir: &Path, rules: &Rules) -> bool {
     walkdir::WalkDir::new(dir)
         .max_depth(4)
         .into_iter()
+        .filter_entry(|e| walk_into(e, rules))
         .filter_map(|e| e.ok())
         .any(|e| {
             e.file_type().is_file() && {
@@ -55,6 +64,9 @@ fn visit(dir: &Path, depth: usize, rules: &Rules, out: &mut Vec<PathBuf>) {
         }
         let Ok(ft) = e.file_type() else { continue };
         if ft.is_dir() {
+            if rules.ignores_dir(&e.file_name().to_string_lossy()) {
+                continue;
+            }
             if p.file_name()
                 .map(|n| n.eq_ignore_ascii_case("BDMV"))
                 .unwrap_or(false)
@@ -75,7 +87,10 @@ fn visit(dir: &Path, depth: usize, rules: &Rules, out: &mut Vec<PathBuf>) {
             out.push(dir.to_path_buf());
             return;
         }
-        let media_subdirs: Vec<_> = subdirs.iter().filter(|d| subtree_has_media(d)).collect();
+        let media_subdirs: Vec<_> = subdirs
+            .iter()
+            .filter(|d| subtree_has_media(d, rules))
+            .collect();
         if media_subdirs.is_empty() {
             return;
         }
@@ -106,11 +121,14 @@ pub struct FileRec {
     pub ext: String,
 }
 
-/// Lists all files of an album and returns a content fingerprint.
+/// Lists all files of an album (outside ignored folders) and returns a
+/// content fingerprint.
 pub fn list_files(dir: &Path) -> (u64, Vec<FileRec>) {
+    let rules = rules::current();
     let mut files = Vec::new();
     for e in walkdir::WalkDir::new(dir)
         .into_iter()
+        .filter_entry(|e| walk_into(e, &rules))
         .filter_map(|e| e.ok())
     {
         if !e.file_type().is_file() {

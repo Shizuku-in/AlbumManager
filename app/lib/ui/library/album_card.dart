@@ -82,9 +82,14 @@ class AlbumCard extends StatelessWidget {
 
   static const _infoPadding = EdgeInsets.fromLTRB(12, 10, 8, 8);
 
-  static bool get _hasSubtitle =>
-      settings.showsOnCard(CardField.artist) ||
-      settings.showsOnCard(CardField.date);
+  static const _subtitleFields = [
+    CardField.artist,
+    CardField.date,
+    CardField.catalog,
+    CardField.event,
+  ];
+
+  static bool get _hasSubtitle => _subtitleFields.any(settings.showsOnCard);
 
   /// Grid of cards at most [CardSize.maxExtent] wide: a square cover plus an
   /// info area sized for two title lines and (if shown) one subtitle line.
@@ -117,6 +122,8 @@ class AlbumCard extends StatelessWidget {
     final subtitle = [
       if (settings.showsOnCard(CardField.artist)) album.artist,
       if (settings.showsOnCard(CardField.date)) settings.formatDate(album.date),
+      if (settings.showsOnCard(CardField.catalog)) album.catalog,
+      if (settings.showsOnCard(CardField.event)) album.event,
     ].whereType<String>().join(' · ');
     // Decode at display size (grid tiles are at most maxExtent wide) rather
     // than the 480px thumbnail, so more covers fit in the image cache.

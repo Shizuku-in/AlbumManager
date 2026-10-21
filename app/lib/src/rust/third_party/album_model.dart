@@ -735,11 +735,16 @@ class ScanRules {
   /// ...or when it has at least this many images (0 = never by count).
   final int scanMinImages;
 
+  /// Folders skipped by scans, at any depth (inside albums too): whole
+  /// names, case-insensitive, with `*` and `?` wildcards.
+  final List<String> ignoreFolders;
+
   const ScanRules({
     required this.coverKeywords,
     required this.nameTemplates,
     required this.scanFolderKeywords,
     required this.scanMinImages,
+    required this.ignoreFolders,
   });
 
   static Future<ScanRules> default_() =>
@@ -750,7 +755,8 @@ class ScanRules {
       coverKeywords.hashCode ^
       nameTemplates.hashCode ^
       scanFolderKeywords.hashCode ^
-      scanMinImages.hashCode;
+      scanMinImages.hashCode ^
+      ignoreFolders.hashCode;
 
   @override
   bool operator ==(Object other) =>
@@ -760,7 +766,8 @@ class ScanRules {
           coverKeywords == other.coverKeywords &&
           nameTemplates == other.nameTemplates &&
           scanFolderKeywords == other.scanFolderKeywords &&
-          scanMinImages == other.scanMinImages;
+          scanMinImages == other.scanMinImages &&
+          ignoreFolders == other.ignoreFolders;
 }
 
 class Track {

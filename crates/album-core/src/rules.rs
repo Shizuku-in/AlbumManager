@@ -17,6 +17,8 @@ pub struct Rules {
     /// Lowercased scan folder keywords.
     scan_folders: Vec<String>,
     names: Vec<Regex>,
+    /// All ignore patterns as one case-insensitive regex.
+    ignore: Option<Regex>,
 }
 
 /// Values read from a folder name.
@@ -40,7 +42,10 @@ const PLACEHOLDERS: [(&str, &str); 7] = [
         r"(?P<date>\d{8}|\d{6}|\d{4}[-./]\d{1,2}(?:[-./]\d{1,2})?)",
     ),
     ("{year}", r"(?P<year>(?:19|20)\d{2})"),
-    ("{catalog}", r"(?P<catalog>[A-Za-z]{2,6}-?\d{2,6}(?:[~～]\d{1,6})?)"),
+    (
+        "{catalog}",
+        r"(?P<catalog>[A-Za-z]{2,6}-?\d{2,6}(?:[~～]\d{1,6})?)",
+    ),
     ("{artist}", "(?P<artist>.+?)"),
     ("{event}", "(?P<event>.+?)"),
     ("{title}", "(?P<title>.+)"),
@@ -131,6 +136,17 @@ pub fn parse_date(code: &str) -> (Option<String>, Option<i32>) {
     (Some(s), Some(y))
 }
 
+/// `*` = any run of characters, `?` = one character, the rest literal.
+fn glob_to_regex(glob: &str) -> String {
+    glob.chars()
+        .map(|c| match c {
+            '*' => ".*".to_string(),
+            '?' => ".".to_string(),
+            c => regex::escape(&c.to_string()),
+        })
+        .collect()
+}
+
 /// A date typed by hand: `2024`, or anything `{date}` accepts. Returns
 /// (ISO date, year), or None when it isn't one.
 pub fn parse_typed_date(s: &str) -> Option<(String, i32)> {
@@ -166,11 +182,22 @@ impl Rules {
         };
         let cover = lower(&source.cover_keywords);
         let scan_folders = lower(&source.scan_folder_keywords);
+        let globs: Vec<String> = source
+            .ignore_folders
+            .iter()
+            .map(|g| g.trim())
+            .filter(|g| !g.is_empty())
+            .map(glob_to_regex)
+            .collect();
+        let ignore = (!globs.is_empty())
+            .then(|| Regex::new(&format!("(?i)^(?:{})$", globs.join("|"))))
+            .transpose()?;
         Ok(Self {
             source,
             cover,
             scan_folders,
             names,
+            ignore,
         })
     }
 
@@ -218,6 +245,14 @@ impl Rules {
                 let dir = dir.to_lowercase();
                 self.scan_folders.iter().any(|k| dir.contains(k.as_str()))
             })
+    }
+
+    /// Whether scans skip a folder with this name: hidden (`.` / `$`
+    /// prefix) or matching an ignore pattern.
+    pub fn ignores_dir(&self, name: &str) -> bool {
+        name.starts_with('.')
+            || name.starts_with('$')
+            || self.ignore.as_ref().is_some_and(|re| re.is_match(name))
     }
 
     pub fn is_album_name(&self, name: &str) -> bool {

@@ -123,6 +123,7 @@ class _RulesPageState extends State<RulesPage> {
   final _keyword = TextEditingController();
   final _scanKeyword = TextEditingController();
   final _template = TextEditingController();
+  final _ignore = TextEditingController();
 
   @override
   void initState() {
@@ -137,6 +138,7 @@ class _RulesPageState extends State<RulesPage> {
     _keyword.dispose();
     _scanKeyword.dispose();
     _template.dispose();
+    _ignore.dispose();
     super.dispose();
   }
 
@@ -145,6 +147,7 @@ class _RulesPageState extends State<RulesPage> {
     List<String>? nameTemplates,
     List<String>? scanFolderKeywords,
     int? scanMinImages,
+    List<String>? ignoreFolders,
   }) async {
     final r = _rules!;
     final next = ScanRules(
@@ -152,6 +155,7 @@ class _RulesPageState extends State<RulesPage> {
       nameTemplates: nameTemplates ?? r.nameTemplates,
       scanFolderKeywords: scanFolderKeywords ?? r.scanFolderKeywords,
       scanMinImages: scanMinImages ?? r.scanMinImages,
+      ignoreFolders: ignoreFolders ?? r.ignoreFolders,
     );
     try {
       await api.setScanRules(rules: next);
@@ -174,6 +178,7 @@ class _RulesPageState extends State<RulesPage> {
       nameTemplates: d.nameTemplates,
       scanFolderKeywords: d.scanFolderKeywords,
       scanMinImages: d.scanMinImages,
+      ignoreFolders: d.ignoreFolders,
     );
   }
 
@@ -195,6 +200,16 @@ class _RulesPageState extends State<RulesPage> {
       _save(scanFolderKeywords: [...list, k]);
     }
     _scanKeyword.clear();
+  }
+
+  void _addIgnore() {
+    final k = _ignore.text.trim();
+    if (k.isEmpty) return;
+    final list = _rules!.ignoreFolders;
+    if (!list.any((x) => x.toLowerCase() == k.toLowerCase())) {
+      _save(ignoreFolders: [...list, k]);
+    }
+    _ignore.clear();
   }
 
   Future<void> _addTemplate(String t) async {
@@ -230,7 +245,7 @@ class _RulesPageState extends State<RulesPage> {
     return SettingsSubpage(
       title: '识别规则',
       onReset: _resetDefaults,
-      resetNote: '自定义的封面关键词、扫图关键词和文件夹命名格式都会被替换，完整重新扫描后生效。',
+      resetNote: '自定义的封面关键词、扫图关键词、文件夹命名格式和忽略的文件夹都会被替换，完整重新扫描后生效。',
       groups: (context) => rules == null
           ? const [
               SettingsGroup(children: [ListTile(title: Text('正在读取…'))]),
@@ -389,6 +404,30 @@ class _RulesPageState extends State<RulesPage> {
                   if (_error != null)
                     SettingsNote(_error!, color: t.colorScheme.error),
                   const SettingsNote('符合格式的文件夹会被识别为专辑，不符合的会标为“命名不规范”。'),
+                ],
+              ),
+              SettingsGroup(
+                title: '忽略的文件夹',
+                children: [
+                  ListTile(
+                    leading: const Icon(Icons.folder_off_outlined),
+                    title: const Text('扫描时跳过'),
+                    subtitle: settingsChips([
+                      for (final k in rules.ignoreFolders)
+                        InputChip(
+                          label: Text(k),
+                          onDeleted: () => _save(
+                            ignoreFolders: rules.ignoreFolders
+                                .where((x) => x != k)
+                                .toList(),
+                          ),
+                        ),
+                      input(_ignore, '添加文件夹名', _addIgnore),
+                    ]),
+                  ),
+                  const SettingsNote(
+                    '名称与这些规则完全一致的文件夹在扫描时跳过，包括专辑里的子文件夹，不区分大小写，可用 * 和 ? 通配（如 temp*）。以 . 或 \$ 开头的文件夹总是跳过。',
+                  ),
                 ],
               ),
             ],

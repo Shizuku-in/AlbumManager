@@ -1339,13 +1339,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   ScanRules dco_decode_scan_rules(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 4)
-      throw Exception('unexpected arr length: expect 4 but see ${arr.length}');
+    if (arr.length != 5)
+      throw Exception('unexpected arr length: expect 5 but see ${arr.length}');
     return ScanRules(
       coverKeywords: dco_decode_list_String(arr[0]),
       nameTemplates: dco_decode_list_String(arr[1]),
       scanFolderKeywords: dco_decode_list_String(arr[2]),
       scanMinImages: dco_decode_u_32(arr[3]),
+      ignoreFolders: dco_decode_list_String(arr[4]),
     );
   }
 
@@ -2123,11 +2124,13 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_nameTemplates = sse_decode_list_String(deserializer);
     var var_scanFolderKeywords = sse_decode_list_String(deserializer);
     var var_scanMinImages = sse_decode_u_32(deserializer);
+    var var_ignoreFolders = sse_decode_list_String(deserializer);
     return ScanRules(
       coverKeywords: var_coverKeywords,
       nameTemplates: var_nameTemplates,
       scanFolderKeywords: var_scanFolderKeywords,
       scanMinImages: var_scanMinImages,
+      ignoreFolders: var_ignoreFolders,
     );
   }
 
@@ -2785,6 +2788,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_list_String(self.nameTemplates, serializer);
     sse_encode_list_String(self.scanFolderKeywords, serializer);
     sse_encode_u_32(self.scanMinImages, serializer);
+    sse_encode_list_String(self.ignoreFolders, serializer);
   }
 
   @protected

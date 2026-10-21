@@ -134,6 +134,10 @@ pub struct ScanRules {
     /// ...or when it has at least this many images (0 = never by count).
     #[serde(default = "default_scan_min_images")]
     pub scan_min_images: u32,
+    /// Folders skipped by scans, at any depth (inside albums too): whole
+    /// names, case-insensitive, with `*` and `?` wildcards.
+    #[serde(default = "default_ignore_folders")]
+    pub ignore_folders: Vec<String>,
 }
 
 fn default_scan_folder_keywords() -> Vec<String> {
@@ -154,6 +158,20 @@ fn default_scan_min_images() -> u32 {
     5
 }
 
+/// NAS thumbnail / recycle bin folders. Names starting with `.` or `$` are
+/// skipped regardless.
+fn default_ignore_folders() -> Vec<String> {
+    [
+        "@eaDir",
+        "#recycle",
+        "#snapshot",
+        "System Volume Information",
+        "lost+found",
+    ]
+    .map(String::from)
+    .to_vec()
+}
+
 impl Default for ScanRules {
     fn default() -> Self {
         Self {
@@ -171,6 +189,7 @@ impl Default for ScanRules {
             name_templates: vec!["[{date}] {title}".into()],
             scan_folder_keywords: default_scan_folder_keywords(),
             scan_min_images: default_scan_min_images(),
+            ignore_folders: default_ignore_folders(),
         }
     }
 }

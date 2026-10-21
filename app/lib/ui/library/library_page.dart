@@ -303,6 +303,7 @@ class _LibraryPageState extends State<LibraryPage>
             ? null
             : (main: a.title.characters.first.toUpperCase(), sub: null),
       SortMode.artist => (main: a.artist ?? '未知艺术家', sub: null),
+      SortMode.catalog => (main: catalogPrefix(a.catalog) ?? '无品番', sub: null),
       SortMode.size => (main: formatSize(a.totalSize), sub: null),
     };
   }

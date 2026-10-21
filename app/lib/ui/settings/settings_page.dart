@@ -60,7 +60,7 @@ class SettingsPage extends StatelessWidget {
                     category(
                       Icons.rule_folder_outlined,
                       '识别规则',
-                      '封面、扫图、专辑文件夹命名格式',
+                      '封面、扫图、专辑文件夹命名格式、忽略的文件夹',
                       const RulesPage(),
                     ),
                     category(

@@ -21,6 +21,8 @@ enum CardField {
   quality('高解析度标记'),
   artist('艺术家'),
   date('日期'),
+  catalog('品番'),
+  event('展会'),
   ripStatus('抓轨状态');
 
   const CardField(this.label);
