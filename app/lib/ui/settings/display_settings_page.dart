@@ -99,6 +99,73 @@ class DisplaySettingsPage extends StatelessWidget {
           ],
         ),
         SettingsGroup(
+          title: '时间线',
+          children: [
+            ListTile(
+              leading: const Icon(Icons.crop_portrait_outlined),
+              title: const Text('卡片样式'),
+              subtitle: settingsChips([
+                for (final c in TimelineCard.values)
+                  ChoiceChip(
+                    label: Text(c.label),
+                    selected: settings.timelineCard == c,
+                    onSelected: (_) => settings.setTimelineCard(c),
+                  ),
+              ]),
+            ),
+            ListTile(
+              leading: const Icon(Icons.view_comfy_outlined),
+              title: const Text('封面墙样式'),
+              subtitle: settingsChips([
+                for (final s in WallStyle.values)
+                  ChoiceChip(
+                    label: Text(s.label),
+                    selected: settings.wallStyle == s,
+                    onSelected: (_) => settings.setWallStyle(s),
+                  ),
+              ]),
+            ),
+            ListTile(
+              leading: const Icon(Icons.grid_on),
+              title: const Text('封面间距'),
+              subtitle: settingsChips([
+                for (final g in WallGap.values)
+                  ChoiceChip(
+                    label: Text(g.label),
+                    selected: settings.wallGap == g,
+                    onSelected: (_) => settings.setWallGap(g),
+                  ),
+              ]),
+            ),
+            ListTile(
+              leading: const Icon(Icons.animation),
+              title: const Text('封面动画'),
+              subtitle: settingsChips([
+                for (final m in WallMotion.values)
+                  ChoiceChip(
+                    label: Text(m.label),
+                    selected: settings.wallMotion == m,
+                    onSelected: (_) => settings.setWallMotion(m),
+                  ),
+              ]),
+            ),
+            SwitchListTile(
+              secondary: const Icon(Icons.zoom_in),
+              title: const Text('悬停时放大'),
+              subtitle: const Text('鼠标移到卡片上时封面墙略微放大，倾斜的封面墙同时摆正一些'),
+              value: settings.wallZoom,
+              onChanged: settings.setWallZoom,
+            ),
+            SwitchListTile(
+              secondary: const Icon(Icons.calendar_view_month_outlined),
+              title: const Text('按年代分组'),
+              subtitle: const Text('每个年代以一条横幅封面墙开头'),
+              value: settings.timelineDecades,
+              onChanged: settings.setTimelineDecades,
+            ),
+          ],
+        ),
+        SettingsGroup(
           title: '浏览',
           children: [
             SwitchListTile(

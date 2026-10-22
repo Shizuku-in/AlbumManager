@@ -47,11 +47,16 @@ class _SmoothScrollPosition extends ScrollPositionWithSingleContext {
     final target = (from + delta).clamp(minScrollExtent, maxScrollExtent);
     if (target == from) return;
     _target = target;
-    animateTo(
-      target,
+    final activity = _WheelScrollActivity(
+      this,
+      from: pixels,
+      to: target,
       duration: _duration,
       curve: Curves.easeOutCubic,
-    ).whenComplete(() {
+      vsync: context.vsync,
+    );
+    beginActivity(activity);
+    activity.done.whenComplete(() {
       if (_target == target) _target = null;
     });
   }
@@ -63,4 +68,22 @@ class _SmoothScrollPosition extends ScrollPositionWithSingleContext {
     if (newActivity is! DrivenScrollActivity) _target = null;
     super.beginActivity(newActivity);
   }
+}
+
+/// A wheel step's animation. Unlike [animateTo]'s, it keeps the content
+/// hit-testable, so whatever is under the cursor stays hovered (and hover
+/// moves on to what scrolls under it) instead of every hover effect dropping
+/// for the length of each step.
+class _WheelScrollActivity extends DrivenScrollActivity {
+  _WheelScrollActivity(
+    super.delegate, {
+    required super.from,
+    required super.to,
+    required super.duration,
+    required super.curve,
+    required super.vsync,
+  });
+
+  @override
+  bool get shouldIgnorePointer => false;
 }

@@ -86,6 +86,44 @@ enum FolderView {
   final String label;
 }
 
+/// How the timeline's year cards are laid out.
+enum TimelineCard {
+  poster('海报'),
+  classic('经典');
+
+  const TimelineCard(this.label);
+  final String label;
+}
+
+/// Layout of the cover wall on the timeline's year cards.
+enum WallStyle {
+  tilted('倾斜'),
+  flat('平铺');
+
+  const WallStyle(this.label);
+  final String label;
+}
+
+/// Spacing between the covers of the timeline's cover walls.
+enum WallGap {
+  spaced('留缝'),
+  seamless('铺满');
+
+  const WallGap(this.label);
+  final String label;
+}
+
+/// How the timeline's cover walls move.
+enum WallMotion {
+  hover('悬停时滚动'),
+  follow('跟随鼠标'),
+  always('始终滚动'),
+  off('静止');
+
+  const WallMotion(this.label);
+  final String label;
+}
+
 /// Navigation destinations the user can hide.
 enum HideablePage {
   timeline('时间线'),
@@ -128,6 +166,16 @@ class SettingsController extends ChangeNotifier {
   DateStyle dateStyle = DateStyle.iso;
   FileListMode fileListMode = FileListMode.flat;
   FolderView folderView = FolderView.expanded;
+  WallStyle wallStyle = WallStyle.tilted;
+  WallMotion wallMotion = WallMotion.hover;
+  WallGap wallGap = WallGap.spaced;
+  TimelineCard timelineCard = TimelineCard.poster;
+
+  /// Hovered cover walls zoom in slightly (and straighten when tilted).
+  bool wallZoom = true;
+
+  /// Timeline years grouped under a banner per decade.
+  bool timelineDecades = true;
   Set<HideablePage> hiddenPages = const {};
 
   /// Restore the library filters on the next launch.
@@ -185,6 +233,16 @@ class SettingsController extends ChangeNotifier {
       FolderView.values,
       FolderView.expanded,
     );
+    wallStyle = _loadEnum('wallStyle', WallStyle.values, WallStyle.tilted);
+    wallMotion = _loadEnum('wallMotion', WallMotion.values, WallMotion.hover);
+    wallGap = _loadEnum('wallGap', WallGap.values, WallGap.spaced);
+    timelineCard = _loadEnum(
+      'timelineCard',
+      TimelineCard.values,
+      TimelineCard.poster,
+    );
+    wallZoom = prefs.getBool('wallZoom') ?? true;
+    timelineDecades = prefs.getBool('timelineDecades') ?? true;
     hiddenPages = _loadSet('hiddenPages', HideablePage.values);
     rememberFilters = prefs.getBool('rememberFilters') ?? false;
     showLogScore = prefs.getBool('showLogScore') ?? false;
@@ -215,6 +273,12 @@ class SettingsController extends ChangeNotifier {
     'folderView',
     'rememberFilters',
     'hiddenSearchFields',
+    'wallStyle',
+    'wallMotion',
+    'wallGap',
+    'timelineCard',
+    'wallZoom',
+    'timelineDecades',
   ]);
   Future<void> resetHealthChecks() => _reset(['hiddenIssues', 'overwriteCue']);
   Future<void> resetScanning() => _reset(['scanOnStartup']);
@@ -328,6 +392,48 @@ class SettingsController extends ChangeNotifier {
     if (v == folderView) return;
     folderView = v;
     prefs.setString('folderView', v.name);
+    notifyListeners();
+  }
+
+  void setWallStyle(WallStyle s) {
+    if (s == wallStyle) return;
+    wallStyle = s;
+    prefs.setString('wallStyle', s.name);
+    notifyListeners();
+  }
+
+  void setWallMotion(WallMotion m) {
+    if (m == wallMotion) return;
+    wallMotion = m;
+    prefs.setString('wallMotion', m.name);
+    notifyListeners();
+  }
+
+  void setWallGap(WallGap g) {
+    if (g == wallGap) return;
+    wallGap = g;
+    prefs.setString('wallGap', g.name);
+    notifyListeners();
+  }
+
+  void setTimelineCard(TimelineCard c) {
+    if (c == timelineCard) return;
+    timelineCard = c;
+    prefs.setString('timelineCard', c.name);
+    notifyListeners();
+  }
+
+  void setWallZoom(bool v) {
+    if (v == wallZoom) return;
+    wallZoom = v;
+    prefs.setBool('wallZoom', v);
+    notifyListeners();
+  }
+
+  void setTimelineDecades(bool v) {
+    if (v == timelineDecades) return;
+    timelineDecades = v;
+    prefs.setBool('timelineDecades', v);
     notifyListeners();
   }
 
