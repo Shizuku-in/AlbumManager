@@ -7,7 +7,7 @@ import '../frb_generated.dart';
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `hash`
 
 /// Full album info for the detail page.
 class Album {
@@ -559,11 +559,12 @@ enum MatchKind {
 
 /// A release found in an online database that may be an album.
 class OnlineMatch {
-  /// e.g. "MusicBrainz"
+  /// Where the data comes from, e.g. "MusicBrainz", "Bangumi", or
+  /// "FreeDB" (through the CueTools database).
   final String source;
   final String id;
 
-  /// The release's page.
+  /// The release's page; empty when there's none.
   final String url;
   final String title;
   final String? artist;
@@ -571,12 +572,19 @@ class OnlineMatch {
   /// `YYYY`, `YYYY-MM` or `YYYY-MM-DD`.
   final String? date;
   final String? catalog;
+
+  /// Doujin event, e.g. "C95", "M3-55".
+  final String? event;
   final String? label;
   final String? country;
 
   /// Medium, e.g. "CD", "Digital Media".
   final String? format;
+
+  /// 0 when unknown.
   final int discCount;
+
+  /// 0 when unknown.
   final int trackCount;
 
   /// Front cover, small for previews and large for saving; may not exist.
@@ -595,6 +603,7 @@ class OnlineMatch {
     this.artist,
     this.date,
     this.catalog,
+    this.event,
     this.label,
     this.country,
     this.format,
@@ -615,6 +624,7 @@ class OnlineMatch {
       artist.hashCode ^
       date.hashCode ^
       catalog.hashCode ^
+      event.hashCode ^
       label.hashCode ^
       country.hashCode ^
       format.hashCode ^
@@ -637,6 +647,7 @@ class OnlineMatch {
           artist == other.artist &&
           date == other.date &&
           catalog == other.catalog &&
+          event == other.event &&
           label == other.label &&
           country == other.country &&
           format == other.format &&
@@ -646,6 +657,38 @@ class OnlineMatch {
           coverUrl == other.coverUrl &&
           matchedBy == other.matchedBy &&
           score == other.score;
+}
+
+/// Releases found online for an album, best matches first.
+class OnlineResults {
+  final List<OnlineMatch> matches;
+
+  /// Sources that couldn't be queried, with the reason.
+  final List<String> errors;
+
+  const OnlineResults({required this.matches, required this.errors});
+
+  @override
+  int get hashCode => matches.hashCode ^ errors.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is OnlineResults &&
+          runtimeType == other.runtimeType &&
+          matches == other.matches &&
+          errors == other.errors;
+}
+
+/// An online database albums can be looked up in.
+enum OnlineSource {
+  musicBrainz,
+
+  /// bgm.tv: anime / game soundtracks and doujin music.
+  bangumi,
+
+  /// CueTools database: MusicBrainz, Discogs and FreeDB data by disc TOC.
+  ctdb,
 }
 
 class RipLog {

@@ -477,11 +477,12 @@ fn wire__crate__api__library__lookup_online_impl(
             let mut deserializer =
                 flutter_rust_bridge::for_generated::SseDeserializer::new(message);
             let api_id = <String>::sse_decode(&mut deserializer);
+            let api_sources = <Vec<album_model::OnlineSource>>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| {
                 transform_result_sse::<_, flutter_rust_bridge::for_generated::anyhow::Error>(
                     (move || {
-                        let output_ok = crate::api::library::lookup_online(api_id)?;
+                        let output_ok = crate::api::library::lookup_online(api_id, api_sources)?;
                         std::result::Result::Ok(output_ok)
                     })(),
                 )
@@ -1132,6 +1133,7 @@ const _: fn() = || {
         let _: Option<String> = OnlineMatch.artist;
         let _: Option<String> = OnlineMatch.date;
         let _: Option<String> = OnlineMatch.catalog;
+        let _: Option<String> = OnlineMatch.event;
         let _: Option<String> = OnlineMatch.label;
         let _: Option<String> = OnlineMatch.country;
         let _: Option<String> = OnlineMatch.format;
@@ -1141,6 +1143,11 @@ const _: fn() = || {
         let _: Option<String> = OnlineMatch.cover_url;
         let _: album_model::MatchKind = OnlineMatch.matched_by;
         let _: i32 = OnlineMatch.score;
+    }
+    {
+        let OnlineResults = None::<album_model::OnlineResults>.unwrap();
+        let _: Vec<album_model::OnlineMatch> = OnlineResults.matches;
+        let _: Vec<String> = OnlineResults.errors;
     }
     {
         let RipLog = None::<album_model::RipLog>.unwrap();
@@ -1667,6 +1674,18 @@ impl SseDecode for Vec<album_model::OnlineMatch> {
     }
 }
 
+impl SseDecode for Vec<album_model::OnlineSource> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ {
+            ans_.push(<album_model::OnlineSource>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
 impl SseDecode for Vec<i32> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -1783,6 +1802,7 @@ impl SseDecode for album_model::OnlineMatch {
         let mut var_artist = <Option<String>>::sse_decode(deserializer);
         let mut var_date = <Option<String>>::sse_decode(deserializer);
         let mut var_catalog = <Option<String>>::sse_decode(deserializer);
+        let mut var_event = <Option<String>>::sse_decode(deserializer);
         let mut var_label = <Option<String>>::sse_decode(deserializer);
         let mut var_country = <Option<String>>::sse_decode(deserializer);
         let mut var_format = <Option<String>>::sse_decode(deserializer);
@@ -1800,6 +1820,7 @@ impl SseDecode for album_model::OnlineMatch {
             artist: var_artist,
             date: var_date,
             catalog: var_catalog,
+            event: var_event,
             label: var_label,
             country: var_country,
             format: var_format,
@@ -1809,6 +1830,31 @@ impl SseDecode for album_model::OnlineMatch {
             cover_url: var_coverUrl,
             matched_by: var_matchedBy,
             score: var_score,
+        };
+    }
+}
+
+impl SseDecode for album_model::OnlineResults {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_matches = <Vec<album_model::OnlineMatch>>::sse_decode(deserializer);
+        let mut var_errors = <Vec<String>>::sse_decode(deserializer);
+        return album_model::OnlineResults {
+            matches: var_matches,
+            errors: var_errors,
+        };
+    }
+}
+
+impl SseDecode for album_model::OnlineSource {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => album_model::OnlineSource::MusicBrainz,
+            1 => album_model::OnlineSource::Bangumi,
+            2 => album_model::OnlineSource::Ctdb,
+            _ => unreachable!("Invalid variant for OnlineSource: {}", inner),
         };
     }
 }
@@ -2587,6 +2633,7 @@ impl flutter_rust_bridge::IntoDart for FrbWrapper<album_model::OnlineMatch> {
             self.0.artist.into_into_dart().into_dart(),
             self.0.date.into_into_dart().into_dart(),
             self.0.catalog.into_into_dart().into_dart(),
+            self.0.event.into_into_dart().into_dart(),
             self.0.label.into_into_dart().into_dart(),
             self.0.country.into_into_dart().into_dart(),
             self.0.format.into_into_dart().into_dart(),
@@ -2608,6 +2655,49 @@ impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<album_model::OnlineMatch>>
     for album_model::OnlineMatch
 {
     fn into_into_dart(self) -> FrbWrapper<album_model::OnlineMatch> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<album_model::OnlineResults> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.0.matches.into_into_dart().into_dart(),
+            self.0.errors.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for FrbWrapper<album_model::OnlineResults>
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<album_model::OnlineResults>>
+    for album_model::OnlineResults
+{
+    fn into_into_dart(self) -> FrbWrapper<album_model::OnlineResults> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<album_model::OnlineSource> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self.0 {
+            album_model::OnlineSource::MusicBrainz => 0.into_dart(),
+            album_model::OnlineSource::Bangumi => 1.into_dart(),
+            album_model::OnlineSource::Ctdb => 2.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for FrbWrapper<album_model::OnlineSource>
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<album_model::OnlineSource>>
+    for album_model::OnlineSource
+{
+    fn into_into_dart(self) -> FrbWrapper<album_model::OnlineSource> {
         self.into()
     }
 }
@@ -3176,6 +3266,16 @@ impl SseEncode for Vec<album_model::OnlineMatch> {
     }
 }
 
+impl SseEncode for Vec<album_model::OnlineSource> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <album_model::OnlineSource>::sse_encode(item, serializer);
+        }
+    }
+}
+
 impl SseEncode for Vec<i32> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -3283,6 +3383,7 @@ impl SseEncode for album_model::OnlineMatch {
         <Option<String>>::sse_encode(self.artist, serializer);
         <Option<String>>::sse_encode(self.date, serializer);
         <Option<String>>::sse_encode(self.catalog, serializer);
+        <Option<String>>::sse_encode(self.event, serializer);
         <Option<String>>::sse_encode(self.label, serializer);
         <Option<String>>::sse_encode(self.country, serializer);
         <Option<String>>::sse_encode(self.format, serializer);
@@ -3292,6 +3393,31 @@ impl SseEncode for album_model::OnlineMatch {
         <Option<String>>::sse_encode(self.cover_url, serializer);
         <album_model::MatchKind>::sse_encode(self.matched_by, serializer);
         <i32>::sse_encode(self.score, serializer);
+    }
+}
+
+impl SseEncode for album_model::OnlineResults {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <Vec<album_model::OnlineMatch>>::sse_encode(self.matches, serializer);
+        <Vec<String>>::sse_encode(self.errors, serializer);
+    }
+}
+
+impl SseEncode for album_model::OnlineSource {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                album_model::OnlineSource::MusicBrainz => 0,
+                album_model::OnlineSource::Bangumi => 1,
+                album_model::OnlineSource::Ctdb => 2,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
     }
 }
 

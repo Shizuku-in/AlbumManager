@@ -376,6 +376,16 @@ pub struct Album {
     pub fingerprint: u64,
 }
 
+/// An online database albums can be looked up in.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
+pub enum OnlineSource {
+    MusicBrainz,
+    /// bgm.tv: anime / game soundtracks and doujin music.
+    Bangumi,
+    /// CueTools database: MusicBrainz, Discogs and FreeDB data by disc TOC.
+    Ctdb,
+}
+
 /// How an online release was matched to an album.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum MatchKind {
@@ -390,21 +400,26 @@ pub enum MatchKind {
 /// A release found in an online database that may be an album.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OnlineMatch {
-    /// e.g. "MusicBrainz"
+    /// Where the data comes from, e.g. "MusicBrainz", "Bangumi", or
+    /// "FreeDB" (through the CueTools database).
     pub source: String,
     pub id: String,
-    /// The release's page.
+    /// The release's page; empty when there's none.
     pub url: String,
     pub title: String,
     pub artist: Option<String>,
     /// `YYYY`, `YYYY-MM` or `YYYY-MM-DD`.
     pub date: Option<String>,
     pub catalog: Option<String>,
+    /// Doujin event, e.g. "C95", "M3-55".
+    pub event: Option<String>,
     pub label: Option<String>,
     pub country: Option<String>,
     /// Medium, e.g. "CD", "Digital Media".
     pub format: Option<String>,
+    /// 0 when unknown.
     pub disc_count: i32,
+    /// 0 when unknown.
     pub track_count: i32,
     /// Front cover, small for previews and large for saving; may not exist.
     pub thumb_url: Option<String>,
@@ -412,4 +427,12 @@ pub struct OnlineMatch {
     pub matched_by: MatchKind,
     /// Search relevance, 0..100.
     pub score: i32,
+}
+
+/// Releases found online for an album, best matches first.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct OnlineResults {
+    pub matches: Vec<OnlineMatch>,
+    /// Sources that couldn't be queried, with the reason.
+    pub errors: Vec<String>,
 }

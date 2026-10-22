@@ -86,6 +86,19 @@ impl Toc {
     }
 }
 
+impl Toc {
+    /// `0:19528:...:282942` for the CueTools database: track offsets and the
+    /// lead-out, without the lead-in.
+    pub fn ctdb_param(&self) -> String {
+        self.offsets
+            .iter()
+            .chain([&self.lead_out])
+            .map(|o| (o - LEAD_IN).to_string())
+            .collect::<Vec<_>>()
+            .join(":")
+    }
+}
+
 /// Base64 with MusicBrainz's URL-safe alphabet (`.`, `_`, `-` padding).
 fn base64(bytes: &[u8]) -> String {
     const ABC: &[u8; 64] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789._";

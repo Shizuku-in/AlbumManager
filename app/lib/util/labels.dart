@@ -27,6 +27,20 @@ CustomColor _secondary(ColorScheme s) => CustomColor(
   s.onSecondaryContainer,
 );
 
+extension OnlineSourceX on OnlineSource {
+  String get label => switch (this) {
+    OnlineSource.musicBrainz => 'MusicBrainz',
+    OnlineSource.bangumi => 'Bangumi',
+    OnlineSource.ctdb => 'CueTools 数据库',
+  };
+
+  String get description => switch (this) {
+    OnlineSource.musicBrainz => '按光盘 ID、品番、标题搜索，覆盖商业 CD 较全',
+    OnlineSource.bangumi => '按标题搜索，动画 / 游戏原声与同人音乐，含展会',
+    OnlineSource.ctdb => '按光盘目录匹配，汇总 MusicBrainz、Discogs、FreeDB',
+  };
+}
+
 extension SourceX on AlbumSource {
   String get label => switch (this) {
     AlbumSource.cdRip => 'CD 抓轨',

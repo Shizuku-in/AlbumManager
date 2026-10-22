@@ -90,10 +90,11 @@ pub fn search_tracks(query: String, titles: bool, artists: bool) -> Vec<String> 
         .collect()
 }
 
-/// Releases on MusicBrainz that may be this album, best matches first.
-pub fn lookup_online(id: String) -> Result<Vec<OnlineMatch>> {
+/// Releases on the given online databases that may be this album, best
+/// matches first.
+pub fn lookup_online(id: String, sources: Vec<OnlineSource>) -> Result<OnlineResults> {
     let album = library::get(&id).ok_or_else(|| anyhow!("album not found"))?;
-    album_online::lookup(&album)
+    Ok(album_online::lookup(&album, &sources))
 }
 
 /// Downloads a cover found online into the album folder (never overwriting a

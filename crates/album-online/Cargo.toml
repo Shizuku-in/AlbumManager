@@ -1,6 +1,6 @@
 [package]
 name = "album-online"
-description = "Album lookups in online databases (MusicBrainz)."
+description = "Album lookups in online databases (MusicBrainz, Bangumi, CueTools)."
 version.workspace = true
 edition.workspace = true
 authors.workspace = true
@@ -12,6 +12,7 @@ publish.workspace = true
 album-formats.workspace = true
 album-model.workspace = true
 anyhow.workspace = true
+regex.workspace = true
 serde_json.workspace = true
 sha1.workspace = true
 ureq.workspace = true

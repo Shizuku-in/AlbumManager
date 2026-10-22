@@ -1,26 +1,15 @@
 //! MusicBrainz web service (https://musicbrainz.org/doc/MusicBrainz_API).
 
 use crate::discid::Toc;
+use crate::AGENT;
 use album_model::{MatchKind, OnlineMatch};
 use anyhow::Result;
 use serde_json::Value;
-use std::sync::{LazyLock, Mutex};
+use std::sync::Mutex;
 use std::time::{Duration, Instant};
 
 const API: &str = "https://musicbrainz.org/ws/2";
 const SOURCE: &str = "MusicBrainz";
-
-/// MusicBrainz asks clients to identify themselves.
-pub(crate) static AGENT: LazyLock<ureq::Agent> = LazyLock::new(|| {
-    ureq::AgentBuilder::new()
-        .user_agent(concat!(
-            "AlbumManager/",
-            env!("CARGO_PKG_VERSION"),
-            " ( https://github.com/Shizuku-in/AlbumManager )"
-        ))
-        .timeout(Duration::from_secs(20))
-        .build()
-});
 
 /// Time of the last request: MusicBrainz allows one per second.
 static LAST: Mutex<Option<Instant>> = Mutex::new(None);
@@ -50,7 +39,7 @@ fn quoted(text: &str) -> String {
     format!("\"{}\"", text.replace('\\', "\\\\").replace('"', "\\\""))
 }
 
-fn text(v: &Value) -> Option<String> {
+pub(crate) fn text(v: &Value) -> Option<String> {
     v.as_str()
         .map(str::trim)
         .filter(|s| !s.is_empty())
@@ -90,6 +79,7 @@ fn release(v: &Value, matched_by: MatchKind) -> Option<OnlineMatch> {
         artist: Some(artist.trim().to_string()).filter(|a| !a.is_empty()),
         date: text(&v["date"]),
         catalog: labels.clone().find_map(|l| text(&l["catalog-number"])),
+        event: None,
         label: labels.clone().find_map(|l| text(&l["label"]["name"])),
         country: text(&v["country"]),
         format: media

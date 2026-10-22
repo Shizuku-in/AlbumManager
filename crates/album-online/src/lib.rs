@@ -1,16 +1,33 @@
-//! Looks albums up in online databases (MusicBrainz for now) to fill in
-//! their title, artist, release date, catalog number and cover.
+//! Looks albums up in online databases (MusicBrainz, Bangumi and the
+//! CueTools database) to fill in their title, artist, release date, catalog
+//! number, event and cover.
 
+mod bangumi;
+mod ctdb;
 pub mod discid;
 mod musicbrainz;
 
 use album_formats::riplog;
-use album_model::{Album, MatchKind, OnlineMatch};
+use album_model::{Album, MatchKind, OnlineMatch, OnlineResults, OnlineSource};
 use anyhow::{bail, Result};
 use discid::Toc;
 use std::collections::HashSet;
 use std::io::Read;
 use std::path::{Path, PathBuf};
+use std::sync::LazyLock;
+use std::time::Duration;
+
+/// Shared client; the services ask clients to identify themselves.
+pub(crate) static AGENT: LazyLock<ureq::Agent> = LazyLock::new(|| {
+    ureq::AgentBuilder::new()
+        .user_agent(concat!(
+            "AlbumManager/",
+            env!("CARGO_PKG_VERSION"),
+            " ( https://github.com/Shizuku-in/AlbumManager )"
+        ))
+        .timeout(Duration::from_secs(20))
+        .build()
+});
 
 /// Tables of contents of the album's discs: from rip logs, else from
 /// single-file cue images.
@@ -36,17 +53,25 @@ fn tocs(album: &Album) -> Vec<Toc> {
         .collect()
 }
 
-/// Releases that may be `album`, best matches first: same disc (from the
-/// rip log or cue image), then catalog number, then title and artist.
-pub fn lookup(album: &Album) -> Result<Vec<OnlineMatch>> {
+/// The catalog number with case, spaces and dashes ignored.
+fn catalog_key(s: &str) -> String {
+    s.chars()
+        .filter(|c| c.is_alphanumeric())
+        .flat_map(char::to_uppercase)
+        .collect()
+}
+
+/// MusicBrainz: by disc (rip log or cue image), catalog number, then title
+/// and artist. Requests are throttled, so they run one after another.
+fn musicbrainz(album: &Album, tocs: &[Toc]) -> Result<Vec<OnlineMatch>> {
     let s = &album.summary;
     let mut found = Vec::new();
-    let mut errors = Vec::new();
+    let mut error = None;
     let mut add = |r: Result<Vec<OnlineMatch>>, found: &mut Vec<OnlineMatch>| match r {
         Ok(v) => found.extend(v),
-        Err(e) => errors.push(e),
+        Err(e) => error = Some(e),
     };
-    for toc in tocs(album).iter().take(3) {
+    for toc in tocs.iter().take(3) {
         add(musicbrainz::by_toc(toc), &mut found);
     }
     if let Some(catalog) = &s.catalog {
@@ -63,9 +88,70 @@ pub fn lookup(album: &Album) -> Result<Vec<OnlineMatch>> {
             add(musicbrainz::by_title(&s.title, None), &mut found);
         }
     }
-    if found.is_empty() {
-        if let Some(e) = errors.into_iter().next() {
-            return Err(e);
+    match error {
+        Some(e) if found.is_empty() => Err(e),
+        _ => Ok(found),
+    }
+}
+
+fn ctdb(tocs: &[Toc]) -> Result<Vec<OnlineMatch>> {
+    let mut found = Vec::new();
+    for toc in tocs.iter().take(3) {
+        found.extend(ctdb::by_toc(toc)?);
+    }
+    Ok(found)
+}
+
+/// Releases on the given `sources` that may be `album`, best matches first:
+/// same disc, similar disc, same catalog number, then by title. The sources
+/// are queried in parallel; one failing doesn't fail the others.
+pub fn lookup(album: &Album, sources: &[OnlineSource]) -> OnlineResults {
+    let tocs = tocs(album);
+    let catalog = album.summary.catalog.as_deref().map(catalog_key);
+    let results: Vec<(OnlineSource, Result<Vec<OnlineMatch>>)> = std::thread::scope(|scope| {
+        let jobs: Vec<_> = sources
+            .iter()
+            .map(|&src| {
+                let tocs = &tocs;
+                let job = scope.spawn(move || match src {
+                    OnlineSource::MusicBrainz => musicbrainz(album, tocs),
+                    OnlineSource::Bangumi => bangumi::search(&album.summary.title),
+                    OnlineSource::Ctdb => ctdb(tocs),
+                });
+                (src, job)
+            })
+            .collect();
+        jobs.into_iter()
+            .map(|(src, job)| {
+                let r = job
+                    .join()
+                    .unwrap_or_else(|_| Err(anyhow::anyhow!("panicked")));
+                (src, r)
+            })
+            .collect()
+    });
+    let mut matches = Vec::new();
+    let mut errors = Vec::new();
+    for (src, r) in results {
+        match r {
+            Ok(v) => matches.extend(v),
+            Err(e) => {
+                let name = match src {
+                    OnlineSource::MusicBrainz => "MusicBrainz",
+                    OnlineSource::Bangumi => "Bangumi",
+                    OnlineSource::Ctdb => "CueTools 数据库",
+                };
+                errors.push(format!("{name}：{e}"));
+            }
+        }
+    }
+    // A title hit with the album's catalog number is a catalog match.
+    for m in &mut matches {
+        if m.matched_by == MatchKind::Title
+            && catalog.is_some()
+            && m.catalog.as_deref().map(catalog_key) == catalog
+        {
+            m.matched_by = MatchKind::Catalog;
         }
     }
     let rank = |k: MatchKind| match k {
@@ -74,16 +160,16 @@ pub fn lookup(album: &Album) -> Result<Vec<OnlineMatch>> {
         MatchKind::Catalog => 2,
         MatchKind::Title => 3,
     };
-    found.sort_by_key(|m| (rank(m.matched_by), -m.score));
+    matches.sort_by_key(|m| (rank(m.matched_by), -m.score));
     let mut seen = HashSet::new();
-    found.retain(|m| seen.insert(m.id.clone()));
-    Ok(found)
+    matches.retain(|m| seen.insert((m.source.clone(), m.id.clone())));
+    OnlineResults { matches, errors }
 }
 
 /// Downloads a cover into `dir` as `cover.jpg` (or `.png`), never
 /// overwriting a file, and returns its path.
 pub fn save_cover(url: &str, dir: &Path) -> Result<PathBuf> {
-    let res = musicbrainz::AGENT.get(url).call()?;
+    let res = AGENT.get(url).call()?;
     let ext = match res.content_type() {
         "image/png" => "png",
         "image/jpeg" => "jpg",

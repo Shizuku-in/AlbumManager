@@ -117,7 +117,10 @@ abstract class RustLibApi extends BaseApi {
 
   Future<LibraryInfo> crateApiLibraryInitLibrary({required String dataDir});
 
-  Future<List<OnlineMatch>> crateApiLibraryLookupOnline({required String id});
+  Future<OnlineResults> crateApiLibraryLookupOnline({
+    required String id,
+    required List<OnlineSource> sources,
+  });
 
   Future<String> crateApiLibraryReadTextFile({required String path});
 
@@ -515,12 +518,16 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       const TaskConstMeta(debugName: "init_library", argNames: ["dataDir"]);
 
   @override
-  Future<List<OnlineMatch>> crateApiLibraryLookupOnline({required String id}) {
+  Future<OnlineResults> crateApiLibraryLookupOnline({
+    required String id,
+    required List<OnlineSource> sources,
+  }) {
     return handler.executeNormal(
       NormalTask(
         callFfi: (port_) {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(id, serializer);
+          sse_encode_list_online_source(sources, serializer);
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
@@ -529,18 +536,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           );
         },
         codec: SseCodec(
-          decodeSuccessData: sse_decode_list_online_match,
+          decodeSuccessData: sse_decode_online_results,
           decodeErrorData: sse_decode_AnyhowException,
         ),
         constMeta: kCrateApiLibraryLookupOnlineConstMeta,
-        argValues: [id],
+        argValues: [id, sources],
         apiImpl: this,
       ),
     );
   }
 
   TaskConstMeta get kCrateApiLibraryLookupOnlineConstMeta =>
-      const TaskConstMeta(debugName: "lookup_online", argNames: ["id"]);
+      const TaskConstMeta(
+        debugName: "lookup_online",
+        argNames: ["id", "sources"],
+      );
 
   @override
   Future<String> crateApiLibraryReadTextFile({required String path}) {
@@ -1346,6 +1356,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<OnlineSource> dco_decode_list_online_source(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return (raw as List<dynamic>).map(dco_decode_online_source).toList();
+  }
+
+  @protected
   Int32List dco_decode_list_prim_i_32_strict(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return raw as Int32List;
@@ -1406,8 +1422,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   OnlineMatch dco_decode_online_match(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 16)
-      throw Exception('unexpected arr length: expect 16 but see ${arr.length}');
+    if (arr.length != 17)
+      throw Exception('unexpected arr length: expect 17 but see ${arr.length}');
     return OnlineMatch(
       source: dco_decode_String(arr[0]),
       id: dco_decode_String(arr[1]),
@@ -1416,16 +1432,35 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       artist: dco_decode_opt_String(arr[4]),
       date: dco_decode_opt_String(arr[5]),
       catalog: dco_decode_opt_String(arr[6]),
-      label: dco_decode_opt_String(arr[7]),
-      country: dco_decode_opt_String(arr[8]),
-      format: dco_decode_opt_String(arr[9]),
-      discCount: dco_decode_i_32(arr[10]),
-      trackCount: dco_decode_i_32(arr[11]),
-      thumbUrl: dco_decode_opt_String(arr[12]),
-      coverUrl: dco_decode_opt_String(arr[13]),
-      matchedBy: dco_decode_match_kind(arr[14]),
-      score: dco_decode_i_32(arr[15]),
+      event: dco_decode_opt_String(arr[7]),
+      label: dco_decode_opt_String(arr[8]),
+      country: dco_decode_opt_String(arr[9]),
+      format: dco_decode_opt_String(arr[10]),
+      discCount: dco_decode_i_32(arr[11]),
+      trackCount: dco_decode_i_32(arr[12]),
+      thumbUrl: dco_decode_opt_String(arr[13]),
+      coverUrl: dco_decode_opt_String(arr[14]),
+      matchedBy: dco_decode_match_kind(arr[15]),
+      score: dco_decode_i_32(arr[16]),
     );
+  }
+
+  @protected
+  OnlineResults dco_decode_online_results(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 2)
+      throw Exception('unexpected arr length: expect 2 but see ${arr.length}');
+    return OnlineResults(
+      matches: dco_decode_list_online_match(arr[0]),
+      errors: dco_decode_list_String(arr[1]),
+    );
+  }
+
+  @protected
+  OnlineSource dco_decode_online_source(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return OnlineSource.values[raw as int];
   }
 
   @protected
@@ -2085,6 +2120,20 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  List<OnlineSource> sse_decode_list_online_source(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+
+    var len_ = sse_decode_i_32(deserializer);
+    var ans_ = <OnlineSource>[];
+    for (var idx_ = 0; idx_ < len_; ++idx_) {
+      ans_.add(sse_decode_online_source(deserializer));
+    }
+    return ans_;
+  }
+
+  @protected
   Int32List sse_decode_list_prim_i_32_strict(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     var len_ = sse_decode_i_32(deserializer);
@@ -2175,6 +2224,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_artist = sse_decode_opt_String(deserializer);
     var var_date = sse_decode_opt_String(deserializer);
     var var_catalog = sse_decode_opt_String(deserializer);
+    var var_event = sse_decode_opt_String(deserializer);
     var var_label = sse_decode_opt_String(deserializer);
     var var_country = sse_decode_opt_String(deserializer);
     var var_format = sse_decode_opt_String(deserializer);
@@ -2192,6 +2242,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       artist: var_artist,
       date: var_date,
       catalog: var_catalog,
+      event: var_event,
       label: var_label,
       country: var_country,
       format: var_format,
@@ -2202,6 +2253,21 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       matchedBy: var_matchedBy,
       score: var_score,
     );
+  }
+
+  @protected
+  OnlineResults sse_decode_online_results(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_matches = sse_decode_list_online_match(deserializer);
+    var var_errors = sse_decode_list_String(deserializer);
+    return OnlineResults(matches: var_matches, errors: var_errors);
+  }
+
+  @protected
+  OnlineSource sse_decode_online_source(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var inner = sse_decode_i_32(deserializer);
+    return OnlineSource.values[inner];
   }
 
   @protected
@@ -2853,6 +2919,18 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_list_online_source(
+    List<OnlineSource> self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.length, serializer);
+    for (final item in self) {
+      sse_encode_online_source(item, serializer);
+    }
+  }
+
+  @protected
   void sse_encode_list_prim_i_32_strict(
     Int32List self,
     SseSerializer serializer,
@@ -2934,6 +3012,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_opt_String(self.artist, serializer);
     sse_encode_opt_String(self.date, serializer);
     sse_encode_opt_String(self.catalog, serializer);
+    sse_encode_opt_String(self.event, serializer);
     sse_encode_opt_String(self.label, serializer);
     sse_encode_opt_String(self.country, serializer);
     sse_encode_opt_String(self.format, serializer);
@@ -2943,6 +3022,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_opt_String(self.coverUrl, serializer);
     sse_encode_match_kind(self.matchedBy, serializer);
     sse_encode_i_32(self.score, serializer);
+  }
+
+  @protected
+  void sse_encode_online_results(OnlineResults self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_list_online_match(self.matches, serializer);
+    sse_encode_list_String(self.errors, serializer);
+  }
+
+  @protected
+  void sse_encode_online_source(OnlineSource self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_i_32(self.index, serializer);
   }
 
   @protected

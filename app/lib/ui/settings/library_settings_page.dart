@@ -2,11 +2,13 @@ import 'package:flutter/material.dart';
 
 import 'package:album_manager/src/rust/api/library.dart' as api;
 import 'package:album_manager/src/rust/api/models.dart';
+import 'package:album_manager/src/rust/third_party/album_model.dart';
 import 'package:album_manager/state/library_controller.dart';
 import 'package:album_manager/state/settings_controller.dart';
 import 'package:album_manager/ui/settings/settings_widgets.dart';
 import 'package:album_manager/ui/settings/welcome_page.dart';
 import 'package:album_manager/util/format.dart';
+import 'package:album_manager/util/labels.dart';
 import 'package:album_manager/util/system.dart';
 
 /// Library location, scanning and the thumbnail cache.
@@ -78,6 +80,19 @@ class LibrarySettingsPage extends StatelessWidget {
                 child: const Text('扫描'),
               ),
             ),
+          ],
+        ),
+        SettingsGroup(
+          title: '在线补全',
+          children: [
+            for (final s in OnlineSource.values)
+              SwitchListTile(
+                secondary: const Icon(Icons.travel_explore),
+                title: Text(s.label),
+                subtitle: Text(s.description),
+                value: !settings.disabledOnlineSources.contains(s),
+                onChanged: (v) => settings.setOnlineSource(s, v),
+              ),
           ],
         ),
         const SettingsGroup(title: '缓存', children: [_CacheTile()]),

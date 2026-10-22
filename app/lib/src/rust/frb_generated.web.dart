@@ -149,6 +149,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<OnlineMatch> dco_decode_list_online_match(dynamic raw);
 
   @protected
+  List<OnlineSource> dco_decode_list_online_source(dynamic raw);
+
+  @protected
   Int32List dco_decode_list_prim_i_32_strict(dynamic raw);
 
   @protected
@@ -174,6 +177,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   OnlineMatch dco_decode_online_match(dynamic raw);
+
+  @protected
+  OnlineResults dco_decode_online_results(dynamic raw);
+
+  @protected
+  OnlineSource dco_decode_online_source(dynamic raw);
 
   @protected
   String? dco_decode_opt_String(dynamic raw);
@@ -360,6 +369,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   List<OnlineMatch> sse_decode_list_online_match(SseDeserializer deserializer);
 
   @protected
+  List<OnlineSource> sse_decode_list_online_source(
+    SseDeserializer deserializer,
+  );
+
+  @protected
   Int32List sse_decode_list_prim_i_32_strict(SseDeserializer deserializer);
 
   @protected
@@ -385,6 +399,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   OnlineMatch sse_decode_online_match(SseDeserializer deserializer);
+
+  @protected
+  OnlineResults sse_decode_online_results(SseDeserializer deserializer);
+
+  @protected
+  OnlineSource sse_decode_online_source(SseDeserializer deserializer);
 
   @protected
   String? sse_decode_opt_String(SseDeserializer deserializer);
@@ -599,6 +619,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   );
 
   @protected
+  void sse_encode_list_online_source(
+    List<OnlineSource> self,
+    SseSerializer serializer,
+  );
+
+  @protected
   void sse_encode_list_prim_i_32_strict(
     Int32List self,
     SseSerializer serializer,
@@ -633,6 +659,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_online_match(OnlineMatch self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_online_results(OnlineResults self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_online_source(OnlineSource self, SseSerializer serializer);
 
   @protected
   void sse_encode_opt_String(String? self, SseSerializer serializer);

@@ -151,6 +151,9 @@ class SettingsController extends ChangeNotifier {
 
   bool scanOnStartup = true;
 
+  /// Online databases "在线补全" skips.
+  Set<OnlineSource> disabledOnlineSources = const {};
+
   /// Issue kinds the user turned off.
   Set<IssueKind> hiddenIssues = const {};
 
@@ -217,6 +220,10 @@ class SettingsController extends ChangeNotifier {
     seedColor = Color(prefs.getInt('seedColor') ?? defaultSeed.toARGB32());
     fontFamily = prefs.getString('fontFamily');
     scanOnStartup = prefs.getBool('scanOnStartup') ?? true;
+    disabledOnlineSources = _loadSet(
+      'disabledOnlineSources',
+      OnlineSource.values,
+    );
     hiddenIssues = _loadSet('hiddenIssues', IssueKind.values);
     overwriteCue = prefs.getBool('overwriteCue') ?? false;
     cardSize = _loadEnum('cardSize', CardSize.values, CardSize.medium);
@@ -281,7 +288,8 @@ class SettingsController extends ChangeNotifier {
     'timelineDecades',
   ]);
   Future<void> resetHealthChecks() => _reset(['hiddenIssues', 'overwriteCue']);
-  Future<void> resetScanning() => _reset(['scanOnStartup']);
+  Future<void> resetScanning() =>
+      _reset(['scanOnStartup', 'disabledOnlineSources']);
   Future<void> resetLogDisplay() => _reset(['showLogScore']);
 
   void setFontFamily(String? f) {
@@ -367,6 +375,22 @@ class SettingsController extends ChangeNotifier {
       hiddenSearchFields,
       f,
       !searched,
+    );
+    notifyListeners();
+  }
+
+  List<OnlineSource> get onlineSources => [
+    for (final s in OnlineSource.values)
+      if (!disabledOnlineSources.contains(s)) s,
+  ];
+
+  void setOnlineSource(OnlineSource s, bool enabled) {
+    if (enabled != !disabledOnlineSources.contains(s)) return;
+    disabledOnlineSources = _toggle(
+      'disabledOnlineSources',
+      disabledOnlineSources,
+      s,
+      !enabled,
     );
     notifyListeners();
   }

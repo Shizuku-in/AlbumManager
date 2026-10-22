@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import 'package:album_manager/src/rust/api/library.dart' as api;
 import 'package:album_manager/src/rust/third_party/album_model.dart';
+import 'package:album_manager/state/settings_controller.dart';
+import 'package:album_manager/util/labels.dart';
 import 'package:album_manager/util/system.dart';
 
 /// Looks the album up online, lets the user pick a release and the values to
@@ -26,7 +28,7 @@ extension on MatchKind {
   };
 }
 
-enum _Field { title, artist, date, catalog, cover }
+enum _Field { title, artist, date, catalog, event, cover }
 
 class _OnlineLookupDialog extends StatefulWidget {
   final Album album;
@@ -37,7 +39,8 @@ class _OnlineLookupDialog extends StatefulWidget {
 }
 
 class _OnlineLookupDialogState extends State<_OnlineLookupDialog> {
-  late Future<List<OnlineMatch>> _results = _lookup();
+  final _sources = settings.onlineSources;
+  late Future<OnlineResults> _results = _lookup();
   OnlineMatch? _picked;
   Set<_Field> _fields = {};
   bool _saving = false;
@@ -48,13 +51,15 @@ class _OnlineLookupDialogState extends State<_OnlineLookupDialog> {
       widget.album.discs.fold(0, (n, d) => n + d.tracks.length);
   bool get _hasCover => _s.coverThumb != null;
 
-  Future<List<OnlineMatch>> _lookup() => api.lookupOnline(id: _s.id);
+  Future<OnlineResults> _lookup() =>
+      api.lookupOnline(id: _s.id, sources: _sources);
 
   String? _current(_Field f) => switch (f) {
     _Field.title => _s.title,
     _Field.artist => _s.artist,
     _Field.date => _s.date,
     _Field.catalog => _s.catalog,
+    _Field.event => _s.event,
     _Field.cover => _hasCover ? '已有封面' : null,
   };
 
@@ -63,6 +68,7 @@ class _OnlineLookupDialogState extends State<_OnlineLookupDialog> {
     _Field.artist => m.artist,
     _Field.date => m.date,
     _Field.catalog => m.catalog,
+    _Field.event => m.event,
     _Field.cover => m.coverUrl == null ? null : '下载到专辑文件夹',
   };
 
@@ -103,7 +109,7 @@ class _OnlineLookupDialogState extends State<_OnlineLookupDialog> {
           date: take(_Field.date, ov.date),
           genre: ov.genre,
           catalog: take(_Field.catalog, ov.catalog),
-          event: ov.event,
+          event: take(_Field.event, ov.event),
         ),
       );
     } catch (e) {
@@ -147,13 +153,19 @@ class _OnlineLookupDialogState extends State<_OnlineLookupDialog> {
 
   Widget _resultList(BuildContext context) {
     final t = Theme.of(context);
+    if (_sources.isEmpty) {
+      return const _Message(
+        icon: Icon(Icons.cloud_off, size: 40),
+        text: '没有启用任何数据源（设置 → 位置与扫描 → 在线补全）',
+      );
+    }
     return FutureBuilder(
       future: _results,
       builder: (context, snap) {
         if (snap.connectionState != ConnectionState.done) {
-          return const _Message(
-            icon: CircularProgressIndicator(),
-            text: '正在查询 MusicBrainz…',
+          return _Message(
+            icon: const CircularProgressIndicator(),
+            text: '正在查询 ${_sources.map((s) => s.label).join('、')}…',
           );
         }
         if (snap.hasError) {
@@ -166,11 +178,21 @@ class _OnlineLookupDialogState extends State<_OnlineLookupDialog> {
             ),
           );
         }
-        final results = snap.data!;
+        final results = snap.data!.matches;
+        final errors = snap.data!.errors;
+        final failed = errors.isEmpty
+            ? null
+            : Text(
+                '部分数据源查询失败：${errors.join('；')}',
+                style: t.textTheme.bodySmall?.copyWith(
+                  color: t.colorScheme.error,
+                ),
+              );
         if (results.isEmpty) {
-          return const _Message(
-            icon: Icon(Icons.search_off, size: 40),
+          return _Message(
+            icon: const Icon(Icons.search_off, size: 40),
             text: '没有找到匹配的专辑',
+            action: failed,
           );
         }
         return Column(
@@ -183,6 +205,7 @@ class _OnlineLookupDialogState extends State<_OnlineLookupDialog> {
                 color: t.colorScheme.onSurfaceVariant,
               ),
             ),
+            if (failed != null) ...[const SizedBox(height: 4), failed],
             const SizedBox(height: 8),
             ConstrainedBox(
               constraints: const BoxConstraints(maxHeight: 440),
@@ -209,6 +232,7 @@ class _OnlineLookupDialogState extends State<_OnlineLookupDialog> {
       _Field.artist: '艺术家',
       _Field.date: '日期',
       _Field.catalog: '品番',
+      _Field.event: '展会',
       _Field.cover: '封面',
     };
     return Column(
@@ -286,6 +310,7 @@ class _ResultTile extends StatelessWidget {
           m.artist,
           m.date,
           m.catalog,
+          m.event,
           m.label,
           [m.format, m.country].whereType<String>().join(' · '),
         ].whereType<String>().where((s) => s.isNotEmpty).join('  ·  '),
@@ -300,22 +325,27 @@ class _ResultTile extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(m.matchedBy.label, style: t.textTheme.labelMedium),
               Text(
-                '${m.trackCount} 首',
-                style: t.textTheme.bodySmall?.copyWith(
-                  color: sameTracks
-                      ? t.colorScheme.primary
-                      : t.colorScheme.onSurfaceVariant,
-                ),
+                '${m.source} · ${m.matchedBy.label}',
+                style: t.textTheme.labelMedium,
               ),
+              if (m.trackCount > 0)
+                Text(
+                  '${m.trackCount} 首',
+                  style: t.textTheme.bodySmall?.copyWith(
+                    color: sameTracks
+                        ? t.colorScheme.primary
+                        : t.colorScheme.onSurfaceVariant,
+                  ),
+                ),
             ],
           ),
-          IconButton(
-            tooltip: '在 ${m.source} 打开',
-            icon: const Icon(Icons.open_in_new, size: 20),
-            onPressed: () => openUrl(m.url),
-          ),
+          if (m.url.isNotEmpty)
+            IconButton(
+              tooltip: '在 ${m.source} 打开',
+              icon: const Icon(Icons.open_in_new, size: 20),
+              onPressed: () => openUrl(m.url),
+            ),
         ],
       ),
     );
