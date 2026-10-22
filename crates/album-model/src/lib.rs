@@ -400,6 +400,8 @@ pub enum MatchKind {
 /// A release found in an online database that may be an album.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OnlineMatch {
+    /// The database that was queried.
+    pub via: OnlineSource,
     /// Where the data comes from, e.g. "MusicBrainz", "Bangumi", or
     /// "FreeDB" (through the CueTools database).
     pub source: String,

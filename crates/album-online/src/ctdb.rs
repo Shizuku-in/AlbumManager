@@ -3,7 +3,7 @@
 
 use crate::discid::Toc;
 use crate::AGENT;
-use album_model::{MatchKind, OnlineMatch};
+use album_model::{MatchKind, OnlineMatch, OnlineSource};
 use anyhow::Result;
 use regex::Regex;
 use std::collections::HashMap;
@@ -69,6 +69,7 @@ fn entry(head: &str, body: &str) -> Option<OnlineMatch> {
         }
     }
     Some(OnlineMatch {
+        via: OnlineSource::Ctdb,
         source: source.into(),
         url,
         title: a.get("album")?.clone(),

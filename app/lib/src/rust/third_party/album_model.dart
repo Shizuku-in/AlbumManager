@@ -559,6 +559,9 @@ enum MatchKind {
 
 /// A release found in an online database that may be an album.
 class OnlineMatch {
+  /// The database that was queried.
+  final OnlineSource via;
+
   /// Where the data comes from, e.g. "MusicBrainz", "Bangumi", or
   /// "FreeDB" (through the CueTools database).
   final String source;
@@ -596,6 +599,7 @@ class OnlineMatch {
   final int score;
 
   const OnlineMatch({
+    required this.via,
     required this.source,
     required this.id,
     required this.url,
@@ -617,6 +621,7 @@ class OnlineMatch {
 
   @override
   int get hashCode =>
+      via.hashCode ^
       source.hashCode ^
       id.hashCode ^
       url.hashCode ^
@@ -640,6 +645,7 @@ class OnlineMatch {
       identical(this, other) ||
       other is OnlineMatch &&
           runtimeType == other.runtimeType &&
+          via == other.via &&
           source == other.source &&
           id == other.id &&
           url == other.url &&

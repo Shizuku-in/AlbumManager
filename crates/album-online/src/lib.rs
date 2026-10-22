@@ -9,7 +9,7 @@ mod musicbrainz;
 
 use album_formats::riplog;
 use album_model::{Album, MatchKind, OnlineMatch, OnlineResults, OnlineSource};
-use anyhow::{bail, Result};
+use anyhow::{anyhow, bail, Result};
 use discid::Toc;
 use std::collections::HashSet;
 use std::io::Read;
@@ -28,6 +28,23 @@ pub(crate) static AGENT: LazyLock<ureq::Agent> = LazyLock::new(|| {
         .timeout(Duration::from_secs(20))
         .build()
 });
+
+/// A short reason a request failed, for the UI.
+fn describe(e: &anyhow::Error) -> String {
+    match e.downcast_ref::<ureq::Error>() {
+        Some(ureq::Error::Status(503, _)) => "服务器繁忙（503），请稍后再试".into(),
+        Some(ureq::Error::Status(code, _)) => format!("服务器返回 {code}"),
+        Some(ureq::Error::Transport(t)) => match t.kind() {
+            ureq::ErrorKind::Dns => "无法解析域名".into(),
+            ureq::ErrorKind::ConnectionFailed => "无法连接".into(),
+            ureq::ErrorKind::Io => "连接中断或超时".into(),
+            _ => "网络错误".into(),
+        },
+        // Reading or parsing the response.
+        None if e.is::<std::io::Error>() => "返回内容无法解析".into(),
+        None => e.to_string(),
+    }
+}
 
 /// Tables of contents of the album's discs: from rip logs, else from
 /// single-file cue images.
@@ -141,7 +158,7 @@ pub fn lookup(album: &Album, sources: &[OnlineSource]) -> OnlineResults {
                     OnlineSource::Bangumi => "Bangumi",
                     OnlineSource::Ctdb => "CueTools 数据库",
                 };
-                errors.push(format!("{name}：{e}"));
+                errors.push(format!("{name}：{}", describe(&e)));
             }
         }
     }
@@ -169,11 +186,15 @@ pub fn lookup(album: &Album, sources: &[OnlineSource]) -> OnlineResults {
 /// Downloads a cover into `dir` as `cover.jpg` (or `.png`), never
 /// overwriting a file, and returns its path.
 pub fn save_cover(url: &str, dir: &Path) -> Result<PathBuf> {
+    download_cover(url, dir).map_err(|e| anyhow!("封面下载失败：{}", describe(&e)))
+}
+
+fn download_cover(url: &str, dir: &Path) -> Result<PathBuf> {
     let res = AGENT.get(url).call()?;
     let ext = match res.content_type() {
         "image/png" => "png",
         "image/jpeg" => "jpg",
-        other => bail!("not an image: {other}"),
+        other => bail!("下载的不是图片（{other}）"),
     };
     let mut bytes = Vec::new();
     res.into_reader().take(64 << 20).read_to_end(&mut bytes)?;

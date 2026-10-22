@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart'
+    show AnyhowException;
 
 import 'package:album_manager/src/rust/api/library.dart' as api;
 import 'package:album_manager/src/rust/third_party/album_model.dart';
 import 'package:album_manager/state/settings_controller.dart';
+import 'package:album_manager/ui/common/cover_image.dart';
 import 'package:album_manager/ui/common/svg_icon.dart';
+import 'package:album_manager/ui/common/tone_label.dart';
 import 'package:album_manager/util/labels.dart';
 import 'package:album_manager/util/system.dart';
 
@@ -20,24 +24,19 @@ Future<AlbumOverride?> showOnlineLookupDialog(
   );
 }
 
-/// Icon of a result's source; Discogs and FreeDB data comes through the
-/// CueTools database.
-String _sourceIcon(String source) => switch (source) {
-  'MusicBrainz' => OnlineSource.musicBrainz.iconAsset,
-  'Bangumi' => OnlineSource.bangumi.iconAsset,
-  _ => OnlineSource.ctdb.iconAsset,
-};
+String _errorText(Object e) => e is AnyhowException ? e.message : '$e';
 
-extension on MatchKind {
-  String get label => switch (this) {
-    MatchKind.discId => '同一张光盘',
-    MatchKind.toc => '曲目结构相近',
-    MatchKind.catalog => '品番',
-    MatchKind.title => '标题',
-  };
+enum _Field {
+  title('标题'),
+  artist('艺术家'),
+  date('日期'),
+  catalog('品番'),
+  event('展会'),
+  cover('封面');
+
+  const _Field(this.label);
+  final String label;
 }
-
-enum _Field { title, artist, date, catalog, event, cover }
 
 class _OnlineLookupDialog extends StatefulWidget {
   final Album album;
@@ -63,13 +62,14 @@ class _OnlineLookupDialogState extends State<_OnlineLookupDialog> {
   Future<OnlineResults> _lookup() =>
       api.lookupOnline(id: _s.id, sources: _sources);
 
+  /// The value as stored; the cover by whether there is one.
   String? _current(_Field f) => switch (f) {
     _Field.title => _s.title,
     _Field.artist => _s.artist,
     _Field.date => _s.date,
     _Field.catalog => _s.catalog,
     _Field.event => _s.event,
-    _Field.cover => _hasCover ? '已有封面' : null,
+    _Field.cover => _s.coverThumb,
   };
 
   String? _online(OnlineMatch m, _Field f) => switch (f) {
@@ -78,8 +78,12 @@ class _OnlineLookupDialogState extends State<_OnlineLookupDialog> {
     _Field.date => m.date,
     _Field.catalog => m.catalog,
     _Field.event => m.event,
-    _Field.cover => m.coverUrl == null ? null : '下载到专辑文件夹',
+    _Field.cover => m.coverUrl,
   };
+
+  /// For display: dates in the chosen style.
+  String _shown(_Field f, String? v) =>
+      (f == _Field.date ? settings.formatDate(v) : v) ?? '（无）';
 
   void _pick(OnlineMatch m) => setState(() {
     _picked = m;
@@ -125,7 +129,7 @@ class _OnlineLookupDialogState extends State<_OnlineLookupDialog> {
       if (mounted) {
         setState(() {
           _saving = false;
-          _error = '封面下载失败：$e';
+          _error = _errorText(e);
         });
       }
     }
@@ -164,7 +168,7 @@ class _OnlineLookupDialogState extends State<_OnlineLookupDialog> {
     final t = Theme.of(context);
     if (_sources.isEmpty) {
       return const _Message(
-        icon: Icon(Icons.cloud_off, size: 40),
+        icon: Icons.cloud_off,
         text: '没有启用任何数据源（设置 → 在线补全）',
       );
     }
@@ -173,14 +177,13 @@ class _OnlineLookupDialogState extends State<_OnlineLookupDialog> {
       builder: (context, snap) {
         if (snap.connectionState != ConnectionState.done) {
           return _Message(
-            icon: const CircularProgressIndicator(),
             text: '正在查询 ${_sources.map((s) => s.label).join('、')}…',
           );
         }
         if (snap.hasError) {
           return _Message(
-            icon: const Icon(Icons.cloud_off, size: 40),
-            text: '查询失败：${snap.error}',
+            icon: Icons.cloud_off,
+            text: '查询失败：${_errorText(snap.error!)}',
             action: TextButton(
               onPressed: () => setState(() => _results = _lookup()),
               child: const Text('重试'),
@@ -199,7 +202,7 @@ class _OnlineLookupDialogState extends State<_OnlineLookupDialog> {
               );
         if (results.isEmpty) {
           return _Message(
-            icon: const Icon(Icons.search_off, size: 40),
+            icon: Icons.search_off,
             text: '没有找到匹配的专辑',
             action: failed,
           );
@@ -209,7 +212,7 @@ class _OnlineLookupDialogState extends State<_OnlineLookupDialog> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '本地：$_trackCount 首 · 按匹配程度排序，选择一项查看可补全的信息',
+              '本地 $_trackCount 首 · 按匹配程度排序，选择一项查看可补全的信息',
               style: t.textTheme.bodySmall?.copyWith(
                 color: t.colorScheme.onSurfaceVariant,
               ),
@@ -236,14 +239,6 @@ class _OnlineLookupDialogState extends State<_OnlineLookupDialog> {
 
   Widget _fieldList(OnlineMatch m) {
     final t = Theme.of(context);
-    const names = {
-      _Field.title: '标题',
-      _Field.artist: '艺术家',
-      _Field.date: '日期',
-      _Field.catalog: '品番',
-      _Field.event: '展会',
-      _Field.cover: '封面',
-    };
     return Column(
       mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -261,12 +256,14 @@ class _OnlineLookupDialogState extends State<_OnlineLookupDialog> {
                         ? {..._fields, f}
                         : ({..._fields}..remove(f)),
                   ),
-            title: Text(names[f]!),
-            subtitle: Text(
-              '${_current(f) ?? '（无）'}  →  ${_online(m, f) ?? '（无）'}',
-              maxLines: 2,
-              overflow: TextOverflow.ellipsis,
-            ),
+            title: Text(f.label),
+            subtitle: f == _Field.cover
+                ? _coverChange(m)
+                : Text(
+                    '${_shown(f, _current(f))} → ${_shown(f, _online(m, f))}',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                  ),
           ),
         if (_error != null)
           Padding(
@@ -274,6 +271,56 @@ class _OnlineLookupDialogState extends State<_OnlineLookupDialog> {
             child: Text(_error!, style: TextStyle(color: t.colorScheme.error)),
           ),
       ],
+    );
+  }
+
+  /// Current cover → online cover, as thumbnails.
+  Widget _coverChange(OnlineMatch m) {
+    final t = Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.only(top: 8),
+      child: Row(
+        spacing: 12,
+        children: [
+          SizedBox.square(
+            dimension: 72,
+            child: CoverImage(path: _s.coverThumb, radius: 8, cacheWidth: 160),
+          ),
+          Icon(Icons.arrow_forward, color: t.colorScheme.onSurfaceVariant),
+          SizedBox.square(dimension: 72, child: _NetworkCover(url: m.thumbUrl)),
+          if (m.coverUrl != null)
+            Expanded(
+              child: Text(
+                '下载到专辑文件夹，不覆盖已有文件',
+                style: t.textTheme.bodySmall?.copyWith(
+                  color: t.colorScheme.onSurfaceVariant,
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// A cover found online, with the same placeholder as local covers.
+class _NetworkCover extends StatelessWidget {
+  final String? url;
+  const _NetworkCover({required this.url});
+
+  @override
+  Widget build(BuildContext context) {
+    const placeholder = CoverPlaceholder(iconSize: 24);
+    return ClipRRect(
+      borderRadius: BorderRadius.circular(8),
+      child: url == null
+          ? placeholder
+          : Image.network(
+              url!,
+              fit: BoxFit.cover,
+              filterQuality: FilterQuality.medium,
+              errorBuilder: (_, _, _) => placeholder,
+            ),
     );
   }
 }
@@ -292,37 +339,27 @@ class _ResultTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final t = Theme.of(context);
     final m = match;
-    final placeholder = ColoredBox(
-      color: t.colorScheme.surfaceContainerHighest,
-      child: Icon(Icons.album, color: t.colorScheme.onSurfaceVariant),
+    final muted = t.textTheme.bodySmall?.copyWith(
+      color: t.colorScheme.onSurfaceVariant,
     );
-    final sameTracks = m.trackCount == localTracks;
     return ListTile(
       onTap: onTap,
       contentPadding: EdgeInsets.zero,
-      leading: ClipRRect(
-        borderRadius: BorderRadius.circular(6),
-        child: SizedBox.square(
-          dimension: 56,
-          child: m.thumbUrl == null
-              ? placeholder
-              : Image.network(
-                  m.thumbUrl!,
-                  fit: BoxFit.cover,
-                  errorBuilder: (_, _, _) => placeholder,
-                ),
-        ),
+      leading: SizedBox.square(
+        dimension: 56,
+        child: _NetworkCover(url: m.thumbUrl),
       ),
       title: Text(m.title, maxLines: 1, overflow: TextOverflow.ellipsis),
       subtitle: Text(
         [
           m.artist,
-          m.date,
+          settings.formatDate(m.date),
           m.catalog,
           m.event,
           m.label,
-          [m.format, m.country].whereType<String>().join(' · '),
-        ].whereType<String>().where((s) => s.isNotEmpty).join('  ·  '),
+          m.format,
+          m.country,
+        ].whereType<String>().where((s) => s.isNotEmpty).join(' · '),
         maxLines: 2,
         overflow: TextOverflow.ellipsis,
       ),
@@ -333,31 +370,29 @@ class _ResultTile extends StatelessWidget {
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.end,
+            spacing: 4,
             children: [
+              ToneLabel(m.matchedBy.label, tone: m.matchedBy.tone(context)),
               Row(
                 mainAxisSize: MainAxisSize.min,
                 spacing: 4,
                 children: [
                   SvgIcon(
-                    _sourceIcon(m.source),
-                    size: 14,
+                    m.via.iconAsset,
+                    size: 12,
                     color: t.colorScheme.onSurfaceVariant,
                   ),
                   Text(
-                    '${m.source} · ${m.matchedBy.label}',
-                    style: t.textTheme.labelMedium,
+                    [
+                      m.source,
+                      if (m.trackCount > 0) '${m.trackCount} 首',
+                    ].join(' · '),
+                    style: m.trackCount == localTracks
+                        ? muted?.copyWith(color: t.colorScheme.primary)
+                        : muted,
                   ),
                 ],
               ),
-              if (m.trackCount > 0)
-                Text(
-                  '${m.trackCount} 首',
-                  style: t.textTheme.bodySmall?.copyWith(
-                    color: sameTracks
-                        ? t.colorScheme.primary
-                        : t.colorScheme.onSurfaceVariant,
-                  ),
-                ),
             ],
           ),
           if (m.url.isNotEmpty)
@@ -372,22 +407,34 @@ class _ResultTile extends StatelessWidget {
   }
 }
 
+/// Centered state of the result list, styled like the app's empty states;
+/// without [icon] it shows a progress indicator.
 class _Message extends StatelessWidget {
-  final Widget icon;
+  final IconData? icon;
   final String text;
   final Widget? action;
-  const _Message({required this.icon, required this.text, this.action});
+  const _Message({this.icon, required this.text, this.action});
 
   @override
   Widget build(BuildContext context) {
+    final t = Theme.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 32),
       child: Column(
         mainAxisSize: MainAxisSize.min,
-        spacing: 16,
+        spacing: 12,
         children: [
-          icon,
-          Text(text, textAlign: TextAlign.center),
+          if (icon == null)
+            const CircularProgressIndicator()
+          else
+            Icon(icon, size: 40, color: t.colorScheme.onSurfaceVariant),
+          Text(
+            text,
+            textAlign: TextAlign.center,
+            style: t.textTheme.bodyMedium?.copyWith(
+              color: t.colorScheme.onSurfaceVariant,
+            ),
+          ),
           ?action,
         ],
       ),

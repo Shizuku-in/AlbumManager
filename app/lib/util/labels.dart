@@ -47,6 +47,26 @@ extension OnlineSourceX on OnlineSource {
   };
 }
 
+extension MatchKindX on MatchKind {
+  String get label => switch (this) {
+    MatchKind.discId => '同一张光盘',
+    MatchKind.toc => '曲目结构相近',
+    MatchKind.catalog => '品番相同',
+    MatchKind.title => '标题相似',
+  };
+
+  /// From most to least reliable: success, primary, secondary, neutral.
+  CustomColor tone(BuildContext c) {
+    final s = Theme.of(c).colorScheme;
+    return switch (this) {
+      MatchKind.discId => AppColors.of(c).success,
+      MatchKind.toc => _primary(s),
+      MatchKind.catalog => _secondary(s),
+      MatchKind.title => _neutral(s),
+    };
+  }
+}
+
 extension SourceX on AlbumSource {
   String get label => switch (this) {
     AlbumSource.cdRip => 'CD 抓轨',

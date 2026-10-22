@@ -4,6 +4,27 @@ import 'package:flutter/material.dart';
 
 import 'package:album_manager/src/rust/api/library.dart' as api;
 
+/// Tonal box with an album icon, standing in for a missing cover.
+class CoverPlaceholder extends StatelessWidget {
+  final double iconSize;
+  const CoverPlaceholder({super.key, this.iconSize = 40});
+
+  @override
+  Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+    return ColoredBox(
+      color: cs.surfaceContainerHighest,
+      child: Center(
+        child: Icon(
+          Icons.album_outlined,
+          color: cs.onSurfaceVariant,
+          size: iconSize,
+        ),
+      ),
+    );
+  }
+}
+
 /// Album cover from the cached thumbnail, with a tonal placeholder.
 class CoverImage extends StatelessWidget {
   final String? path;
@@ -26,13 +47,7 @@ class CoverImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final cs = Theme.of(context).colorScheme;
-    final placeholder = ColoredBox(
-      color: cs.surfaceContainerHighest,
-      child: Center(
-        child: Icon(Icons.album_outlined, color: cs.onSurfaceVariant, size: 40),
-      ),
-    );
+    const placeholder = CoverPlaceholder();
     final image = path == null
         ? placeholder
         : Image(

@@ -1126,6 +1126,7 @@ const _: fn() = || {
     }
     {
         let OnlineMatch = None::<album_model::OnlineMatch>.unwrap();
+        let _: album_model::OnlineSource = OnlineMatch.via;
         let _: String = OnlineMatch.source;
         let _: String = OnlineMatch.id;
         let _: String = OnlineMatch.url;
@@ -1795,6 +1796,7 @@ impl SseDecode for album_model::MatchKind {
 impl SseDecode for album_model::OnlineMatch {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_via = <album_model::OnlineSource>::sse_decode(deserializer);
         let mut var_source = <String>::sse_decode(deserializer);
         let mut var_id = <String>::sse_decode(deserializer);
         let mut var_url = <String>::sse_decode(deserializer);
@@ -1813,6 +1815,7 @@ impl SseDecode for album_model::OnlineMatch {
         let mut var_matchedBy = <album_model::MatchKind>::sse_decode(deserializer);
         let mut var_score = <i32>::sse_decode(deserializer);
         return album_model::OnlineMatch {
+            via: var_via,
             source: var_source,
             id: var_id,
             url: var_url,
@@ -2626,6 +2629,7 @@ impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<album_model::MatchKind>>
 impl flutter_rust_bridge::IntoDart for FrbWrapper<album_model::OnlineMatch> {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
+            self.0.via.into_into_dart().into_dart(),
             self.0.source.into_into_dart().into_dart(),
             self.0.id.into_into_dart().into_dart(),
             self.0.url.into_into_dart().into_dart(),
@@ -3376,6 +3380,7 @@ impl SseEncode for album_model::MatchKind {
 impl SseEncode for album_model::OnlineMatch {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <album_model::OnlineSource>::sse_encode(self.via, serializer);
         <String>::sse_encode(self.source, serializer);
         <String>::sse_encode(self.id, serializer);
         <String>::sse_encode(self.url, serializer);

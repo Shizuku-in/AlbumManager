@@ -1422,26 +1422,27 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   OnlineMatch dco_decode_online_match(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     final arr = raw as List<dynamic>;
-    if (arr.length != 17)
-      throw Exception('unexpected arr length: expect 17 but see ${arr.length}');
+    if (arr.length != 18)
+      throw Exception('unexpected arr length: expect 18 but see ${arr.length}');
     return OnlineMatch(
-      source: dco_decode_String(arr[0]),
-      id: dco_decode_String(arr[1]),
-      url: dco_decode_String(arr[2]),
-      title: dco_decode_String(arr[3]),
-      artist: dco_decode_opt_String(arr[4]),
-      date: dco_decode_opt_String(arr[5]),
-      catalog: dco_decode_opt_String(arr[6]),
-      event: dco_decode_opt_String(arr[7]),
-      label: dco_decode_opt_String(arr[8]),
-      country: dco_decode_opt_String(arr[9]),
-      format: dco_decode_opt_String(arr[10]),
-      discCount: dco_decode_i_32(arr[11]),
-      trackCount: dco_decode_i_32(arr[12]),
-      thumbUrl: dco_decode_opt_String(arr[13]),
-      coverUrl: dco_decode_opt_String(arr[14]),
-      matchedBy: dco_decode_match_kind(arr[15]),
-      score: dco_decode_i_32(arr[16]),
+      via: dco_decode_online_source(arr[0]),
+      source: dco_decode_String(arr[1]),
+      id: dco_decode_String(arr[2]),
+      url: dco_decode_String(arr[3]),
+      title: dco_decode_String(arr[4]),
+      artist: dco_decode_opt_String(arr[5]),
+      date: dco_decode_opt_String(arr[6]),
+      catalog: dco_decode_opt_String(arr[7]),
+      event: dco_decode_opt_String(arr[8]),
+      label: dco_decode_opt_String(arr[9]),
+      country: dco_decode_opt_String(arr[10]),
+      format: dco_decode_opt_String(arr[11]),
+      discCount: dco_decode_i_32(arr[12]),
+      trackCount: dco_decode_i_32(arr[13]),
+      thumbUrl: dco_decode_opt_String(arr[14]),
+      coverUrl: dco_decode_opt_String(arr[15]),
+      matchedBy: dco_decode_match_kind(arr[16]),
+      score: dco_decode_i_32(arr[17]),
     );
   }
 
@@ -2217,6 +2218,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @protected
   OnlineMatch sse_decode_online_match(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_via = sse_decode_online_source(deserializer);
     var var_source = sse_decode_String(deserializer);
     var var_id = sse_decode_String(deserializer);
     var var_url = sse_decode_String(deserializer);
@@ -2235,6 +2237,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     var var_matchedBy = sse_decode_match_kind(deserializer);
     var var_score = sse_decode_i_32(deserializer);
     return OnlineMatch(
+      via: var_via,
       source: var_source,
       id: var_id,
       url: var_url,
@@ -3005,6 +3008,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   @protected
   void sse_encode_online_match(OnlineMatch self, SseSerializer serializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_online_source(self.via, serializer);
     sse_encode_String(self.source, serializer);
     sse_encode_String(self.id, serializer);
     sse_encode_String(self.url, serializer);

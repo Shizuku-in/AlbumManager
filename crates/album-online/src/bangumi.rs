@@ -3,7 +3,7 @@
 
 use crate::musicbrainz::text;
 use crate::AGENT;
-use album_model::{MatchKind, OnlineMatch};
+use album_model::{MatchKind, OnlineMatch, OnlineSource};
 use anyhow::Result;
 use regex::Regex;
 use serde_json::{json, Value};
@@ -47,6 +47,7 @@ fn subject(v: &Value) -> Option<OnlineMatch> {
     let id = v["id"].as_i64()?;
     let images = &v["images"];
     Some(OnlineMatch {
+        via: OnlineSource::Bangumi,
         source: SOURCE.into(),
         id: id.to_string(),
         url: format!("https://bgm.tv/subject/{id}"),

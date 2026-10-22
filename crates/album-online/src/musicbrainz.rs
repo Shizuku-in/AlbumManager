@@ -2,7 +2,7 @@
 
 use crate::discid::Toc;
 use crate::AGENT;
-use album_model::{MatchKind, OnlineMatch};
+use album_model::{MatchKind, OnlineMatch, OnlineSource};
 use anyhow::Result;
 use serde_json::Value;
 use std::sync::Mutex;
@@ -73,6 +73,7 @@ fn release(v: &Value, matched_by: MatchKind) -> Option<OnlineMatch> {
     // Lookups say whether there's artwork; search results don't.
     let has_cover = v["cover-art-archive"]["front"].as_bool().unwrap_or(true);
     Some(OnlineMatch {
+        via: OnlineSource::MusicBrainz,
         source: SOURCE.into(),
         url: format!("https://musicbrainz.org/release/{id}"),
         title: text(&v["title"])?,
