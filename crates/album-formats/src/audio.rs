@@ -34,6 +34,8 @@ pub struct AudioInfo {
     pub disc: Option<u32>,
     pub date: Option<String>,
     pub is_dsd: bool,
+    /// Embedded cue sheet (CUESHEET tag), as found in single-file images.
+    pub cue_sheet: Option<String>,
 }
 
 pub fn ext_of(path: &Path) -> String {
@@ -74,6 +76,7 @@ pub fn probe(path: &Path) -> AudioInfo {
                 info.channels = ch;
                 info.duration = dur;
             }
+            info.cue_sheet = ape_cue_sheet(path);
             return info;
         }
         "tak" => {
@@ -83,6 +86,7 @@ pub fn probe(path: &Path) -> AudioInfo {
                 info.channels = ch;
                 info.duration = dur;
             }
+            info.cue_sheet = ape_cue_sheet(path);
             return info;
         }
         _ => {}
@@ -103,7 +107,63 @@ pub fn probe(path: &Path) -> AudioInfo {
     if let Some(tag) = tagged.primary_tag().or_else(|| tagged.first_tag()) {
         fill_tags(tag, &mut info);
     }
+    info.cue_sheet = tagged.tags().iter().find_map(cue_sheet_item);
     info
+}
+
+/// The CUESHEET item (Vorbis comment / APEv2), which lofty keeps as an unknown key.
+fn cue_sheet_item(tag: &lofty::tag::Tag) -> Option<String> {
+    tag.items().find_map(|item| match item.key() {
+        ItemKey::Unknown(k) if k.eq_ignore_ascii_case("cuesheet") => item
+            .value()
+            .text()
+            .filter(|v| !v.trim().is_empty())
+            .map(str::to_string),
+        _ => None,
+    })
+}
+
+/// CUESHEET item of an APEv2 tag at the end of the file (TAK / TTA, which lofty
+/// can't open), optionally followed by an ID3v1 tag.
+fn ape_cue_sheet(path: &Path) -> Option<String> {
+    let mut f = File::open(path).ok()?;
+    let len = f.seek(SeekFrom::End(0)).ok()?;
+    let mut footer = [0u8; 32];
+    let mut end = len;
+    for skip in [0u64, 128] {
+        end = len.checked_sub(skip)?;
+        f.seek(SeekFrom::Start(end.checked_sub(32)?)).ok()?;
+        f.read_exact(&mut footer).ok()?;
+        if &footer[0..8] == b"APETAGEX" {
+            break;
+        }
+    }
+    if &footer[0..8] != b"APETAGEX" {
+        return None;
+    }
+    // Size covers the items and the footer, not the optional header.
+    let size = u32::from_le_bytes(footer[12..16].try_into().ok()?) as u64;
+    let count = u32::from_le_bytes(footer[16..20].try_into().ok()?);
+    if !(32..=16 << 20).contains(&size) {
+        return None;
+    }
+    f.seek(SeekFrom::Start(end.checked_sub(size)?)).ok()?;
+    let mut buf = vec![0u8; size as usize - 32];
+    f.read_exact(&mut buf).ok()?;
+    let mut pos = 0usize;
+    for _ in 0..count {
+        let head = buf.get(pos..pos + 8)?;
+        let value_len = u32::from_le_bytes(head[0..4].try_into().ok()?) as usize;
+        let key_end = pos + 8 + buf.get(pos + 8..)?.iter().position(|&b| b == 0)?;
+        let key = &buf[pos + 8..key_end];
+        let value = buf.get(key_end + 1..key_end + 1 + value_len)?;
+        if key.eq_ignore_ascii_case(b"cuesheet") {
+            return Some(String::from_utf8_lossy(value).into_owned())
+                .filter(|v| !v.trim().is_empty());
+        }
+        pos = key_end + 1 + value_len;
+    }
+    None
 }
 
 fn read_tags_only(path: &Path, info: &mut AudioInfo) {

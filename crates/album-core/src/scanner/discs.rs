@@ -92,6 +92,43 @@ fn make_track(
     }
 }
 
+/// Tracks of a cue sheet whose FILE entries resolved to `resolved` (indices
+/// into `audio_files`); tracks of unresolved files are dropped.
+fn cue_tracks(
+    sheet: &cue::CueSheet,
+    resolved: &[Option<usize>],
+    audio_files: &[&FileRec],
+    audio: &[AudioInfo],
+) -> Vec<Track> {
+    let mut tracks = Vec::new();
+    for (ti, t) in sheet.tracks.iter().enumerate() {
+        let Some(Some(fi)) = resolved.get(t.file) else {
+            continue;
+        };
+        let a = &audio[*fi];
+        let next_same_file = sheet.tracks.get(ti + 1).filter(|n| n.file == t.file);
+        let dur = match next_same_file {
+            Some(n) => n.start - t.start,
+            None => a.duration - t.start,
+        };
+        let title = t
+            .title
+            .clone()
+            .unwrap_or_else(|| format!("Track {:02}", t.number));
+        let artist = t.performer.clone().or_else(|| sheet.performer.clone());
+        tracks.push(make_track(
+            t.number,
+            title,
+            artist,
+            dur,
+            Some(t.start),
+            audio_files[*fi],
+            a,
+        ));
+    }
+    tracks
+}
+
 /// `audio` is indexed like `audio_files`; `all_files` is every file in the album, so
 /// a cue pointing at a non-audio file that exists (an SACD .iso) isn't reported missing.
 pub fn build(
@@ -198,32 +235,7 @@ pub fn build(
         }
         consumed.extend(used.iter().copied());
 
-        let mut tracks = Vec::new();
-        for (ti, t) in sheet.tracks.iter().enumerate() {
-            let Some(Some(fi)) = resolved.get(t.file) else {
-                continue;
-            };
-            let a = &audio[*fi];
-            let next_same_file = sheet.tracks.get(ti + 1).filter(|n| n.file == t.file);
-            let dur = match next_same_file {
-                Some(n) => n.start - t.start,
-                None => a.duration - t.start,
-            };
-            let title = t
-                .title
-                .clone()
-                .unwrap_or_else(|| format!("Track {:02}", t.number));
-            let artist = t.performer.clone().or_else(|| sheet.performer.clone());
-            tracks.push(make_track(
-                t.number,
-                title,
-                artist,
-                dur,
-                Some(t.start),
-                audio_files[*fi],
-                a,
-            ));
-        }
+        let tracks = cue_tracks(&sheet, &resolved, audio_files, audio);
         let cue_name = cf.rel.rsplit('/').next().unwrap_or(&cf.rel).to_string();
         let number = sheet
             .disc_number
@@ -238,6 +250,38 @@ pub fn build(
                 format!("{dir}/{cue_name}")
             }),
             cue_path: Some(cf.path.to_string_lossy().into_owned()),
+            tracks,
+        });
+        sheets.push(sheet);
+    }
+
+    // Images with an embedded cue sheet (CUESHEET tag) not claimed by a .cue file.
+    // Its FILE line names the original image, so every track maps to the file itself.
+    for (i, f) in audio_files.iter().enumerate() {
+        if consumed.contains(&i) {
+            continue;
+        }
+        let Some(text) = audio[i].cue_sheet.as_deref() else {
+            continue;
+        };
+        let sheet = cue::parse(text);
+        if sheet.tracks.len() < 2 || sheet.files.len() > 1 {
+            continue;
+        }
+        consumed.insert(i);
+        let tracks = cue_tracks(&sheet, &[Some(i)], audio_files, audio);
+        let dir = parent_rel(&f.rel);
+        let number = sheet
+            .disc_number
+            .or(audio[i].disc.map(|d| d as i32))
+            .or_else(|| disc_number_from(&stem(&f.rel)))
+            .or_else(|| disc_number_from(dir.rsplit('/').next().unwrap_or("")))
+            .unwrap_or(discs.len() as i32 + 1);
+        discs.push(Disc {
+            number,
+            label: Some(f.rel.clone()),
+            // Players read the embedded sheet, so the image stands in for the cue.
+            cue_path: Some(f.path.to_string_lossy().into_owned()),
             tracks,
         });
         sheets.push(sheet);
