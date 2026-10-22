@@ -67,6 +67,29 @@ pub fn scan_library(force: bool, sink: StreamSink<ScanEvent>) -> Result<()> {
     Ok(())
 }
 
+/// Ids of the albums with a track whose title (`titles`) or artist (`artists`)
+/// contains `query`, ignoring case. Sync: it only walks the in-memory library.
+#[flutter_rust_bridge::frb(sync)]
+pub fn search_tracks(query: String, titles: bool, artists: bool) -> Vec<String> {
+    let q = query.trim().to_lowercase();
+    if q.is_empty() || !(titles || artists) {
+        return Vec::new();
+    }
+    let hit = |s: &str| s.to_lowercase().contains(&q);
+    library::STATE
+        .read()
+        .unwrap()
+        .albums
+        .iter()
+        .filter(|a| {
+            a.discs.iter().flat_map(|d| &d.tracks).any(|t| {
+                (titles && hit(&t.title)) || (artists && t.artist.as_deref().is_some_and(hit))
+            })
+        })
+        .map(|a| a.summary.id.clone())
+        .collect()
+}
+
 pub fn get_album(id: String) -> Option<Album> {
     library::get(&id)
 }

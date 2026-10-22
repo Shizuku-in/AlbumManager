@@ -171,7 +171,7 @@ class _LibraryPageState extends State<LibraryPage>
                           child: SearchBar(
                             controller: _search,
                             focusNode: librarySearchFocus,
-                            hintText: '搜索标题、艺术家、文件夹（Ctrl+F）',
+                            hintText: _searchHint(),
                             leading: const Icon(Icons.search),
                             elevation: const WidgetStatePropertyAll(0),
                             padding: const WidgetStatePropertyAll(
@@ -366,6 +366,14 @@ class _LibraryPageState extends State<LibraryPage>
       ],
     ];
   }
+}
+
+/// "搜索标题、艺术家、文件夹名等" from the fields the search looks in.
+String _searchHint() {
+  final fields = SearchField.values.where(settings.searches).toList();
+  if (fields.isEmpty) return '未选择搜索范围（设置 → 专辑显示）';
+  final shown = fields.take(3).map((f) => f.label).join('、');
+  return '搜索$shown${fields.length > 3 ? '等' : ''}（Ctrl+F）';
 }
 
 class _SortMenu extends StatelessWidget {

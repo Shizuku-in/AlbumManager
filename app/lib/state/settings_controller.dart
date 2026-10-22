@@ -30,6 +30,21 @@ enum CardField {
   final String label;
 }
 
+/// What the library search looks in.
+enum SearchField {
+  title('标题'),
+  artist('艺术家'),
+  folderName('文件夹名'),
+  genre('流派'),
+  catalog('品番'),
+  event('展会'),
+  trackTitle('音轨标题'),
+  trackArtist('音轨艺术家');
+
+  const SearchField(this.label);
+  final String label;
+}
+
 /// How release dates (`YYYY`, `YYYY-MM` or `YYYY-MM-DD`) are shown.
 enum DateStyle {
   iso('2024-03-15'),
@@ -107,6 +122,9 @@ class SettingsController extends ChangeNotifier {
 
   CardSize cardSize = CardSize.medium;
   Set<CardField> hiddenCardFields = const {};
+
+  /// Fields the library search skips.
+  Set<SearchField> hiddenSearchFields = const {};
   DateStyle dateStyle = DateStyle.iso;
   FileListMode fileListMode = FileListMode.flat;
   FolderView folderView = FolderView.expanded;
@@ -155,6 +173,7 @@ class SettingsController extends ChangeNotifier {
     overwriteCue = prefs.getBool('overwriteCue') ?? false;
     cardSize = _loadEnum('cardSize', CardSize.values, CardSize.medium);
     hiddenCardFields = _loadSet('hiddenCardFields', CardField.values);
+    hiddenSearchFields = _loadSet('hiddenSearchFields', SearchField.values);
     dateStyle = _loadEnum('dateStyle', DateStyle.values, DateStyle.iso);
     fileListMode = _loadEnum(
       'fileListMode',
@@ -195,6 +214,7 @@ class SettingsController extends ChangeNotifier {
     'fileListMode',
     'folderView',
     'rememberFilters',
+    'hiddenSearchFields',
   ]);
   Future<void> resetHealthChecks() => _reset(['hiddenIssues', 'overwriteCue']);
   Future<void> resetScanning() => _reset(['scanOnStartup']);
@@ -271,6 +291,19 @@ class SettingsController extends ChangeNotifier {
   void setCardField(CardField f, bool shown) {
     if (shown == showsOnCard(f)) return;
     hiddenCardFields = _toggle('hiddenCardFields', hiddenCardFields, f, !shown);
+    notifyListeners();
+  }
+
+  bool searches(SearchField f) => !hiddenSearchFields.contains(f);
+
+  void setSearchField(SearchField f, bool searched) {
+    if (searched == searches(f)) return;
+    hiddenSearchFields = _toggle(
+      'hiddenSearchFields',
+      hiddenSearchFields,
+      f,
+      !searched,
+    );
     notifyListeners();
   }
 

@@ -22,6 +22,18 @@ Future<void> setLibraryRoot({required String root}) =>
 Stream<ScanEvent> scanLibrary({required bool force}) =>
     RustLib.instance.api.crateApiLibraryScanLibrary(force: force);
 
+/// Ids of the albums with a track whose title (`titles`) or artist (`artists`)
+/// contains `query`, ignoring case. Sync: it only walks the in-memory library.
+List<String> searchTracks({
+  required String query,
+  required bool titles,
+  required bool artists,
+}) => RustLib.instance.api.crateApiLibrarySearchTracks(
+  query: query,
+  titles: titles,
+  artists: artists,
+);
+
 Future<Album?> getAlbum({required String id}) =>
     RustLib.instance.api.crateApiLibraryGetAlbum(id: id);
 

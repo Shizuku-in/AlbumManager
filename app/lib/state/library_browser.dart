@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 
+import 'package:album_manager/src/rust/api/library.dart' as api;
 import 'package:album_manager/src/rust/third_party/album_model.dart';
 import 'package:album_manager/state/favorites.dart';
 import 'package:album_manager/state/navigation.dart';
@@ -307,15 +308,21 @@ class LibraryBrowser extends ChangeNotifier {
     // The "favorite" filter follows starring / unstarring.
     favorites.addListener(notifyListeners);
     var hidden = settings.hiddenIssues;
+    var unsearched = settings.hiddenSearchFields;
     var remember = settings.rememberFilters;
     settings.addListener(() {
       if (remember != settings.rememberFilters) {
         remember = settings.rememberFilters;
         _saveFilters();
       }
-      // The "has issues" filter depends on which checks are enabled.
-      if (identical(hidden, settings.hiddenIssues)) return;
+      // The "has issues" filter depends on which checks are enabled, the
+      // search on which fields it looks in.
+      if (identical(hidden, settings.hiddenIssues) &&
+          identical(unsearched, settings.hiddenSearchFields)) {
+        return;
+      }
       hidden = settings.hiddenIssues;
+      unsearched = settings.hiddenSearchFields;
       notifyListeners();
     });
   }
@@ -383,6 +390,7 @@ class LibraryBrowser extends ChangeNotifier {
           int?,
           Set<IssueKind>,
           Set<String>,
+          Set<SearchField>,
         ),
         List<AlbumSummary>
       >();
@@ -399,19 +407,33 @@ class LibraryBrowser extends ChangeNotifier {
       yearFilter,
       settings.hiddenIssues,
       favorites.ids,
+      settings.hiddenSearchFields,
     ),
     () {
       final q = query.trim().toLowerCase();
+      bool has(SearchField f, String? v) =>
+          settings.searches(f) && (v?.toLowerCase().contains(q) ?? false);
+      // Tracks aren't in the summaries: the Rust side searches them.
+      final trackHits = q.isEmpty
+          ? const <String>{}
+          : api
+                .searchTracks(
+                  query: q,
+                  titles: settings.searches(SearchField.trackTitle),
+                  artists: settings.searches(SearchField.trackArtist),
+                )
+                .toSet();
       final list = albums.where((a) {
         if (!filters.matches(a)) return false;
         if (yearFilter != null && a.year != yearFilter) return false;
         if (q.isEmpty) return true;
-        return a.title.toLowerCase().contains(q) ||
-            (a.artist?.toLowerCase().contains(q) ?? false) ||
-            a.folderName.toLowerCase().contains(q) ||
-            (a.genre?.toLowerCase().contains(q) ?? false) ||
-            (a.catalog?.toLowerCase().contains(q) ?? false) ||
-            (a.event?.toLowerCase().contains(q) ?? false);
+        return has(SearchField.title, a.title) ||
+            has(SearchField.artist, a.artist) ||
+            has(SearchField.folderName, a.folderName) ||
+            has(SearchField.genre, a.genre) ||
+            has(SearchField.catalog, a.catalog) ||
+            has(SearchField.event, a.event) ||
+            trackHits.contains(a.id);
       }).toList();
       int byDate(AlbumSummary a, AlbumSummary b) =>
           (a.date ?? '${a.year ?? 0}').compareTo(b.date ?? '${b.year ?? 0}');

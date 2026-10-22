@@ -108,6 +108,18 @@ class DisplaySettingsPage extends StatelessWidget {
               value: settings.rememberFilters,
               onChanged: settings.setRememberFilters,
             ),
+            ListTile(
+              leading: const Icon(Icons.search),
+              title: const Text('搜索范围'),
+              subtitle: settingsChips([
+                for (final f in SearchField.values)
+                  FilterChip(
+                    label: Text(f.label),
+                    selected: settings.searches(f),
+                    onSelected: (v) => settings.setSearchField(f, v),
+                  ),
+              ]),
+            ),
           ],
         ),
       ],
