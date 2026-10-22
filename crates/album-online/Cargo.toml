@@ -1,0 +1,17 @@
+[package]
+name = "album-online"
+description = "Album lookups in online databases (MusicBrainz)."
+version.workspace = true
+edition.workspace = true
+authors.workspace = true
+license.workspace = true
+repository.workspace = true
+publish.workspace = true
+
+[dependencies]
+album-formats.workspace = true
+album-model.workspace = true
+anyhow.workspace = true
+serde_json.workspace = true
+sha1.workspace = true
+ureq.workspace = true

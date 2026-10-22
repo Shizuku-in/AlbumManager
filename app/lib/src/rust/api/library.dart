@@ -34,6 +34,15 @@ List<String> searchTracks({
   artists: artists,
 );
 
+/// Releases on MusicBrainz that may be this album, best matches first.
+Future<List<OnlineMatch>> lookupOnline({required String id}) =>
+    RustLib.instance.api.crateApiLibraryLookupOnline(id: id);
+
+/// Downloads a cover found online into the album folder (never overwriting a
+/// file) and returns its path.
+Future<String> saveOnlineCover({required String id, required String url}) =>
+    RustLib.instance.api.crateApiLibrarySaveOnlineCover(id: id, url: url);
+
 Future<Album?> getAlbum({required String id}) =>
     RustLib.instance.api.crateApiLibraryGetAlbum(id: id);
 

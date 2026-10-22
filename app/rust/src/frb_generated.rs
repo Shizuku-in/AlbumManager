@@ -39,7 +39,7 @@ flutter_rust_bridge::frb_generated_boilerplate!(
     default_rust_auto_opaque = RustAutoOpaqueMoi,
 );
 pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_VERSION: &str = "2.13.0";
-pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -1615197053;
+pub(crate) const FLUTTER_RUST_BRIDGE_CODEGEN_CONTENT_HASH: i32 = -1244909011;
 
 // Section: executor
 
@@ -454,6 +454,41 @@ fn wire__crate__api__library__init_library_impl(
         },
     )
 }
+fn wire__crate__api__library__lookup_online_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "lookup_online",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_id = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, flutter_rust_bridge::for_generated::anyhow::Error>(
+                    (move || {
+                        let output_ok = crate::api::library::lookup_online(api_id)?;
+                        std::result::Result::Ok(output_ok)
+                    })(),
+                )
+            }
+        },
+    )
+}
 fn wire__crate__api__library__read_text_file_impl(
     port_: flutter_rust_bridge::for_generated::MessagePort,
     ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
@@ -552,6 +587,42 @@ fn wire__crate__api__library__rip_deduction_kinds_impl(
                     let output_ok = Ok::<_, ()>(crate::api::library::rip_deduction_kinds())?;
                     std::result::Result::Ok(output_ok)
                 })())
+            }
+        },
+    )
+}
+fn wire__crate__api__library__save_online_cover_impl(
+    port_: flutter_rust_bridge::for_generated::MessagePort,
+    ptr_: flutter_rust_bridge::for_generated::PlatformGeneralizedUint8ListPtr,
+    rust_vec_len_: i32,
+    data_len_: i32,
+) {
+    FLUTTER_RUST_BRIDGE_HANDLER.wrap_normal::<flutter_rust_bridge::for_generated::SseCodec, _, _>(
+        flutter_rust_bridge::for_generated::TaskInfo {
+            debug_name: "save_online_cover",
+            port: Some(port_),
+            mode: flutter_rust_bridge::for_generated::FfiCallMode::Normal,
+        },
+        move || {
+            let message = unsafe {
+                flutter_rust_bridge::for_generated::Dart2RustMessageSse::from_wire(
+                    ptr_,
+                    rust_vec_len_,
+                    data_len_,
+                )
+            };
+            let mut deserializer =
+                flutter_rust_bridge::for_generated::SseDeserializer::new(message);
+            let api_id = <String>::sse_decode(&mut deserializer);
+            let api_url = <String>::sse_decode(&mut deserializer);
+            deserializer.end();
+            move |context| {
+                transform_result_sse::<_, flutter_rust_bridge::for_generated::anyhow::Error>(
+                    (move || {
+                        let output_ok = crate::api::library::save_online_cover(api_id, api_url)?;
+                        std::result::Result::Ok(output_ok)
+                    })(),
+                )
             }
         },
     )
@@ -1051,6 +1122,25 @@ const _: fn() = || {
         let _: i32 = LogDeduction.points;
         let _: Option<i32> = LogDeduction.track;
         let _: bool = LogDeduction.informational;
+    }
+    {
+        let OnlineMatch = None::<album_model::OnlineMatch>.unwrap();
+        let _: String = OnlineMatch.source;
+        let _: String = OnlineMatch.id;
+        let _: String = OnlineMatch.url;
+        let _: String = OnlineMatch.title;
+        let _: Option<String> = OnlineMatch.artist;
+        let _: Option<String> = OnlineMatch.date;
+        let _: Option<String> = OnlineMatch.catalog;
+        let _: Option<String> = OnlineMatch.label;
+        let _: Option<String> = OnlineMatch.country;
+        let _: Option<String> = OnlineMatch.format;
+        let _: i32 = OnlineMatch.disc_count;
+        let _: i32 = OnlineMatch.track_count;
+        let _: Option<String> = OnlineMatch.thumb_url;
+        let _: Option<String> = OnlineMatch.cover_url;
+        let _: album_model::MatchKind = OnlineMatch.matched_by;
+        let _: i32 = OnlineMatch.score;
     }
     {
         let RipLog = None::<album_model::RipLog>.unwrap();
@@ -1565,6 +1655,18 @@ impl SseDecode for Vec<album_model::LogDeduction> {
     }
 }
 
+impl SseDecode for Vec<album_model::OnlineMatch> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut len_ = <i32>::sse_decode(deserializer);
+        let mut ans_ = Vec::with_capacity(len_ as usize);
+        for idx_ in 0..len_ {
+            ans_.push(<album_model::OnlineMatch>::sse_decode(deserializer));
+        }
+        return ans_;
+    }
+}
+
 impl SseDecode for Vec<i32> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
@@ -1653,6 +1755,60 @@ impl SseDecode for album_model::LogDeduction {
             points: var_points,
             track: var_track,
             informational: var_informational,
+        };
+    }
+}
+
+impl SseDecode for album_model::MatchKind {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut inner = <i32>::sse_decode(deserializer);
+        return match inner {
+            0 => album_model::MatchKind::DiscId,
+            1 => album_model::MatchKind::Toc,
+            2 => album_model::MatchKind::Catalog,
+            3 => album_model::MatchKind::Title,
+            _ => unreachable!("Invalid variant for MatchKind: {}", inner),
+        };
+    }
+}
+
+impl SseDecode for album_model::OnlineMatch {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_source = <String>::sse_decode(deserializer);
+        let mut var_id = <String>::sse_decode(deserializer);
+        let mut var_url = <String>::sse_decode(deserializer);
+        let mut var_title = <String>::sse_decode(deserializer);
+        let mut var_artist = <Option<String>>::sse_decode(deserializer);
+        let mut var_date = <Option<String>>::sse_decode(deserializer);
+        let mut var_catalog = <Option<String>>::sse_decode(deserializer);
+        let mut var_label = <Option<String>>::sse_decode(deserializer);
+        let mut var_country = <Option<String>>::sse_decode(deserializer);
+        let mut var_format = <Option<String>>::sse_decode(deserializer);
+        let mut var_discCount = <i32>::sse_decode(deserializer);
+        let mut var_trackCount = <i32>::sse_decode(deserializer);
+        let mut var_thumbUrl = <Option<String>>::sse_decode(deserializer);
+        let mut var_coverUrl = <Option<String>>::sse_decode(deserializer);
+        let mut var_matchedBy = <album_model::MatchKind>::sse_decode(deserializer);
+        let mut var_score = <i32>::sse_decode(deserializer);
+        return album_model::OnlineMatch {
+            source: var_source,
+            id: var_id,
+            url: var_url,
+            title: var_title,
+            artist: var_artist,
+            date: var_date,
+            catalog: var_catalog,
+            label: var_label,
+            country: var_country,
+            format: var_format,
+            disc_count: var_discCount,
+            track_count: var_trackCount,
+            thumb_url: var_thumbUrl,
+            cover_url: var_coverUrl,
+            matched_by: var_matchedBy,
+            score: var_score,
         };
     }
 }
@@ -1970,21 +2126,23 @@ fn pde_ffi_dispatcher_primary_impl(
         10 => wire__crate__api__library__get_thumbnail_impl(port, ptr, rust_vec_len, data_len),
         11 => wire__crate__api__init_app_impl(port, ptr, rust_vec_len, data_len),
         12 => wire__crate__api__library__init_library_impl(port, ptr, rust_vec_len, data_len),
-        13 => wire__crate__api__library__read_text_file_impl(port, ptr, rust_vec_len, data_len),
-        14 => wire__crate__api__library__rescan_album_impl(port, ptr, rust_vec_len, data_len),
-        15 => {
+        13 => wire__crate__api__library__lookup_online_impl(port, ptr, rust_vec_len, data_len),
+        14 => wire__crate__api__library__read_text_file_impl(port, ptr, rust_vec_len, data_len),
+        15 => wire__crate__api__library__rescan_album_impl(port, ptr, rust_vec_len, data_len),
+        16 => {
             wire__crate__api__library__rip_deduction_kinds_impl(port, ptr, rust_vec_len, data_len)
         }
-        16 => wire__crate__api__library__scan_library_impl(port, ptr, rust_vec_len, data_len),
-        17 => wire__album_model__scan_rules_default_impl(port, ptr, rust_vec_len, data_len),
-        19 => wire__crate__api__library__set_album_override_impl(port, ptr, rust_vec_len, data_len),
-        20 => wire__crate__api__library__set_library_root_impl(port, ptr, rust_vec_len, data_len),
-        21 => wire__crate__api__library__set_rip_rules_impl(port, ptr, rust_vec_len, data_len),
-        22 => wire__crate__api__library__set_scan_rules_impl(port, ptr, rust_vec_len, data_len),
-        23 => wire__crate__api__shell__shell_open_impl(port, ptr, rust_vec_len, data_len),
-        24 => wire__crate__api__shell__shell_reveal_impl(port, ptr, rust_vec_len, data_len),
-        25 => wire__crate__api__fonts__system_font_families_impl(port, ptr, rust_vec_len, data_len),
-        26 => wire__crate__api__library__translate_log_impl(port, ptr, rust_vec_len, data_len),
+        17 => wire__crate__api__library__save_online_cover_impl(port, ptr, rust_vec_len, data_len),
+        18 => wire__crate__api__library__scan_library_impl(port, ptr, rust_vec_len, data_len),
+        19 => wire__album_model__scan_rules_default_impl(port, ptr, rust_vec_len, data_len),
+        21 => wire__crate__api__library__set_album_override_impl(port, ptr, rust_vec_len, data_len),
+        22 => wire__crate__api__library__set_library_root_impl(port, ptr, rust_vec_len, data_len),
+        23 => wire__crate__api__library__set_rip_rules_impl(port, ptr, rust_vec_len, data_len),
+        24 => wire__crate__api__library__set_scan_rules_impl(port, ptr, rust_vec_len, data_len),
+        25 => wire__crate__api__shell__shell_open_impl(port, ptr, rust_vec_len, data_len),
+        26 => wire__crate__api__shell__shell_reveal_impl(port, ptr, rust_vec_len, data_len),
+        27 => wire__crate__api__fonts__system_font_families_impl(port, ptr, rust_vec_len, data_len),
+        28 => wire__crate__api__library__translate_log_impl(port, ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -1997,7 +2155,7 @@ fn pde_ffi_dispatcher_sync_impl(
 ) -> flutter_rust_bridge::for_generated::WireSyncRust2DartSse {
     // Codec=Pde (Serialization + dispatch), see doc to use other codecs
     match func_id {
-        18 => wire__crate__api__library__search_tracks_impl(ptr, rust_vec_len, data_len),
+        20 => wire__crate__api__library__search_tracks_impl(ptr, rust_vec_len, data_len),
         _ => unreachable!(),
     }
 }
@@ -2392,6 +2550,64 @@ impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<album_model::LogDeduction>>
     for album_model::LogDeduction
 {
     fn into_into_dart(self) -> FrbWrapper<album_model::LogDeduction> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<album_model::MatchKind> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        match self.0 {
+            album_model::MatchKind::DiscId => 0.into_dart(),
+            album_model::MatchKind::Toc => 1.into_dart(),
+            album_model::MatchKind::Catalog => 2.into_dart(),
+            album_model::MatchKind::Title => 3.into_dart(),
+            _ => unreachable!(),
+        }
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for FrbWrapper<album_model::MatchKind>
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<album_model::MatchKind>>
+    for album_model::MatchKind
+{
+    fn into_into_dart(self) -> FrbWrapper<album_model::MatchKind> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<album_model::OnlineMatch> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.0.source.into_into_dart().into_dart(),
+            self.0.id.into_into_dart().into_dart(),
+            self.0.url.into_into_dart().into_dart(),
+            self.0.title.into_into_dart().into_dart(),
+            self.0.artist.into_into_dart().into_dart(),
+            self.0.date.into_into_dart().into_dart(),
+            self.0.catalog.into_into_dart().into_dart(),
+            self.0.label.into_into_dart().into_dart(),
+            self.0.country.into_into_dart().into_dart(),
+            self.0.format.into_into_dart().into_dart(),
+            self.0.disc_count.into_into_dart().into_dart(),
+            self.0.track_count.into_into_dart().into_dart(),
+            self.0.thumb_url.into_into_dart().into_dart(),
+            self.0.cover_url.into_into_dart().into_dart(),
+            self.0.matched_by.into_into_dart().into_dart(),
+            self.0.score.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for FrbWrapper<album_model::OnlineMatch>
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<album_model::OnlineMatch>>
+    for album_model::OnlineMatch
+{
+    fn into_into_dart(self) -> FrbWrapper<album_model::OnlineMatch> {
         self.into()
     }
 }
@@ -2950,6 +3166,16 @@ impl SseEncode for Vec<album_model::LogDeduction> {
     }
 }
 
+impl SseEncode for Vec<album_model::OnlineMatch> {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(self.len() as _, serializer);
+        for item in self {
+            <album_model::OnlineMatch>::sse_encode(item, serializer);
+        }
+    }
+}
+
 impl SseEncode for Vec<i32> {
     // Codec=Sse (Serialization based), see doc to use other codecs
     fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
@@ -3026,6 +3252,46 @@ impl SseEncode for album_model::LogDeduction {
         <i32>::sse_encode(self.points, serializer);
         <Option<i32>>::sse_encode(self.track, serializer);
         <bool>::sse_encode(self.informational, serializer);
+    }
+}
+
+impl SseEncode for album_model::MatchKind {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <i32>::sse_encode(
+            match self {
+                album_model::MatchKind::DiscId => 0,
+                album_model::MatchKind::Toc => 1,
+                album_model::MatchKind::Catalog => 2,
+                album_model::MatchKind::Title => 3,
+                _ => {
+                    unimplemented!("");
+                }
+            },
+            serializer,
+        );
+    }
+}
+
+impl SseEncode for album_model::OnlineMatch {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <String>::sse_encode(self.source, serializer);
+        <String>::sse_encode(self.id, serializer);
+        <String>::sse_encode(self.url, serializer);
+        <String>::sse_encode(self.title, serializer);
+        <Option<String>>::sse_encode(self.artist, serializer);
+        <Option<String>>::sse_encode(self.date, serializer);
+        <Option<String>>::sse_encode(self.catalog, serializer);
+        <Option<String>>::sse_encode(self.label, serializer);
+        <Option<String>>::sse_encode(self.country, serializer);
+        <Option<String>>::sse_encode(self.format, serializer);
+        <i32>::sse_encode(self.disc_count, serializer);
+        <i32>::sse_encode(self.track_count, serializer);
+        <Option<String>>::sse_encode(self.thumb_url, serializer);
+        <Option<String>>::sse_encode(self.cover_url, serializer);
+        <album_model::MatchKind>::sse_encode(self.matched_by, serializer);
+        <i32>::sse_encode(self.score, serializer);
     }
 }
 

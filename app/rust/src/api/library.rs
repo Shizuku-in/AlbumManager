@@ -90,6 +90,20 @@ pub fn search_tracks(query: String, titles: bool, artists: bool) -> Vec<String> 
         .collect()
 }
 
+/// Releases on MusicBrainz that may be this album, best matches first.
+pub fn lookup_online(id: String) -> Result<Vec<OnlineMatch>> {
+    let album = library::get(&id).ok_or_else(|| anyhow!("album not found"))?;
+    album_online::lookup(&album)
+}
+
+/// Downloads a cover found online into the album folder (never overwriting a
+/// file) and returns its path.
+pub fn save_online_cover(id: String, url: String) -> Result<String> {
+    let album = library::get(&id).ok_or_else(|| anyhow!("album not found"))?;
+    let path = album_online::save_cover(&url, Path::new(&album.summary.path))?;
+    Ok(path.to_string_lossy().into_owned())
+}
+
 pub fn get_album(id: String) -> Option<Album> {
     library::get(&id)
 }

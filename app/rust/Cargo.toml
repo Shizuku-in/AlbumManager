@@ -15,6 +15,7 @@ crate-type = ["cdylib", "staticlib"]
 album-core.workspace = true
 album-formats.workspace = true
 album-model.workspace = true
+album-online.workspace = true
 anyhow.workspace = true
 flutter_rust_bridge = "=2.13.0"
 

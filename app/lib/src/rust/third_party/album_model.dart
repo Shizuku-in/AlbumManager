@@ -7,7 +7,7 @@ import '../frb_generated.dart';
 
 import 'package:flutter_rust_bridge/flutter_rust_bridge_for_generated.dart';
 
-// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`
+// These function are ignored because they are on traits that is not defined in current crate (put an empty `#[frb]` on it to unignore): `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `assert_fields_are_eq`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `clone`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `eq`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`, `fmt`
 
 /// Full album info for the detail page.
 class Album {
@@ -544,6 +544,108 @@ class LogDeduction {
           points == other.points &&
           track == other.track &&
           informational == other.informational;
+}
+
+/// How an online release was matched to an album.
+enum MatchKind {
+  /// Same disc ID: the very same CD pressing.
+  discId,
+
+  /// Similar track layout (fuzzy table-of-contents lookup).
+  toc,
+  catalog,
+  title,
+}
+
+/// A release found in an online database that may be an album.
+class OnlineMatch {
+  /// e.g. "MusicBrainz"
+  final String source;
+  final String id;
+
+  /// The release's page.
+  final String url;
+  final String title;
+  final String? artist;
+
+  /// `YYYY`, `YYYY-MM` or `YYYY-MM-DD`.
+  final String? date;
+  final String? catalog;
+  final String? label;
+  final String? country;
+
+  /// Medium, e.g. "CD", "Digital Media".
+  final String? format;
+  final int discCount;
+  final int trackCount;
+
+  /// Front cover, small for previews and large for saving; may not exist.
+  final String? thumbUrl;
+  final String? coverUrl;
+  final MatchKind matchedBy;
+
+  /// Search relevance, 0..100.
+  final int score;
+
+  const OnlineMatch({
+    required this.source,
+    required this.id,
+    required this.url,
+    required this.title,
+    this.artist,
+    this.date,
+    this.catalog,
+    this.label,
+    this.country,
+    this.format,
+    required this.discCount,
+    required this.trackCount,
+    this.thumbUrl,
+    this.coverUrl,
+    required this.matchedBy,
+    required this.score,
+  });
+
+  @override
+  int get hashCode =>
+      source.hashCode ^
+      id.hashCode ^
+      url.hashCode ^
+      title.hashCode ^
+      artist.hashCode ^
+      date.hashCode ^
+      catalog.hashCode ^
+      label.hashCode ^
+      country.hashCode ^
+      format.hashCode ^
+      discCount.hashCode ^
+      trackCount.hashCode ^
+      thumbUrl.hashCode ^
+      coverUrl.hashCode ^
+      matchedBy.hashCode ^
+      score.hashCode;
+
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      other is OnlineMatch &&
+          runtimeType == other.runtimeType &&
+          source == other.source &&
+          id == other.id &&
+          url == other.url &&
+          title == other.title &&
+          artist == other.artist &&
+          date == other.date &&
+          catalog == other.catalog &&
+          label == other.label &&
+          country == other.country &&
+          format == other.format &&
+          discCount == other.discCount &&
+          trackCount == other.trackCount &&
+          thumbUrl == other.thumbUrl &&
+          coverUrl == other.coverUrl &&
+          matchedBy == other.matchedBy &&
+          score == other.score;
 }
 
 class RipLog {

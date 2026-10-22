@@ -375,3 +375,41 @@ pub struct Album {
     /// Fingerprint of the folder contents (for incremental rescans).
     pub fingerprint: u64,
 }
+
+/// How an online release was matched to an album.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+pub enum MatchKind {
+    /// Same disc ID: the very same CD pressing.
+    DiscId,
+    /// Similar track layout (fuzzy table-of-contents lookup).
+    Toc,
+    Catalog,
+    Title,
+}
+
+/// A release found in an online database that may be an album.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct OnlineMatch {
+    /// e.g. "MusicBrainz"
+    pub source: String,
+    pub id: String,
+    /// The release's page.
+    pub url: String,
+    pub title: String,
+    pub artist: Option<String>,
+    /// `YYYY`, `YYYY-MM` or `YYYY-MM-DD`.
+    pub date: Option<String>,
+    pub catalog: Option<String>,
+    pub label: Option<String>,
+    pub country: Option<String>,
+    /// Medium, e.g. "CD", "Digital Media".
+    pub format: Option<String>,
+    pub disc_count: i32,
+    pub track_count: i32,
+    /// Front cover, small for previews and large for saving; may not exist.
+    pub thumb_url: Option<String>,
+    pub cover_url: Option<String>,
+    pub matched_by: MatchKind,
+    /// Search relevance, 0..100.
+    pub score: i32,
+}

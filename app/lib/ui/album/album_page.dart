@@ -9,6 +9,7 @@ import 'package:album_manager/theme/app_colors.dart';
 import 'package:album_manager/theme/app_theme.dart';
 import 'package:album_manager/ui/album/cue_fix_dialog.dart';
 import 'package:album_manager/ui/album/edit_album_dialog.dart';
+import 'package:album_manager/ui/album/online_lookup_dialog.dart';
 import 'package:album_manager/ui/album/tabs/files_tab.dart';
 import 'package:album_manager/ui/album/tabs/logs_tab.dart';
 import 'package:album_manager/ui/album/tabs/scans_tab.dart';
@@ -109,6 +110,16 @@ class _AlbumPageState extends State<AlbumPage> with TickerProviderStateMixin {
       context,
       () => api.setAlbumOverride(id: _s.id, overrides: o),
       '已保存',
+    );
+  }
+
+  Future<void> _lookupOnline(BuildContext context, Album album) async {
+    final o = await showOnlineLookupDialog(context, album);
+    if (o == null || !context.mounted) return;
+    await _run(
+      context,
+      () => api.setAlbumOverride(id: _s.id, overrides: o),
+      '已应用在线信息',
     );
   }
 
@@ -228,6 +239,13 @@ class _AlbumPageState extends State<AlbumPage> with TickerProviderStateMixin {
                           ? () => _edit(context, a)
                           : null,
                       child: const Text('编辑专辑'),
+                    ),
+                    MenuItemButton(
+                      leadingIcon: const Icon(Icons.travel_explore),
+                      onPressed: a != null && !_busy
+                          ? () => _lookupOnline(context, a)
+                          : null,
+                      child: const Text('在线补全信息'),
                     ),
                     MenuItemButton(
                       leadingIcon: const Icon(Icons.translate),
@@ -414,6 +432,13 @@ class _AlbumPageState extends State<AlbumPage> with TickerProviderStateMixin {
                           : null,
                       icon: const Icon(Icons.edit_outlined),
                       label: const Text('编辑'),
+                    ),
+                    OutlinedButton.icon(
+                      onPressed: _album != null && !_busy
+                          ? () => _lookupOnline(context, _album!)
+                          : null,
+                      icon: const Icon(Icons.travel_explore),
+                      label: const Text('在线补全'),
                     ),
                     if (hasBadCue)
                       OutlinedButton.icon(
