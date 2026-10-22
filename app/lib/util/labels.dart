@@ -34,6 +34,12 @@ extension OnlineSourceX on OnlineSource {
     OnlineSource.ctdb => 'CueTools 数据库',
   };
 
+  String get iconAsset => switch (this) {
+    OnlineSource.musicBrainz => 'assets/icons/musicbrainz.svg',
+    OnlineSource.bangumi => 'assets/icons/bangumi.svg',
+    OnlineSource.ctdb => 'assets/icons/ctdb.svg',
+  };
+
   String get description => switch (this) {
     OnlineSource.musicBrainz => '按光盘 ID、品番、标题搜索，覆盖商业 CD 较全',
     OnlineSource.bangumi => '按标题搜索，动画 / 游戏原声与同人音乐，含展会',

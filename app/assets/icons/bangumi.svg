@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" role="img" aria-labelledby="title desc">
+  <title id="title">Bangumi</title>
+  <desc id="desc">纯黑色电视气泡图标。24 单位画布，至少 2 单位外边距，2 单位主笔画；保留双天线、挤眼与三角嘴，透明背景。</desc>
+  <g stroke="#000" stroke-width="2" stroke-linejoin="round">
+    <path d="m6 3 6 5 6-5" stroke-linecap="square"/>
+    <path d="M5 8h14a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2h-6l-4 2v-2H5a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2Z"/>
+    <path d="m6 11 2 1.5L6 14m12-3-2 1.5 2 1.5" stroke-linecap="butt" stroke-linejoin="miter"/>
+  </g>
+  <path fill="#000" d="M10 12h4l-2 4z"/>
+</svg>

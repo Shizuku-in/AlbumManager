@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" fill="none" role="img" aria-labelledby="title desc">
+  <title id="title">光盘添加</title>
+  <desc id="desc">纯黑色扁平双光盘与加号图标，透明背景与镂空圆心。</desc>
+  <defs>
+    <mask id="disc-cutouts" maskUnits="userSpaceOnUse" x="0" y="0" width="128" height="128">
+      <path fill="#fff" d="M0 0h128v128H0z"/>
+      <circle cx="47" cy="73" r="45" fill="#000"/>
+    </mask>
+    <mask id="add-clearance" maskUnits="userSpaceOnUse" x="0" y="0" width="128" height="128">
+      <path fill="#fff" d="M0 0h128v128H0z"/>
+      <path fill="#000" d="M78 58h28v19h19v28h-19v19H78v-19H59V77h19z"/>
+    </mask>
+  </defs>
+  <g fill="#000" mask="url(#add-clearance)">
+    <circle cx="76" cy="47" r="41" mask="url(#disc-cutouts)"/>
+    <path fill-rule="evenodd" d="M47 33a40 40 0 1 0 0 80 40 40 0 0 0 0-80Zm0 30a10 10 0 1 1 0 20 10 10 0 0 1 0-20Z" clip-rule="evenodd"/>
+  </g>
+  <path fill="#000" d="M84 64h16v19h19v16h-19v19H84V99H65V83h19z"/>
+</svg>

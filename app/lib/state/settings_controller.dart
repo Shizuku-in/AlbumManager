@@ -2,336 +2,312 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:album_manager/src/rust/third_party/album_model.dart';
+import 'package:album_manager/state/settings_types.dart';
 import 'package:album_manager/theme/app_theme.dart';
 
-/// Grid card width presets.
-enum CardSize {
-  small('小', 160),
-  medium('中', 220),
-  large('大', 300);
+export 'package:album_manager/state/settings_types.dart';
 
-  const CardSize(this.label, this.maxExtent);
-  final String label;
-  final double maxExtent;
-}
+/// One stored preference: its key, default and how it's (de)serialized.
+class _Pref<T> {
+  _Pref(this.key, this.fallback, this._decode, this._encode);
+  final String key;
+  final T fallback;
+  final T? Function(SharedPreferences p, String key) _decode;
+  final Future<bool> Function(SharedPreferences p, String key, T v) _encode;
+  late T value = fallback;
 
-/// Optional details on a grid card (the title is always shown).
-enum CardField {
-  source('来源'),
-  quality('高解析度标记'),
-  artist('艺术家'),
-  date('日期'),
-  catalog('品番'),
-  event('展会'),
-  ripStatus('抓轨状态'),
-  favorite('收藏');
+  /// The stored value, or the default when the key is absent.
+  void load(SharedPreferences p) => value = _decode(p, key) ?? fallback;
 
-  const CardField(this.label);
-  final String label;
-}
-
-/// What the library search looks in.
-enum SearchField {
-  title('标题'),
-  artist('艺术家'),
-  folderName('文件夹名'),
-  genre('流派'),
-  catalog('品番'),
-  event('展会'),
-  trackTitle('音轨标题'),
-  trackArtist('音轨艺术家');
-
-  const SearchField(this.label);
-  final String label;
-}
-
-/// How release dates (`YYYY`, `YYYY-MM` or `YYYY-MM-DD`) are shown.
-enum DateStyle {
-  iso('2024-03-15'),
-  slash('2024/03/15'),
-  chinese('2024年3月15日'),
-  year('仅年份');
-
-  const DateStyle(this.label);
-  final String label;
-
-  String? format(String? date) {
-    if (date == null) return null;
-    final p = date.split('-');
-    return switch (this) {
-      DateStyle.iso => date,
-      DateStyle.slash => p.join('/'),
-      DateStyle.chinese =>
-        '${p[0]}年${p.length > 1 ? '${int.parse(p[1])}月' : ''}${p.length > 2 ? '${int.parse(p[2])}日' : ''}',
-      DateStyle.year => p[0],
-    };
+  void store(SharedPreferences p, T v) {
+    value = v;
+    _encode(p, key, v);
   }
 }
 
-/// How the album page's 文件 tab lists files.
-enum FileListMode {
-  flat('平铺完整路径'),
-  tree('保持目录层级');
+_Pref<bool> _bool(String key, bool fallback) =>
+    _Pref(key, fallback, (p, k) => p.getBool(k), (p, k, v) => p.setBool(k, v));
 
-  const FileListMode(this.label);
-  final String label;
-}
+/// Stored by name, so reordering or adding values keeps saved choices.
+_Pref<T> _enum<T extends Enum>(String key, List<T> values, T fallback) => _Pref(
+  key,
+  fallback,
+  (p, k) => values.asNameMap()[p.getString(k)],
+  (p, k, v) => p.setString(k, v.name),
+);
 
-/// How [FileListMode.tree] shows folders.
-enum FolderView {
-  expanded('全部展开'),
-  browse('逐层浏览');
+/// A set of enum values (empty by default), stored by name.
+_Pref<Set<T>> _enumSet<T extends Enum>(String key, List<T> values) =>
+    _Pref(key, const {}, (p, k) {
+      final names = p.getStringList(k)?.toSet();
+      return names == null
+          ? null
+          : {...values.where((v) => names.contains(v.name))};
+    }, (p, k, v) => p.setStringList(k, [for (final e in v) e.name]));
 
-  const FolderView(this.label);
-  final String label;
-}
-
-/// How the timeline's year cards are laid out.
-enum TimelineCard {
-  poster('海报'),
-  classic('经典');
-
-  const TimelineCard(this.label);
-  final String label;
-}
-
-/// Layout of the cover wall on the timeline's year cards.
-enum WallStyle {
-  tilted('倾斜'),
-  flat('平铺');
-
-  const WallStyle(this.label);
-  final String label;
-}
-
-/// Spacing between the covers of the timeline's cover walls.
-enum WallGap {
-  spaced('留缝'),
-  seamless('铺满');
-
-  const WallGap(this.label);
-  final String label;
-}
-
-/// How the timeline's cover walls move.
-enum WallMotion {
-  hover('悬停时滚动'),
-  follow('跟随鼠标'),
-  always('始终滚动'),
-  off('静止');
-
-  const WallMotion(this.label);
-  final String label;
-}
-
-/// Navigation destinations the user can hide.
-enum HideablePage {
-  timeline('时间线'),
-  stats('统计'),
-  health('健康检查');
-
-  const HideablePage(this.label);
-  final String label;
-}
-
-/// User preferences: appearance, display, scanning and health checks.
+/// User preferences. Each settings page has its own group of preferences,
+/// which its "恢复默认" restores.
 ///
 /// Set-valued options are replaced (never mutated) on change so memoized
 /// views can key on them.
 class SettingsController extends ChangeNotifier {
   late final SharedPreferences prefs;
-  ThemeMode themeMode = ThemeMode.system;
-  bool useSystemColor = true;
+
+  // ---- 外观 ----
+  final _themeMode = _Pref<ThemeMode>(
+    'themeMode',
+    ThemeMode.system,
+    (p, k) => ThemeMode.values.elementAtOrNull(p.getInt(k) ?? -1),
+    (p, k, v) => p.setInt(k, v.index),
+  );
+  final _useSystemColor = _bool('useSystemColor', true);
 
   /// Seed used when the system accent color is off (or unavailable).
-  Color seedColor = defaultSeed;
+  final _seedColor = _Pref<Color>(
+    'seedColor',
+    defaultSeed,
+    (p, k) => switch (p.getInt(k)) {
+      final v? => Color(v),
+      null => null,
+    },
+    (p, k, v) => p.setInt(k, v.toARGB32()),
+  );
 
   /// UI font family; null = the platform font ([platformFont]).
-  String? fontFamily;
+  final _fontFamily = _Pref<String?>(
+    'fontFamily',
+    null,
+    (p, k) => p.getString(k),
+    (p, k, v) => v == null ? p.remove(k) : p.setString(k, v),
+  );
+  final _hiddenPages = _enumSet('hiddenPages', HideablePage.values);
 
-  bool scanOnStartup = true;
+  // ---- 专辑浏览 ----
+  final _cardSize = _enum('cardSize', CardSize.values, CardSize.medium);
+  final _hiddenCardFields = _enumSet('hiddenCardFields', CardField.values);
+  final _dateStyle = _enum('dateStyle', DateStyle.values, DateStyle.iso);
 
-  /// Online databases "在线补全" skips.
-  Set<OnlineSource> disabledOnlineSources = const {};
+  /// Fields the library search skips.
+  final _hiddenSearchFields = _enumSet(
+    'hiddenSearchFields',
+    SearchField.values,
+  );
 
+  /// Restore the library filters on the next launch.
+  final _rememberFilters = _bool('rememberFilters', false);
+  final _fileListMode = _enum(
+    'fileListMode',
+    FileListMode.values,
+    FileListMode.flat,
+  );
+  final _folderView = _enum(
+    'folderView',
+    FolderView.values,
+    FolderView.expanded,
+  );
+
+  // ---- 时间线 ----
+  final _timelineCard = _enum(
+    'timelineCard',
+    TimelineCard.values,
+    TimelineCard.poster,
+  );
+
+  /// Years grouped under a banner per decade.
+  final _timelineDecades = _bool('timelineDecades', true);
+  final _wallStyle = _enum('wallStyle', WallStyle.values, WallStyle.tilted);
+  final _wallGap = _enum('wallGap', WallGap.values, WallGap.spaced);
+  final _wallMotion = _enum('wallMotion', WallMotion.values, WallMotion.hover);
+
+  /// Hovered cover walls zoom in slightly (and straighten when tilted).
+  final _wallZoom = _bool('wallZoom', true);
+
+  // ---- 位置与扫描 ----
+  final _scanOnStartup = _bool('scanOnStartup', true);
+
+  // ---- 在线补全 ----
+  final _disabledOnlineSources = _enumSet(
+    'disabledOnlineSources',
+    OnlineSource.values,
+  );
+
+  // ---- 健康检查 ----
   /// Issue kinds the user turned off.
-  Set<IssueKind> hiddenIssues = const {};
+  final _hiddenIssues = _enumSet('hiddenIssues', IssueKind.values);
 
   /// Converting a cue sheet's encoding overwrites it without keeping a
   /// `*.cue.bak` copy.
-  bool overwriteCue = false;
+  final _overwriteCue = _bool('overwriteCue', false);
 
-  CardSize cardSize = CardSize.medium;
-  Set<CardField> hiddenCardFields = const {};
-
-  /// Fields the library search skips.
-  Set<SearchField> hiddenSearchFields = const {};
-  DateStyle dateStyle = DateStyle.iso;
-  FileListMode fileListMode = FileListMode.flat;
-  FolderView folderView = FolderView.expanded;
-  WallStyle wallStyle = WallStyle.tilted;
-  WallMotion wallMotion = WallMotion.hover;
-  WallGap wallGap = WallGap.spaced;
-  TimelineCard timelineCard = TimelineCard.poster;
-
-  /// Hovered cover walls zoom in slightly (and straighten when tilted).
-  bool wallZoom = true;
-
-  /// Timeline years grouped under a banner per decade.
-  bool timelineDecades = true;
-  Set<HideablePage> hiddenPages = const {};
-
-  /// Restore the library filters on the next launch.
-  bool rememberFilters = false;
-
+  // ---- 抓轨日志 ----
   /// Show the OPS log score and every deduction on the rip log page. The
   /// checks themselves run either way.
-  bool showLogScore = false;
+  final _showLogScore = _bool('showLogScore', false);
 
-  Set<T> _loadSet<T extends Enum>(String key, List<T> values) {
-    final names = prefs.getStringList(key) ?? const [];
-    return {
-      for (final v in values)
-        if (names.contains(v.name)) v,
-    };
-  }
-
-  T _loadEnum<T extends Enum>(String key, List<T> values, T fallback) =>
-      values.where((v) => v.name == prefs.getString(key)).firstOrNull ??
-      fallback;
-
-  /// Returns [set] with [v] added or removed, persisted under [key].
-  Set<T> _toggle<T extends Enum>(String key, Set<T> set, T v, bool include) {
-    final next = include ? {...set, v} : ({...set}..remove(v));
-    prefs.setStringList(key, [for (final e in next) e.name]);
-    return next;
-  }
+  // Per page, for "恢复默认".
+  late final _appearance = <_Pref<Object?>>[
+    _themeMode,
+    _useSystemColor,
+    _seedColor,
+    _fontFamily,
+    _hiddenPages,
+  ];
+  late final _browsing = <_Pref<Object?>>[
+    _cardSize,
+    _hiddenCardFields,
+    _dateStyle,
+    _hiddenSearchFields,
+    _rememberFilters,
+    _fileListMode,
+    _folderView,
+  ];
+  late final _timeline = <_Pref<Object?>>[
+    _timelineCard,
+    _timelineDecades,
+    _wallStyle,
+    _wallGap,
+    _wallMotion,
+    _wallZoom,
+  ];
+  late final _scanning = <_Pref<Object?>>[_scanOnStartup];
+  late final _online = <_Pref<Object?>>[_disabledOnlineSources];
+  late final _health = <_Pref<Object?>>[_hiddenIssues, _overwriteCue];
+  late final _logDisplay = <_Pref<Object?>>[_showLogScore];
 
   Future<void> load() async {
     prefs = await SharedPreferences.getInstance();
-    _read();
-  }
-
-  /// Every value falls back to its default when its key is absent.
-  void _read() {
-    themeMode =
-        ThemeMode.values[prefs.getInt('themeMode') ?? ThemeMode.system.index];
-    useSystemColor = prefs.getBool('useSystemColor') ?? true;
-    seedColor = Color(prefs.getInt('seedColor') ?? defaultSeed.toARGB32());
-    fontFamily = prefs.getString('fontFamily');
-    scanOnStartup = prefs.getBool('scanOnStartup') ?? true;
-    disabledOnlineSources = _loadSet(
-      'disabledOnlineSources',
-      OnlineSource.values,
-    );
-    hiddenIssues = _loadSet('hiddenIssues', IssueKind.values);
-    overwriteCue = prefs.getBool('overwriteCue') ?? false;
-    cardSize = _loadEnum('cardSize', CardSize.values, CardSize.medium);
-    hiddenCardFields = _loadSet('hiddenCardFields', CardField.values);
-    hiddenSearchFields = _loadSet('hiddenSearchFields', SearchField.values);
-    dateStyle = _loadEnum('dateStyle', DateStyle.values, DateStyle.iso);
-    fileListMode = _loadEnum(
-      'fileListMode',
-      FileListMode.values,
-      FileListMode.flat,
-    );
-    folderView = _loadEnum(
-      'folderView',
-      FolderView.values,
-      FolderView.expanded,
-    );
-    wallStyle = _loadEnum('wallStyle', WallStyle.values, WallStyle.tilted);
-    wallMotion = _loadEnum('wallMotion', WallMotion.values, WallMotion.hover);
-    wallGap = _loadEnum('wallGap', WallGap.values, WallGap.spaced);
-    timelineCard = _loadEnum(
-      'timelineCard',
-      TimelineCard.values,
-      TimelineCard.poster,
-    );
-    wallZoom = prefs.getBool('wallZoom') ?? true;
-    timelineDecades = prefs.getBool('timelineDecades') ?? true;
-    hiddenPages = _loadSet('hiddenPages', HideablePage.values);
-    rememberFilters = prefs.getBool('rememberFilters') ?? false;
-    showLogScore = prefs.getBool('showLogScore') ?? false;
-  }
-
-  /// Restores the preferences stored under [keys] to their defaults.
-  Future<void> _reset(List<String> keys) async {
-    for (final k in keys) {
-      await prefs.remove(k);
+    for (final group in [
+      _appearance,
+      _browsing,
+      _timeline,
+      _scanning,
+      _online,
+      _health,
+      _logDisplay,
+    ]) {
+      for (final p in group) {
+        p.load(prefs);
+      }
     }
-    _read();
+  }
+
+  Future<void> _reset(List<_Pref<Object?>> group) async {
+    for (final p in group) {
+      await prefs.remove(p.key);
+      p.load(prefs);
+    }
     notifyListeners();
   }
 
-  // One per settings page ("恢复默认" restores that page).
-  Future<void> resetAppearance() => _reset([
-    'themeMode',
-    'useSystemColor',
-    'seedColor',
-    'fontFamily',
-    'hiddenPages',
-  ]);
-  Future<void> resetDisplay() => _reset([
-    'cardSize',
-    'hiddenCardFields',
-    'dateStyle',
-    'fileListMode',
-    'folderView',
-    'rememberFilters',
-    'hiddenSearchFields',
-    'wallStyle',
-    'wallMotion',
-    'wallGap',
-    'timelineCard',
-    'wallZoom',
-    'timelineDecades',
-  ]);
-  Future<void> resetHealthChecks() => _reset(['hiddenIssues', 'overwriteCue']);
-  Future<void> resetScanning() =>
-      _reset(['scanOnStartup', 'disabledOnlineSources']);
-  Future<void> resetLogDisplay() => _reset(['showLogScore']);
+  Future<void> resetAppearance() => _reset(_appearance);
+  Future<void> resetBrowsing() => _reset(_browsing);
+  Future<void> resetTimeline() => _reset(_timeline);
+  Future<void> resetScanning() => _reset(_scanning);
+  Future<void> resetOnline() => _reset(_online);
+  Future<void> resetHealthChecks() => _reset(_health);
+  Future<void> resetLogDisplay() => _reset(_logDisplay);
 
-  void setFontFamily(String? f) {
-    if (f == fontFamily) return;
-    fontFamily = f;
-    f == null ? prefs.remove('fontFamily') : prefs.setString('fontFamily', f);
+  void _set<T>(_Pref<T> pref, T v) {
+    if (v == pref.value) return;
+    pref.store(prefs, v);
     notifyListeners();
   }
 
-  void setThemeMode(ThemeMode m) {
-    if (m == themeMode) return;
-    themeMode = m;
-    prefs.setInt('themeMode', m.index);
-    notifyListeners();
+  /// Adds [item] to or removes it from a set preference.
+  void _toggle<T>(_Pref<Set<T>> pref, T item, bool include) {
+    final set = pref.value;
+    if (set.contains(item) == include) return;
+    _set(pref, include ? {...set, item} : ({...set}..remove(item)));
   }
 
-  void setUseSystemColor(bool v) {
-    if (v == useSystemColor) return;
-    useSystemColor = v;
-    prefs.setBool('useSystemColor', v);
-    notifyListeners();
-  }
+  // ---- 外观 ----
+  ThemeMode get themeMode => _themeMode.value;
+  void setThemeMode(ThemeMode m) => _set(_themeMode, m);
 
-  void setSeedColor(Color c) {
-    if (c == seedColor) return;
-    seedColor = c;
-    prefs.setInt('seedColor', c.toARGB32());
-    notifyListeners();
-  }
+  bool get useSystemColor => _useSystemColor.value;
+  void setUseSystemColor(bool v) => _set(_useSystemColor, v);
 
-  void setScanOnStartup(bool v) {
-    if (v == scanOnStartup) return;
-    scanOnStartup = v;
-    prefs.setBool('scanOnStartup', v);
-    notifyListeners();
-  }
+  Color get seedColor => _seedColor.value;
+  void setSeedColor(Color c) => _set(_seedColor, c);
 
-  void setIssueEnabled(IssueKind k, bool enabled) {
-    if (enabled != hiddenIssues.contains(k)) return;
-    hiddenIssues = _toggle('hiddenIssues', hiddenIssues, k, !enabled);
-    notifyListeners();
-  }
+  String? get fontFamily => _fontFamily.value;
+  void setFontFamily(String? f) => _set(_fontFamily, f);
+
+  Set<HideablePage> get hiddenPages => _hiddenPages.value;
+  void setPageShown(HideablePage p, bool shown) =>
+      _toggle(_hiddenPages, p, !shown);
+
+  // ---- 专辑浏览 ----
+  CardSize get cardSize => _cardSize.value;
+  void setCardSize(CardSize s) => _set(_cardSize, s);
+
+  bool showsOnCard(CardField f) => !_hiddenCardFields.value.contains(f);
+  void setCardField(CardField f, bool shown) =>
+      _toggle(_hiddenCardFields, f, !shown);
+
+  DateStyle get dateStyle => _dateStyle.value;
+  void setDateStyle(DateStyle s) => _set(_dateStyle, s);
+
+  /// A release date in the chosen style.
+  String? formatDate(String? date) => dateStyle.format(date);
+
+  Set<SearchField> get hiddenSearchFields => _hiddenSearchFields.value;
+  bool searches(SearchField f) => !hiddenSearchFields.contains(f);
+  void setSearchField(SearchField f, bool searched) =>
+      _toggle(_hiddenSearchFields, f, !searched);
+
+  bool get rememberFilters => _rememberFilters.value;
+  void setRememberFilters(bool v) => _set(_rememberFilters, v);
+
+  FileListMode get fileListMode => _fileListMode.value;
+  void setFileListMode(FileListMode m) => _set(_fileListMode, m);
+
+  FolderView get folderView => _folderView.value;
+  void setFolderView(FolderView v) => _set(_folderView, v);
+
+  // ---- 时间线 ----
+  TimelineCard get timelineCard => _timelineCard.value;
+  void setTimelineCard(TimelineCard c) => _set(_timelineCard, c);
+
+  bool get timelineDecades => _timelineDecades.value;
+  void setTimelineDecades(bool v) => _set(_timelineDecades, v);
+
+  WallStyle get wallStyle => _wallStyle.value;
+  void setWallStyle(WallStyle s) => _set(_wallStyle, s);
+
+  WallGap get wallGap => _wallGap.value;
+  void setWallGap(WallGap g) => _set(_wallGap, g);
+
+  WallMotion get wallMotion => _wallMotion.value;
+  void setWallMotion(WallMotion m) => _set(_wallMotion, m);
+
+  bool get wallZoom => _wallZoom.value;
+  void setWallZoom(bool v) => _set(_wallZoom, v);
+
+  // ---- 位置与扫描 ----
+  bool get scanOnStartup => _scanOnStartup.value;
+  void setScanOnStartup(bool v) => _set(_scanOnStartup, v);
+
+  // ---- 在线补全 ----
+  bool usesOnlineSource(OnlineSource s) =>
+      !_disabledOnlineSources.value.contains(s);
+  List<OnlineSource> get onlineSources =>
+      OnlineSource.values.where(usesOnlineSource).toList();
+  void setOnlineSource(OnlineSource s, bool enabled) =>
+      _toggle(_disabledOnlineSources, s, !enabled);
+
+  // ---- 健康检查 ----
+  Set<IssueKind> get hiddenIssues => _hiddenIssues.value;
+  void setIssueEnabled(IssueKind k, bool enabled) =>
+      _toggle(_hiddenIssues, k, !enabled);
+
+  /// The album's issues minus the kinds turned off.
+  List<Issue> issuesOf(AlbumSummary a) => hiddenIssues.isEmpty
+      ? a.issues
+      : a.issues.where((i) => !hiddenIssues.contains(i.kind)).toList();
+
+  bool get overwriteCue => _overwriteCue.value;
+  void setOverwriteCue(bool v) => _set(_overwriteCue, v);
 
   /// A cue sheet that converting rewrites: not UTF-8, or (while that check
   /// is on) UTF-8 without a BOM.
@@ -339,147 +315,9 @@ class SettingsController extends ChangeNotifier {
       !c.isUtf8 ||
       (c.missingBom && !hiddenIssues.contains(IssueKind.cueMissingBom));
 
-  void setOverwriteCue(bool v) {
-    if (v == overwriteCue) return;
-    overwriteCue = v;
-    prefs.setBool('overwriteCue', v);
-    notifyListeners();
-  }
-
-  /// The album's issues minus the kinds turned off.
-  List<Issue> issuesOf(AlbumSummary a) => hiddenIssues.isEmpty
-      ? a.issues
-      : a.issues.where((i) => !hiddenIssues.contains(i.kind)).toList();
-
-  void setCardSize(CardSize s) {
-    if (s == cardSize) return;
-    cardSize = s;
-    prefs.setString('cardSize', s.name);
-    notifyListeners();
-  }
-
-  bool showsOnCard(CardField f) => !hiddenCardFields.contains(f);
-
-  void setCardField(CardField f, bool shown) {
-    if (shown == showsOnCard(f)) return;
-    hiddenCardFields = _toggle('hiddenCardFields', hiddenCardFields, f, !shown);
-    notifyListeners();
-  }
-
-  bool searches(SearchField f) => !hiddenSearchFields.contains(f);
-
-  void setSearchField(SearchField f, bool searched) {
-    if (searched == searches(f)) return;
-    hiddenSearchFields = _toggle(
-      'hiddenSearchFields',
-      hiddenSearchFields,
-      f,
-      !searched,
-    );
-    notifyListeners();
-  }
-
-  List<OnlineSource> get onlineSources => [
-    for (final s in OnlineSource.values)
-      if (!disabledOnlineSources.contains(s)) s,
-  ];
-
-  void setOnlineSource(OnlineSource s, bool enabled) {
-    if (enabled != !disabledOnlineSources.contains(s)) return;
-    disabledOnlineSources = _toggle(
-      'disabledOnlineSources',
-      disabledOnlineSources,
-      s,
-      !enabled,
-    );
-    notifyListeners();
-  }
-
-  void setDateStyle(DateStyle s) {
-    if (s == dateStyle) return;
-    dateStyle = s;
-    prefs.setString('dateStyle', s.name);
-    notifyListeners();
-  }
-
-  /// A release date in the chosen style.
-  String? formatDate(String? date) => dateStyle.format(date);
-
-  void setFileListMode(FileListMode m) {
-    if (m == fileListMode) return;
-    fileListMode = m;
-    prefs.setString('fileListMode', m.name);
-    notifyListeners();
-  }
-
-  void setFolderView(FolderView v) {
-    if (v == folderView) return;
-    folderView = v;
-    prefs.setString('folderView', v.name);
-    notifyListeners();
-  }
-
-  void setWallStyle(WallStyle s) {
-    if (s == wallStyle) return;
-    wallStyle = s;
-    prefs.setString('wallStyle', s.name);
-    notifyListeners();
-  }
-
-  void setWallMotion(WallMotion m) {
-    if (m == wallMotion) return;
-    wallMotion = m;
-    prefs.setString('wallMotion', m.name);
-    notifyListeners();
-  }
-
-  void setWallGap(WallGap g) {
-    if (g == wallGap) return;
-    wallGap = g;
-    prefs.setString('wallGap', g.name);
-    notifyListeners();
-  }
-
-  void setTimelineCard(TimelineCard c) {
-    if (c == timelineCard) return;
-    timelineCard = c;
-    prefs.setString('timelineCard', c.name);
-    notifyListeners();
-  }
-
-  void setWallZoom(bool v) {
-    if (v == wallZoom) return;
-    wallZoom = v;
-    prefs.setBool('wallZoom', v);
-    notifyListeners();
-  }
-
-  void setTimelineDecades(bool v) {
-    if (v == timelineDecades) return;
-    timelineDecades = v;
-    prefs.setBool('timelineDecades', v);
-    notifyListeners();
-  }
-
-  void setPageShown(HideablePage p, bool shown) {
-    if (shown != hiddenPages.contains(p)) return;
-    hiddenPages = _toggle('hiddenPages', hiddenPages, p, !shown);
-    notifyListeners();
-  }
-
-  void setRememberFilters(bool v) {
-    if (v == rememberFilters) return;
-    rememberFilters = v;
-    prefs.setBool('rememberFilters', v);
-    notifyListeners();
-  }
-
-  void setShowLogScore(bool v) {
-    if (v == showLogScore) return;
-    showLogScore = v;
-    prefs.setBool('showLogScore', v);
-    notifyListeners();
-  }
+  // ---- 抓轨日志 ----
+  bool get showLogScore => _showLogScore.value;
+  void setShowLogScore(bool v) => _set(_showLogScore, v);
 }
 
 final settings = SettingsController();

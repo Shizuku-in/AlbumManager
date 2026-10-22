@@ -146,6 +146,93 @@ Widget settingsChips(List<Widget> chips) => Padding(
   ),
 );
 
+/// A tile choosing one of [values], as choice chips under its title.
+class SettingsChoice<T> extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String? subtitle;
+  final List<T> values;
+  final T selected;
+  final String Function(T value) label;
+  final ValueChanged<T> onSelected;
+  const SettingsChoice({
+    super.key,
+    required this.icon,
+    required this.title,
+    this.subtitle,
+    required this.values,
+    required this.selected,
+    required this.label,
+    required this.onSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Icon(icon),
+      title: Text(title),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (subtitle != null) Text(subtitle!),
+          settingsChips([
+            for (final v in values)
+              ChoiceChip(
+                label: Text(label(v)),
+                selected: v == selected,
+                onSelected: (_) => onSelected(v),
+              ),
+          ]),
+        ],
+      ),
+    );
+  }
+}
+
+/// A tile turning each of [values] on or off, as filter chips under its
+/// title.
+class SettingsMultiChoice<T> extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String? subtitle;
+  final List<T> values;
+  final bool Function(T value) isOn;
+  final String Function(T value) label;
+  final void Function(T value, bool on) onChanged;
+  const SettingsMultiChoice({
+    super.key,
+    required this.icon,
+    required this.title,
+    this.subtitle,
+    required this.values,
+    required this.isOn,
+    required this.label,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return ListTile(
+      leading: Icon(icon),
+      title: Text(title),
+      subtitle: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (subtitle != null) Text(subtitle!),
+          settingsChips([
+            for (final v in values)
+              FilterChip(
+                label: Text(label(v)),
+                selected: isOn(v),
+                onSelected: (on) => onChanged(v, on),
+              ),
+          ]),
+        ],
+      ),
+    );
+  }
+}
+
 /// A second-level settings page: rebuilt when the library or settings change.
 ///
 /// With [onReset], the top app bar gets a "恢复默认" action (the same on

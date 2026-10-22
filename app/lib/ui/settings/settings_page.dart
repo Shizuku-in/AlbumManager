@@ -1,18 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_svg/flutter_svg.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import 'package:album_manager/src/rust/third_party/album_model.dart';
 import 'package:album_manager/state/library_controller.dart';
 import 'package:album_manager/state/settings_controller.dart';
 import 'package:album_manager/ui/common/app_page.dart';
+import 'package:album_manager/ui/common/svg_icon.dart';
 import 'package:album_manager/ui/settings/appearance_settings_page.dart';
-import 'package:album_manager/ui/settings/display_settings_page.dart';
+import 'package:album_manager/ui/settings/browsing_settings_page.dart';
 import 'package:album_manager/ui/settings/health_settings_page.dart';
 import 'package:album_manager/ui/settings/library_settings_page.dart';
+import 'package:album_manager/ui/settings/online_settings_page.dart';
 import 'package:album_manager/ui/settings/rip_log_settings_page.dart';
 import 'package:album_manager/ui/settings/rules_page.dart';
 import 'package:album_manager/ui/settings/settings_widgets.dart';
+import 'package:album_manager/ui/settings/timeline_settings_page.dart';
+import 'package:album_manager/util/labels.dart';
 import 'package:album_manager/util/system.dart';
 
 const _repoUrl = 'https://github.com/Shizuku-in/AlbumManager';
@@ -64,6 +67,21 @@ class SettingsPage extends StatelessWidget {
                       const RulesPage(),
                     ),
                     category(
+                      Icons.travel_explore,
+                      '在线补全',
+                      settings.onlineSources.isEmpty
+                          ? '未启用数据源'
+                          : settings.onlineSources
+                                .map((s) => s.label)
+                                .join('、'),
+                      const OnlineSettingsPage(),
+                    ),
+                  ],
+                ),
+                SettingsGroup(
+                  title: '检查',
+                  children: [
+                    category(
                       Icons.fact_check_outlined,
                       '抓轨日志',
                       settings.showLogScore
@@ -90,9 +108,20 @@ class SettingsPage extends StatelessWidget {
                     ),
                     category(
                       Icons.grid_view_outlined,
-                      '专辑显示',
-                      '${settings.cardSize.label}卡片 · 日期 ${settings.dateStyle.label}',
-                      const DisplaySettingsPage(),
+                      '专辑浏览',
+                      '${settings.cardSize.label}卡片 · 日期 ${settings.dateStyle.label} · 搜索 ${SearchField.values.where(settings.searches).length} 个字段',
+                      const BrowsingSettingsPage(),
+                    ),
+                    category(
+                      Icons.view_timeline_outlined,
+                      '时间线',
+                      [
+                        settings.timelineCard.label,
+                        '${settings.wallStyle.label}封面墙',
+                        settings.wallMotion.label,
+                        if (settings.timelineDecades) '按年代分组',
+                      ].join(' · '),
+                      const TimelineSettingsPage(),
                     ),
                   ],
                 ),
@@ -109,20 +138,7 @@ class SettingsPage extends StatelessWidget {
                       ),
                     ),
                     ListTile(
-                      leading: Builder(
-                        builder: (context) {
-                          final icon = IconTheme.of(context);
-                          return SvgPicture.asset(
-                            'assets/icons/github.svg',
-                            width: icon.size,
-                            height: icon.size,
-                            colorFilter: ColorFilter.mode(
-                              icon.color!,
-                              BlendMode.srcIn,
-                            ),
-                          );
-                        },
-                      ),
+                      leading: const SvgIcon('assets/icons/github.svg'),
                       title: const Text('GitHub'),
                       subtitle: const Text(_repoUrl),
                       trailing: const Icon(Icons.open_in_new),

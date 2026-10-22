@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:album_manager/src/rust/api/library.dart' as api;
 import 'package:album_manager/src/rust/third_party/album_model.dart';
 import 'package:album_manager/state/settings_controller.dart';
+import 'package:album_manager/ui/common/svg_icon.dart';
 import 'package:album_manager/util/labels.dart';
 import 'package:album_manager/util/system.dart';
 
@@ -18,6 +19,14 @@ Future<AlbumOverride?> showOnlineLookupDialog(
     builder: (_) => _OnlineLookupDialog(album),
   );
 }
+
+/// Icon of a result's source; Discogs and FreeDB data comes through the
+/// CueTools database.
+String _sourceIcon(String source) => switch (source) {
+  'MusicBrainz' => OnlineSource.musicBrainz.iconAsset,
+  'Bangumi' => OnlineSource.bangumi.iconAsset,
+  _ => OnlineSource.ctdb.iconAsset,
+};
 
 extension on MatchKind {
   String get label => switch (this) {
@@ -156,7 +165,7 @@ class _OnlineLookupDialogState extends State<_OnlineLookupDialog> {
     if (_sources.isEmpty) {
       return const _Message(
         icon: Icon(Icons.cloud_off, size: 40),
-        text: '没有启用任何数据源（设置 → 位置与扫描 → 在线补全）',
+        text: '没有启用任何数据源（设置 → 在线补全）',
       );
     }
     return FutureBuilder(
@@ -325,9 +334,20 @@ class _ResultTile extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(
-                '${m.source} · ${m.matchedBy.label}',
-                style: t.textTheme.labelMedium,
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                spacing: 4,
+                children: [
+                  SvgIcon(
+                    _sourceIcon(m.source),
+                    size: 14,
+                    color: t.colorScheme.onSurfaceVariant,
+                  ),
+                  Text(
+                    '${m.source} · ${m.matchedBy.label}',
+                    style: t.textTheme.labelMedium,
+                  ),
+                ],
               ),
               if (m.trackCount > 0)
                 Text(
