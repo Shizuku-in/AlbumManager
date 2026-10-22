@@ -5,6 +5,7 @@ import 'package:album_manager/src/rust/third_party/album_model.dart';
 import 'package:album_manager/state/favorites.dart';
 import 'package:album_manager/state/library_controller.dart';
 import 'package:album_manager/state/settings_controller.dart';
+import 'package:album_manager/theme/app_colors.dart';
 import 'package:album_manager/theme/app_theme.dart';
 import 'package:album_manager/ui/album/cue_fix_dialog.dart';
 import 'package:album_manager/ui/album/edit_album_dialog.dart';
@@ -198,8 +199,8 @@ class _AlbumPageState extends State<AlbumPage> with TickerProviderStateMixin {
                       tooltip: starred ? '取消收藏' : '收藏',
                       isSelected: starred,
                       onPressed: () => favorites.toggle(_s),
-                      icon: const Icon(Icons.favorite_border),
-                      selectedIcon: const Icon(Icons.favorite),
+                      icon: const Icon(Icons.star_outline),
+                      selectedIcon: const Icon(Icons.star, color: favoriteStar),
                     );
                   },
                 ),

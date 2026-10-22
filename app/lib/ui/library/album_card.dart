@@ -6,6 +6,7 @@ import 'package:flutter/rendering.dart';
 import 'package:album_manager/src/rust/third_party/album_model.dart';
 import 'package:album_manager/state/favorites.dart';
 import 'package:album_manager/state/settings_controller.dart';
+import 'package:album_manager/theme/app_colors.dart';
 import 'package:album_manager/ui/common/cover_image.dart';
 import 'package:album_manager/ui/common/tone_label.dart';
 import 'package:album_manager/util/format.dart';
@@ -45,13 +46,13 @@ class _AlbumContextMenuState extends State<AlbumContextMenu> {
         ),
         if (favorites.contains(a))
           MenuItemButton(
-            leadingIcon: const Icon(Icons.favorite),
+            leadingIcon: const Icon(Icons.star, color: favoriteStar),
             onPressed: () => favorites.toggle(a),
             child: const Text('取消收藏'),
           )
         else
           MenuItemButton(
-            leadingIcon: const Icon(Icons.favorite_border),
+            leadingIcon: const Icon(Icons.star_outline),
             onPressed: () => favorites.toggle(a),
             child: const Text('收藏'),
           ),
@@ -115,6 +116,8 @@ class AlbumCard extends StatelessWidget {
         album.source == AlbumSource.cdRip &&
         album.ripStatus != RipStatus.noLog;
     final showSource = settings.showsOnCard(CardField.source);
+    final showFavorite =
+        settings.showsOnCard(CardField.favorite) && favorites.contains(album);
     final showQuality =
         settings.showsOnCard(CardField.quality) &&
         (album.quality == AudioQuality.hiRes ||
@@ -150,7 +153,7 @@ class AlbumCard extends StatelessWidget {
                     radius: 0,
                     cacheWidth: decodeWidth,
                   ),
-                  if (favorites.contains(album))
+                  if (showFavorite)
                     Positioned(
                       top: 8,
                       right: 8,
@@ -162,12 +165,12 @@ class AlbumCard extends StatelessWidget {
                                 .withValues(alpha: 0.9),
                             shape: BoxShape.circle,
                           ),
-                          child: Padding(
-                            padding: const EdgeInsets.all(5),
+                          child: const Padding(
+                            padding: EdgeInsets.all(5),
                             child: Icon(
-                              Icons.favorite,
+                              Icons.star,
                               size: 16,
-                              color: t.colorScheme.primary,
+                              color: favoriteStar,
                             ),
                           ),
                         ),
@@ -309,11 +312,7 @@ class AlbumTile extends StatelessWidget {
             child: favorites.contains(album)
                 ? Tooltip(
                     message: '已收藏',
-                    child: Icon(
-                      Icons.favorite,
-                      size: 20,
-                      color: t.colorScheme.primary,
-                    ),
+                    child: Icon(Icons.star, size: 20, color: favoriteStar),
                   )
                 : null,
           ),

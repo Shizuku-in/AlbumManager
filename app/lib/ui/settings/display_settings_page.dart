@@ -11,6 +11,7 @@ IconData _fieldIcon(CardField f) => switch (f) {
   CardField.catalog => Icons.tag,
   CardField.event => Icons.storefront_outlined,
   CardField.ripStatus => Icons.verified_outlined,
+  CardField.favorite => Icons.star_outline,
 };
 
 /// How albums are shown in the library.

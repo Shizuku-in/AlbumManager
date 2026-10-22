@@ -23,7 +23,8 @@ enum CardField {
   date('日期'),
   catalog('品番'),
   event('展会'),
-  ripStatus('抓轨状态');
+  ripStatus('抓轨状态'),
+  favorite('收藏');
 
   const CardField(this.label);
   final String label;

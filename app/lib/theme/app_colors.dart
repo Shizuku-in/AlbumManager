@@ -33,6 +33,9 @@ class CustomColor {
       );
 }
 
+/// Favorite star: yellow in every theme, unlike the cover-derived scheme.
+const favoriteStar = Color(0xFFFFC107);
+
 /// Semantic colors not covered by ColorScheme (success / warning, media sources).
 @immutable
 class AppColors extends ThemeExtension<AppColors> {
