@@ -131,6 +131,39 @@ class SettingsController extends ChangeNotifier {
     OnlineSource.values,
   );
 
+  /// Skip the result list when the best result is the very same disc.
+  final _openExactMatch = _bool('openExactMatch', false);
+  final _preferChineseTitle = _bool('preferChineseTitle', false);
+
+  /// Values not checked by default when they differ.
+  final _unpreselectedFields = _enumSet(
+    'unpreselectedFields',
+    OnlineField.values,
+  );
+  final _coverDownload = _enum(
+    'coverDownload',
+    CoverDownload.values,
+    CoverDownload.missing,
+  );
+  final _coverFileName = _enum(
+    'coverFileName',
+    CoverFileName.values,
+    CoverFileName.cover,
+  );
+
+  /// `http://host:port` or `socks5://host:port`; null = direct.
+  final _onlineProxy = _Pref<String?>(
+    'onlineProxy',
+    null,
+    (p, k) => p.getString(k),
+    (p, k, v) => v == null ? p.remove(k) : p.setString(k, v),
+  );
+  final _onlineTimeout = _enum(
+    'onlineTimeout',
+    OnlineTimeout.values,
+    OnlineTimeout.normal,
+  );
+
   // ---- 健康检查 ----
   /// Issue kinds the user turned off.
   final _hiddenIssues = _enumSet('hiddenIssues', IssueKind.values);
@@ -170,7 +203,16 @@ class SettingsController extends ChangeNotifier {
     _wallZoom,
   ];
   late final _scanning = <_Pref<Object?>>[_scanOnStartup];
-  late final _online = <_Pref<Object?>>[_disabledOnlineSources];
+  late final _online = <_Pref<Object?>>[
+    _disabledOnlineSources,
+    _openExactMatch,
+    _preferChineseTitle,
+    _unpreselectedFields,
+    _coverDownload,
+    _coverFileName,
+    _onlineProxy,
+    _onlineTimeout,
+  ];
   late final _health = <_Pref<Object?>>[_hiddenIssues, _overwriteCue];
   late final _logDisplay = <_Pref<Object?>>[_showLogScore];
 
@@ -295,6 +337,36 @@ class SettingsController extends ChangeNotifier {
       OnlineSource.values.where(usesOnlineSource).toList();
   void setOnlineSource(OnlineSource s, bool enabled) =>
       _toggle(_disabledOnlineSources, s, !enabled);
+
+  bool get openExactMatch => _openExactMatch.value;
+  void setOpenExactMatch(bool v) => _set(_openExactMatch, v);
+
+  bool get preferChineseTitle => _preferChineseTitle.value;
+  void setPreferChineseTitle(bool v) => _set(_preferChineseTitle, v);
+
+  bool preselects(OnlineField f) => !_unpreselectedFields.value.contains(f);
+  void setPreselected(OnlineField f, bool on) =>
+      _toggle(_unpreselectedFields, f, !on);
+
+  CoverDownload get coverDownload => _coverDownload.value;
+  void setCoverDownload(CoverDownload c) => _set(_coverDownload, c);
+
+  CoverFileName get coverFileName => _coverFileName.value;
+  void setCoverFileName(CoverFileName n) => _set(_coverFileName, n);
+
+  String? get onlineProxy => _onlineProxy.value;
+  void setOnlineProxy(String? p) =>
+      _set(_onlineProxy, p == null || p.trim().isEmpty ? null : p.trim());
+
+  OnlineTimeout get onlineTimeout => _onlineTimeout.value;
+  void setOnlineTimeout(OnlineTimeout t) => _set(_onlineTimeout, t);
+
+  /// What the Rust side needs for requests.
+  OnlineOptions get onlineOptions => OnlineOptions(
+    proxy: onlineProxy,
+    timeoutSecs: onlineTimeout.seconds,
+    preferChineseTitle: preferChineseTitle,
+  );
 
   // ---- 健康检查 ----
   Set<IssueKind> get hiddenIssues => _hiddenIssues.value;

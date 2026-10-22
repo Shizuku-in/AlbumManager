@@ -92,16 +92,25 @@ pub fn search_tracks(query: String, titles: bool, artists: bool) -> Vec<String> 
 
 /// Releases on the given online databases that may be this album, best
 /// matches first.
-pub fn lookup_online(id: String, sources: Vec<OnlineSource>) -> Result<OnlineResults> {
+pub fn lookup_online(
+    id: String,
+    sources: Vec<OnlineSource>,
+    options: OnlineOptions,
+) -> Result<OnlineResults> {
     let album = library::get(&id).ok_or_else(|| anyhow!("album not found"))?;
-    Ok(album_online::lookup(&album, &sources))
+    album_online::lookup(&album, &sources, &options)
 }
 
-/// Downloads a cover found online into the album folder (never overwriting a
-/// file) and returns its path.
-pub fn save_online_cover(id: String, url: String) -> Result<String> {
+/// Downloads a cover found online into the album folder as `<name>.jpg`
+/// (never overwriting a file) and returns its path.
+pub fn save_online_cover(
+    id: String,
+    url: String,
+    name: String,
+    options: OnlineOptions,
+) -> Result<String> {
     let album = library::get(&id).ok_or_else(|| anyhow!("album not found"))?;
-    let path = album_online::save_cover(&url, Path::new(&album.summary.path))?;
+    let path = album_online::save_cover(&url, Path::new(&album.summary.path), &name, &options)?;
     Ok(path.to_string_lossy().into_owned())
 }
 

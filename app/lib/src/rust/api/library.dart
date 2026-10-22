@@ -39,13 +39,26 @@ List<String> searchTracks({
 Future<OnlineResults> lookupOnline({
   required String id,
   required List<OnlineSource> sources,
-}) =>
-    RustLib.instance.api.crateApiLibraryLookupOnline(id: id, sources: sources);
+  required OnlineOptions options,
+}) => RustLib.instance.api.crateApiLibraryLookupOnline(
+  id: id,
+  sources: sources,
+  options: options,
+);
 
-/// Downloads a cover found online into the album folder (never overwriting a
-/// file) and returns its path.
-Future<String> saveOnlineCover({required String id, required String url}) =>
-    RustLib.instance.api.crateApiLibrarySaveOnlineCover(id: id, url: url);
+/// Downloads a cover found online into the album folder as `<name>.jpg`
+/// (never overwriting a file) and returns its path.
+Future<String> saveOnlineCover({
+  required String id,
+  required String url,
+  required String name,
+  required OnlineOptions options,
+}) => RustLib.instance.api.crateApiLibrarySaveOnlineCover(
+  id: id,
+  url: url,
+  name: name,
+  options: options,
+);
 
 Future<Album?> getAlbum({required String id}) =>
     RustLib.instance.api.crateApiLibraryGetAlbum(id: id);

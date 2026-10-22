@@ -2,7 +2,6 @@
 //! doujin music, with catalog numbers and event names in the infobox.
 
 use crate::musicbrainz::text;
-use crate::AGENT;
 use album_model::{MatchKind, OnlineMatch, OnlineSource};
 use anyhow::Result;
 use regex::Regex;
@@ -43,7 +42,7 @@ fn first_catalog(s: &str) -> Option<String> {
     Some(first.to_string()).filter(|s| !s.is_empty())
 }
 
-fn subject(v: &Value) -> Option<OnlineMatch> {
+fn subject(v: &Value, prefer_chinese: bool) -> Option<OnlineMatch> {
     let id = v["id"].as_i64()?;
     let images = &v["images"];
     Some(OnlineMatch {
@@ -51,7 +50,11 @@ fn subject(v: &Value) -> Option<OnlineMatch> {
         source: SOURCE.into(),
         id: id.to_string(),
         url: format!("https://bgm.tv/subject/{id}"),
-        title: text(&v["name"]).or_else(|| text(&v["name_cn"]))?,
+        title: if prefer_chinese {
+            text(&v["name_cn"]).or_else(|| text(&v["name"]))
+        } else {
+            text(&v["name"]).or_else(|| text(&v["name_cn"]))
+        }?,
         artist: info(v, &["艺术家", "社团"]),
         date: text(&v["date"]),
         catalog: info(v, &["商品编号", "品番"]).and_then(|c| first_catalog(&c)),
@@ -71,8 +74,12 @@ fn subject(v: &Value) -> Option<OnlineMatch> {
 }
 
 /// Music subjects whose name matches `keyword`, in Bangumi's order.
-pub fn search(keyword: &str) -> Result<Vec<OnlineMatch>> {
-    let v: Value = AGENT
+pub fn search(
+    agent: &ureq::Agent,
+    keyword: &str,
+    prefer_chinese: bool,
+) -> Result<Vec<OnlineMatch>> {
+    let v: Value = agent
         .post("https://api.bgm.tv/v0/search/subjects")
         .query("limit", "10")
         .send_json(json!({ "keyword": keyword, "filter": { "type": [MUSIC] } }))?
@@ -81,7 +88,7 @@ pub fn search(keyword: &str) -> Result<Vec<OnlineMatch>> {
         .as_array()
         .into_iter()
         .flatten()
-        .filter_map(subject);
+        .filter_map(|v| subject(v, prefer_chinese));
     // No relevance score: rank by position.
     Ok(found
         .enumerate()

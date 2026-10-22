@@ -130,3 +130,46 @@ enum HideablePage {
   const HideablePage(this.label);
   final String label;
 }
+
+/// Values "在线补全" can fill in, besides the cover.
+enum OnlineField {
+  title('标题'),
+  artist('艺术家'),
+  date('日期'),
+  catalog('品番'),
+  event('展会');
+
+  const OnlineField(this.label);
+  final String label;
+}
+
+/// When "在线补全" preselects downloading the cover.
+enum CoverDownload {
+  missing('专辑没有封面时'),
+  always('总是'),
+  never('不勾选');
+
+  const CoverDownload(this.label);
+  final String label;
+}
+
+/// File name (without extension) of a downloaded cover.
+enum CoverFileName {
+  cover,
+  folder,
+  front;
+
+  String get label => '$name.jpg';
+}
+
+/// How long an online request may take.
+enum OnlineTimeout {
+  short(10),
+  normal(20),
+  long(40);
+
+  const OnlineTimeout(this.seconds);
+  final int seconds;
+
+  String get label => '$seconds 秒';
+}

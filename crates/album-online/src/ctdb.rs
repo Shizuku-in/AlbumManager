@@ -2,7 +2,6 @@
 //! Discogs and FreeDB by a disc's table of contents, in one request.
 
 use crate::discid::Toc;
-use crate::AGENT;
 use album_model::{MatchKind, OnlineMatch, OnlineSource};
 use anyhow::Result;
 use regex::Regex;
@@ -95,8 +94,8 @@ fn entry(head: &str, body: &str) -> Option<OnlineMatch> {
     })
 }
 
-pub fn by_toc(toc: &Toc) -> Result<Vec<OnlineMatch>> {
-    let xml = AGENT
+pub fn by_toc(agent: &ureq::Agent, toc: &Toc) -> Result<Vec<OnlineMatch>> {
+    let xml = agent
         .get("http://db.cuetools.net/lookup2.php")
         .query("version", "3")
         .query("ctdb", "0")

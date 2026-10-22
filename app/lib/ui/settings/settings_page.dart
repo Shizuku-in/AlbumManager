@@ -69,11 +69,14 @@ class SettingsPage extends StatelessWidget {
                     category(
                       Icons.travel_explore,
                       '在线补全',
-                      settings.onlineSources.isEmpty
-                          ? '未启用数据源'
-                          : settings.onlineSources
-                                .map((s) => s.label)
-                                .join('、'),
+                      [
+                        settings.onlineSources.isEmpty
+                            ? '未启用数据源'
+                            : settings.onlineSources
+                                  .map((s) => s.label)
+                                  .join('、'),
+                        if (settings.onlineProxy != null) '使用代理',
+                      ].join(' · '),
                       const OnlineSettingsPage(),
                     ),
                   ],

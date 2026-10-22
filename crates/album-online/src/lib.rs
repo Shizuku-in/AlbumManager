@@ -8,26 +8,34 @@ pub mod discid;
 mod musicbrainz;
 
 use album_formats::riplog;
-use album_model::{Album, MatchKind, OnlineMatch, OnlineResults, OnlineSource};
+use album_model::{Album, MatchKind, OnlineMatch, OnlineOptions, OnlineResults, OnlineSource};
 use anyhow::{anyhow, bail, Result};
 use discid::Toc;
 use std::collections::HashSet;
 use std::io::Read;
 use std::path::{Path, PathBuf};
-use std::sync::LazyLock;
 use std::time::Duration;
 
-/// Shared client; the services ask clients to identify themselves.
-pub(crate) static AGENT: LazyLock<ureq::Agent> = LazyLock::new(|| {
-    ureq::AgentBuilder::new()
+/// HTTP client per the user's options; the services ask clients to identify
+/// themselves.
+fn agent(opts: &OnlineOptions) -> Result<ureq::Agent> {
+    let mut b = ureq::AgentBuilder::new()
         .user_agent(concat!(
             "AlbumManager/",
             env!("CARGO_PKG_VERSION"),
             " ( https://github.com/Shizuku-in/AlbumManager )"
         ))
-        .timeout(Duration::from_secs(20))
-        .build()
-});
+        .timeout(Duration::from_secs(opts.timeout_secs.clamp(5, 120).into()));
+    if let Some(p) = opts
+        .proxy
+        .as_deref()
+        .map(str::trim)
+        .filter(|p| !p.is_empty())
+    {
+        b = b.proxy(ureq::Proxy::new(p).map_err(|_| anyhow!("代理地址无效：{p}"))?);
+    }
+    Ok(b.build())
+}
 
 /// A short reason a request failed, for the UI.
 fn describe(e: &anyhow::Error) -> String {
@@ -80,7 +88,7 @@ fn catalog_key(s: &str) -> String {
 
 /// MusicBrainz: by disc (rip log or cue image), catalog number, then title
 /// and artist. Requests are throttled, so they run one after another.
-fn musicbrainz(album: &Album, tocs: &[Toc]) -> Result<Vec<OnlineMatch>> {
+fn musicbrainz(agent: &ureq::Agent, album: &Album, tocs: &[Toc]) -> Result<Vec<OnlineMatch>> {
     let s = &album.summary;
     let mut found = Vec::new();
     let mut error = None;
@@ -89,20 +97,20 @@ fn musicbrainz(album: &Album, tocs: &[Toc]) -> Result<Vec<OnlineMatch>> {
         Err(e) => error = Some(e),
     };
     for toc in tocs.iter().take(3) {
-        add(musicbrainz::by_toc(toc), &mut found);
+        add(musicbrainz::by_toc(agent, toc), &mut found);
     }
     if let Some(catalog) = &s.catalog {
         // "SVWC-70501~2": the first disc's number.
         let first = catalog.split(['~', '～']).next().unwrap_or(catalog).trim();
-        add(musicbrainz::by_catalog(first), &mut found);
+        add(musicbrainz::by_catalog(agent, first), &mut found);
     }
     if found.len() < 5 {
         add(
-            musicbrainz::by_title(&s.title, s.artist.as_deref()),
+            musicbrainz::by_title(agent, &s.title, s.artist.as_deref()),
             &mut found,
         );
         if s.artist.is_some() && found.len() < 3 {
-            add(musicbrainz::by_title(&s.title, None), &mut found);
+            add(musicbrainz::by_title(agent, &s.title, None), &mut found);
         }
     }
     match error {
@@ -111,10 +119,10 @@ fn musicbrainz(album: &Album, tocs: &[Toc]) -> Result<Vec<OnlineMatch>> {
     }
 }
 
-fn ctdb(tocs: &[Toc]) -> Result<Vec<OnlineMatch>> {
+fn ctdb(agent: &ureq::Agent, tocs: &[Toc]) -> Result<Vec<OnlineMatch>> {
     let mut found = Vec::new();
     for toc in tocs.iter().take(3) {
-        found.extend(ctdb::by_toc(toc)?);
+        found.extend(ctdb::by_toc(agent, toc)?);
     }
     Ok(found)
 }
@@ -122,7 +130,12 @@ fn ctdb(tocs: &[Toc]) -> Result<Vec<OnlineMatch>> {
 /// Releases on the given `sources` that may be `album`, best matches first:
 /// same disc, similar disc, same catalog number, then by title. The sources
 /// are queried in parallel; one failing doesn't fail the others.
-pub fn lookup(album: &Album, sources: &[OnlineSource]) -> OnlineResults {
+pub fn lookup(
+    album: &Album,
+    sources: &[OnlineSource],
+    opts: &OnlineOptions,
+) -> Result<OnlineResults> {
+    let agent = &agent(opts)?;
     let tocs = tocs(album);
     let catalog = album.summary.catalog.as_deref().map(catalog_key);
     let results: Vec<(OnlineSource, Result<Vec<OnlineMatch>>)> = std::thread::scope(|scope| {
@@ -131,9 +144,11 @@ pub fn lookup(album: &Album, sources: &[OnlineSource]) -> OnlineResults {
             .map(|&src| {
                 let tocs = &tocs;
                 let job = scope.spawn(move || match src {
-                    OnlineSource::MusicBrainz => musicbrainz(album, tocs),
-                    OnlineSource::Bangumi => bangumi::search(&album.summary.title),
-                    OnlineSource::Ctdb => ctdb(tocs),
+                    OnlineSource::MusicBrainz => musicbrainz(agent, album, tocs),
+                    OnlineSource::Bangumi => {
+                        bangumi::search(agent, &album.summary.title, opts.prefer_chinese_title)
+                    }
+                    OnlineSource::Ctdb => ctdb(agent, tocs),
                 });
                 (src, job)
             })
@@ -180,17 +195,26 @@ pub fn lookup(album: &Album, sources: &[OnlineSource]) -> OnlineResults {
     matches.sort_by_key(|m| (rank(m.matched_by), -m.score));
     let mut seen = HashSet::new();
     matches.retain(|m| seen.insert((m.source.clone(), m.id.clone())));
-    OnlineResults { matches, errors }
+    Ok(OnlineResults { matches, errors })
 }
 
-/// Downloads a cover into `dir` as `cover.jpg` (or `.png`), never
+/// Downloads a cover into `dir` as `<name>.jpg` (or `.png`), never
 /// overwriting a file, and returns its path.
-pub fn save_cover(url: &str, dir: &Path) -> Result<PathBuf> {
-    download_cover(url, dir).map_err(|e| anyhow!("封面下载失败：{}", describe(&e)))
+pub fn save_cover(url: &str, dir: &Path, name: &str, opts: &OnlineOptions) -> Result<PathBuf> {
+    // Only a plain file name: no separators or other surprises.
+    let name: String = name
+        .chars()
+        .filter(|c| c.is_alphanumeric() || matches!(c, '_' | '-' | ' '))
+        .collect();
+    let name = Some(name.trim())
+        .filter(|n| !n.is_empty())
+        .unwrap_or("cover");
+    download_cover(&agent(opts)?, url, dir, name)
+        .map_err(|e| anyhow!("封面下载失败：{}", describe(&e)))
 }
 
-fn download_cover(url: &str, dir: &Path) -> Result<PathBuf> {
-    let res = AGENT.get(url).call()?;
+fn download_cover(agent: &ureq::Agent, url: &str, dir: &Path, name: &str) -> Result<PathBuf> {
+    let res = agent.get(url).call()?;
     let ext = match res.content_type() {
         "image/png" => "png",
         "image/jpeg" => "jpg",
@@ -200,8 +224,8 @@ fn download_cover(url: &str, dir: &Path) -> Result<PathBuf> {
     res.into_reader().take(64 << 20).read_to_end(&mut bytes)?;
     let path = (1..)
         .map(|n| match n {
-            1 => dir.join(format!("cover.{ext}")),
-            n => dir.join(format!("cover ({n}).{ext}")),
+            1 => dir.join(format!("{name}.{ext}")),
+            n => dir.join(format!("{name} ({n}).{ext}")),
         })
         .find(|p| !p.exists())
         .unwrap();

@@ -1,7 +1,6 @@
 //! MusicBrainz web service (https://musicbrainz.org/doc/MusicBrainz_API).
 
 use crate::discid::Toc;
-use crate::AGENT;
 use album_model::{MatchKind, OnlineMatch, OnlineSource};
 use anyhow::Result;
 use serde_json::Value;
@@ -15,7 +14,7 @@ const SOURCE: &str = "MusicBrainz";
 static LAST: Mutex<Option<Instant>> = Mutex::new(None);
 
 /// GET `path` with `query`; `None` when MusicBrainz has no such entity.
-fn get(path: &str, query: &[(&str, &str)]) -> Result<Option<Value>> {
+fn get(agent: &ureq::Agent, path: &str, query: &[(&str, &str)]) -> Result<Option<Value>> {
     {
         let mut last = LAST.lock().unwrap();
         if let Some(t) = *last {
@@ -23,7 +22,7 @@ fn get(path: &str, query: &[(&str, &str)]) -> Result<Option<Value>> {
         }
         *last = Some(Instant::now());
     }
-    let mut req = AGENT.get(&format!("{API}/{path}")).query("fmt", "json");
+    let mut req = agent.get(&format!("{API}/{path}")).query("fmt", "json");
     for (k, v) in query {
         req = req.query(k, v);
     }
@@ -106,9 +105,10 @@ fn releases(v: Option<Value>, matched_by: MatchKind) -> Vec<OnlineMatch> {
 }
 
 /// Releases with this disc, or failing that (fuzzy) with a similar layout.
-pub fn by_toc(toc: &Toc) -> Result<Vec<OnlineMatch>> {
+pub fn by_toc(agent: &ureq::Agent, toc: &Toc) -> Result<Vec<OnlineMatch>> {
     let id = toc.disc_id();
     let v = get(
+        agent,
         &format!("discid/{id}"),
         &[
             ("toc", &toc.param()),
@@ -126,17 +126,21 @@ pub fn by_toc(toc: &Toc) -> Result<Vec<OnlineMatch>> {
     Ok(releases(v, kind))
 }
 
-pub fn by_catalog(catalog: &str) -> Result<Vec<OnlineMatch>> {
+pub fn by_catalog(agent: &ureq::Agent, catalog: &str) -> Result<Vec<OnlineMatch>> {
     let q = format!("catno:{}", quoted(catalog));
-    let v = get("release", &[("query", &q), ("limit", "10")])?;
+    let v = get(agent, "release", &[("query", &q), ("limit", "10")])?;
     Ok(releases(v, MatchKind::Catalog))
 }
 
-pub fn by_title(title: &str, artist: Option<&str>) -> Result<Vec<OnlineMatch>> {
+pub fn by_title(
+    agent: &ureq::Agent,
+    title: &str,
+    artist: Option<&str>,
+) -> Result<Vec<OnlineMatch>> {
     let mut q = format!("release:{}", quoted(title));
     if let Some(a) = artist {
         q += &format!(" AND artist:{}", quoted(a));
     }
-    let v = get("release", &[("query", &q), ("limit", "10")])?;
+    let v = get(agent, "release", &[("query", &q), ("limit", "10")])?;
     Ok(releases(v, MatchKind::Title))
 }

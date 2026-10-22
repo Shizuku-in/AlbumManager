@@ -2016,6 +2016,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "5b3dc8af474f516a851ff4bd12db780f948b9250ad37211e4eec0bccea54e01b"
 
 [[package]]
+name = "socks"
+version = "0.3.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f0c3dbbd9ae980613c6dd8e28a9407b50509d3803b57624d5dfe8315218cd58b"
+dependencies = [
+ "byteorder",
+ "libc",
+ "winapi",
+]
+
+[[package]]
 name = "stable_deref_trait"
 version = "1.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2169,6 +2180,7 @@ dependencies = [
  "rustls-pki-types",
  "serde",
  "serde_json",
+ "socks",
  "url",
  "webpki-roots 0.26.11",
 ]

@@ -27,15 +27,19 @@ Future<AlbumOverride?> showOnlineLookupDialog(
 String _errorText(Object e) => e is AnyhowException ? e.message : '$e';
 
 enum _Field {
-  title('标题'),
-  artist('艺术家'),
-  date('日期'),
-  catalog('品番'),
-  event('展会'),
-  cover('封面');
+  title(OnlineField.title),
+  artist(OnlineField.artist),
+  date(OnlineField.date),
+  catalog(OnlineField.catalog),
+  event(OnlineField.event),
+  cover(null);
 
-  const _Field(this.label);
-  final String label;
+  const _Field(this.field);
+
+  /// The setting deciding whether it's checked by default; null for the cover.
+  final OnlineField? field;
+
+  String get label => field?.label ?? '封面';
 }
 
 class _OnlineLookupDialog extends StatefulWidget {
@@ -59,8 +63,21 @@ class _OnlineLookupDialogState extends State<_OnlineLookupDialog> {
       widget.album.discs.fold(0, (n, d) => n + d.tracks.length);
   bool get _hasCover => _s.coverThumb != null;
 
-  Future<OnlineResults> _lookup() =>
-      api.lookupOnline(id: _s.id, sources: _sources);
+  Future<OnlineResults> _lookup() async {
+    final r = await api.lookupOnline(
+      id: _s.id,
+      sources: _sources,
+      options: settings.onlineOptions,
+    );
+    final best = r.matches.firstOrNull;
+    if (settings.openExactMatch &&
+        best?.matchedBy == MatchKind.discId &&
+        mounted &&
+        _picked == null) {
+      _pick(best!);
+    }
+    return r;
+  }
 
   /// The value as stored; the cover by whether there is one.
   String? _current(_Field f) => switch (f) {
@@ -85,15 +102,27 @@ class _OnlineLookupDialogState extends State<_OnlineLookupDialog> {
   String _shown(_Field f, String? v) =>
       (f == _Field.date ? settings.formatDate(v) : v) ?? '（无）';
 
+  /// Checked by default: what's new (per the settings), and the cover as
+  /// set in "下载封面".
+  bool _preselected(OnlineMatch m, _Field f) {
+    if (_online(m, f) == null) return false;
+    final field = f.field;
+    if (field == null) {
+      return switch (settings.coverDownload) {
+        CoverDownload.missing => !_hasCover,
+        CoverDownload.always => true,
+        CoverDownload.never => false,
+      };
+    }
+    return settings.preselects(field) && _online(m, f) != _current(f);
+  }
+
   void _pick(OnlineMatch m) => setState(() {
     _picked = m;
     _error = null;
-    // Preselect what's new; the cover only when the album has none.
     _fields = {
       for (final f in _Field.values)
-        if (_online(m, f) != null &&
-            (f == _Field.cover ? !_hasCover : _online(m, f) != _current(f)))
-          f,
+        if (_preselected(m, f)) f,
     };
   });
 
@@ -106,7 +135,12 @@ class _OnlineLookupDialogState extends State<_OnlineLookupDialog> {
     try {
       final ov = _s.overrides;
       final cover = _fields.contains(_Field.cover)
-          ? await api.saveOnlineCover(id: _s.id, url: m.coverUrl!)
+          ? await api.saveOnlineCover(
+              id: _s.id,
+              url: m.coverUrl!,
+              name: settings.coverFileName.name,
+              options: settings.onlineOptions,
+            )
           : ov.coverPath;
       String? take(_Field f, String? old) =>
           _fields.contains(f) ? _online(m, f) : old;
@@ -291,7 +325,7 @@ class _OnlineLookupDialogState extends State<_OnlineLookupDialog> {
           if (m.coverUrl != null)
             Expanded(
               child: Text(
-                '下载到专辑文件夹，不覆盖已有文件',
+                '保存为专辑文件夹中的 ${settings.coverFileName.label}，不覆盖已有文件',
                 style: t.textTheme.bodySmall?.copyWith(
                   color: t.colorScheme.onSurfaceVariant,
                 ),

@@ -72,6 +72,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
   int dco_decode_box_autoadd_i_32(dynamic raw);
 
   @protected
+  OnlineOptions dco_decode_box_autoadd_online_options(dynamic raw);
+
+  @protected
   RipRules dco_decode_box_autoadd_rip_rules(dynamic raw);
 
   @protected
@@ -175,6 +178,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   OnlineMatch dco_decode_online_match(dynamic raw);
+
+  @protected
+  OnlineOptions dco_decode_online_options(dynamic raw);
 
   @protected
   OnlineResults dco_decode_online_results(dynamic raw);
@@ -284,6 +290,11 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   int sse_decode_box_autoadd_i_32(SseDeserializer deserializer);
+
+  @protected
+  OnlineOptions sse_decode_box_autoadd_online_options(
+    SseDeserializer deserializer,
+  );
 
   @protected
   RipRules sse_decode_box_autoadd_rip_rules(SseDeserializer deserializer);
@@ -397,6 +408,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   OnlineMatch sse_decode_online_match(SseDeserializer deserializer);
+
+  @protected
+  OnlineOptions sse_decode_online_options(SseDeserializer deserializer);
 
   @protected
   OnlineResults sse_decode_online_results(SseDeserializer deserializer);
@@ -516,6 +530,12 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_box_autoadd_i_32(int self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_box_autoadd_online_options(
+    OnlineOptions self,
+    SseSerializer serializer,
+  );
 
   @protected
   void sse_encode_box_autoadd_rip_rules(
@@ -657,6 +677,9 @@ abstract class RustLibApiImplPlatform extends BaseApiImpl<RustLibWire> {
 
   @protected
   void sse_encode_online_match(OnlineMatch self, SseSerializer serializer);
+
+  @protected
+  void sse_encode_online_options(OnlineOptions self, SseSerializer serializer);
 
   @protected
   void sse_encode_online_results(OnlineResults self, SseSerializer serializer);

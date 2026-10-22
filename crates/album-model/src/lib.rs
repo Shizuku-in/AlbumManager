@@ -431,6 +431,16 @@ pub struct OnlineMatch {
     pub score: i32,
 }
 
+/// User options of online lookups.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct OnlineOptions {
+    /// `http://host:port` or `socks5://host:port`; None = direct.
+    pub proxy: Option<String>,
+    pub timeout_secs: u32,
+    /// Bangumi: the Chinese name as title when there is one.
+    pub prefer_chinese_title: bool,
+}
+
 /// Releases found online for an album, best matches first.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OnlineResults {

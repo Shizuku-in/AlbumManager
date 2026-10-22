@@ -478,11 +478,13 @@ fn wire__crate__api__library__lookup_online_impl(
                 flutter_rust_bridge::for_generated::SseDeserializer::new(message);
             let api_id = <String>::sse_decode(&mut deserializer);
             let api_sources = <Vec<album_model::OnlineSource>>::sse_decode(&mut deserializer);
+            let api_options = <album_model::OnlineOptions>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| {
                 transform_result_sse::<_, flutter_rust_bridge::for_generated::anyhow::Error>(
                     (move || {
-                        let output_ok = crate::api::library::lookup_online(api_id, api_sources)?;
+                        let output_ok =
+                            crate::api::library::lookup_online(api_id, api_sources, api_options)?;
                         std::result::Result::Ok(output_ok)
                     })(),
                 )
@@ -616,11 +618,18 @@ fn wire__crate__api__library__save_online_cover_impl(
                 flutter_rust_bridge::for_generated::SseDeserializer::new(message);
             let api_id = <String>::sse_decode(&mut deserializer);
             let api_url = <String>::sse_decode(&mut deserializer);
+            let api_name = <String>::sse_decode(&mut deserializer);
+            let api_options = <album_model::OnlineOptions>::sse_decode(&mut deserializer);
             deserializer.end();
             move |context| {
                 transform_result_sse::<_, flutter_rust_bridge::for_generated::anyhow::Error>(
                     (move || {
-                        let output_ok = crate::api::library::save_online_cover(api_id, api_url)?;
+                        let output_ok = crate::api::library::save_online_cover(
+                            api_id,
+                            api_url,
+                            api_name,
+                            api_options,
+                        )?;
                         std::result::Result::Ok(output_ok)
                     })(),
                 )
@@ -1144,6 +1153,12 @@ const _: fn() = || {
         let _: Option<String> = OnlineMatch.cover_url;
         let _: album_model::MatchKind = OnlineMatch.matched_by;
         let _: i32 = OnlineMatch.score;
+    }
+    {
+        let OnlineOptions = None::<album_model::OnlineOptions>.unwrap();
+        let _: Option<String> = OnlineOptions.proxy;
+        let _: u32 = OnlineOptions.timeout_secs;
+        let _: bool = OnlineOptions.prefer_chinese_title;
     }
     {
         let OnlineResults = None::<album_model::OnlineResults>.unwrap();
@@ -1833,6 +1848,20 @@ impl SseDecode for album_model::OnlineMatch {
             cover_url: var_coverUrl,
             matched_by: var_matchedBy,
             score: var_score,
+        };
+    }
+}
+
+impl SseDecode for album_model::OnlineOptions {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_decode(deserializer: &mut flutter_rust_bridge::for_generated::SseDeserializer) -> Self {
+        let mut var_proxy = <Option<String>>::sse_decode(deserializer);
+        let mut var_timeoutSecs = <u32>::sse_decode(deserializer);
+        let mut var_preferChineseTitle = <bool>::sse_decode(deserializer);
+        return album_model::OnlineOptions {
+            proxy: var_proxy,
+            timeout_secs: var_timeoutSecs,
+            prefer_chinese_title: var_preferChineseTitle,
         };
     }
 }
@@ -2663,6 +2692,28 @@ impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<album_model::OnlineMatch>>
     }
 }
 // Codec=Dco (DartCObject based), see doc to use other codecs
+impl flutter_rust_bridge::IntoDart for FrbWrapper<album_model::OnlineOptions> {
+    fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
+        [
+            self.0.proxy.into_into_dart().into_dart(),
+            self.0.timeout_secs.into_into_dart().into_dart(),
+            self.0.prefer_chinese_title.into_into_dart().into_dart(),
+        ]
+        .into_dart()
+    }
+}
+impl flutter_rust_bridge::for_generated::IntoDartExceptPrimitive
+    for FrbWrapper<album_model::OnlineOptions>
+{
+}
+impl flutter_rust_bridge::IntoIntoDart<FrbWrapper<album_model::OnlineOptions>>
+    for album_model::OnlineOptions
+{
+    fn into_into_dart(self) -> FrbWrapper<album_model::OnlineOptions> {
+        self.into()
+    }
+}
+// Codec=Dco (DartCObject based), see doc to use other codecs
 impl flutter_rust_bridge::IntoDart for FrbWrapper<album_model::OnlineResults> {
     fn into_dart(self) -> flutter_rust_bridge::for_generated::DartAbi {
         [
@@ -3398,6 +3449,15 @@ impl SseEncode for album_model::OnlineMatch {
         <Option<String>>::sse_encode(self.cover_url, serializer);
         <album_model::MatchKind>::sse_encode(self.matched_by, serializer);
         <i32>::sse_encode(self.score, serializer);
+    }
+}
+
+impl SseEncode for album_model::OnlineOptions {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    fn sse_encode(self, serializer: &mut flutter_rust_bridge::for_generated::SseSerializer) {
+        <Option<String>>::sse_encode(self.proxy, serializer);
+        <u32>::sse_encode(self.timeout_secs, serializer);
+        <bool>::sse_encode(self.prefer_chinese_title, serializer);
     }
 }
 

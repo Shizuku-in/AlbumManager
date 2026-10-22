@@ -120,6 +120,7 @@ abstract class RustLibApi extends BaseApi {
   Future<OnlineResults> crateApiLibraryLookupOnline({
     required String id,
     required List<OnlineSource> sources,
+    required OnlineOptions options,
   });
 
   Future<String> crateApiLibraryReadTextFile({required String path});
@@ -131,6 +132,8 @@ abstract class RustLibApi extends BaseApi {
   Future<String> crateApiLibrarySaveOnlineCover({
     required String id,
     required String url,
+    required String name,
+    required OnlineOptions options,
   });
 
   Stream<ScanEvent> crateApiLibraryScanLibrary({required bool force});
@@ -521,6 +524,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Future<OnlineResults> crateApiLibraryLookupOnline({
     required String id,
     required List<OnlineSource> sources,
+    required OnlineOptions options,
   }) {
     return handler.executeNormal(
       NormalTask(
@@ -528,6 +532,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(id, serializer);
           sse_encode_list_online_source(sources, serializer);
+          sse_encode_box_autoadd_online_options(options, serializer);
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
@@ -540,7 +545,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeErrorData: sse_decode_AnyhowException,
         ),
         constMeta: kCrateApiLibraryLookupOnlineConstMeta,
-        argValues: [id, sources],
+        argValues: [id, sources, options],
         apiImpl: this,
       ),
     );
@@ -549,7 +554,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiLibraryLookupOnlineConstMeta =>
       const TaskConstMeta(
         debugName: "lookup_online",
-        argNames: ["id", "sources"],
+        argNames: ["id", "sources", "options"],
       );
 
   @override
@@ -639,6 +644,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   Future<String> crateApiLibrarySaveOnlineCover({
     required String id,
     required String url,
+    required String name,
+    required OnlineOptions options,
   }) {
     return handler.executeNormal(
       NormalTask(
@@ -646,6 +653,8 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           final serializer = SseSerializer(generalizedFrbRustBinding);
           sse_encode_String(id, serializer);
           sse_encode_String(url, serializer);
+          sse_encode_String(name, serializer);
+          sse_encode_box_autoadd_online_options(options, serializer);
           pdeCallFfi(
             generalizedFrbRustBinding,
             serializer,
@@ -658,7 +667,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
           decodeErrorData: sse_decode_AnyhowException,
         ),
         constMeta: kCrateApiLibrarySaveOnlineCoverConstMeta,
-        argValues: [id, url],
+        argValues: [id, url, name, options],
         apiImpl: this,
       ),
     );
@@ -667,7 +676,7 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   TaskConstMeta get kCrateApiLibrarySaveOnlineCoverConstMeta =>
       const TaskConstMeta(
         debugName: "save_online_cover",
-        argNames: ["id", "url"],
+        argNames: ["id", "url", "name", "options"],
       );
 
   @override
@@ -1148,6 +1157,12 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  OnlineOptions dco_decode_box_autoadd_online_options(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    return dco_decode_online_options(raw);
+  }
+
+  @protected
   RipRules dco_decode_box_autoadd_rip_rules(dynamic raw) {
     // Codec=Dco (DartCObject based), see doc to use other codecs
     return dco_decode_rip_rules(raw);
@@ -1443,6 +1458,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       coverUrl: dco_decode_opt_String(arr[15]),
       matchedBy: dco_decode_match_kind(arr[16]),
       score: dco_decode_i_32(arr[17]),
+    );
+  }
+
+  @protected
+  OnlineOptions dco_decode_online_options(dynamic raw) {
+    // Codec=Dco (DartCObject based), see doc to use other codecs
+    final arr = raw as List<dynamic>;
+    if (arr.length != 3)
+      throw Exception('unexpected arr length: expect 3 but see ${arr.length}');
+    return OnlineOptions(
+      proxy: dco_decode_opt_String(arr[0]),
+      timeoutSecs: dco_decode_u_32(arr[1]),
+      preferChineseTitle: dco_decode_bool(arr[2]),
     );
   }
 
@@ -1858,6 +1886,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  OnlineOptions sse_decode_box_autoadd_online_options(
+    SseDeserializer deserializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    return (sse_decode_online_options(deserializer));
+  }
+
+  @protected
   RipRules sse_decode_box_autoadd_rip_rules(SseDeserializer deserializer) {
     // Codec=Sse (Serialization based), see doc to use other codecs
     return (sse_decode_rip_rules(deserializer));
@@ -2255,6 +2291,19 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
       coverUrl: var_coverUrl,
       matchedBy: var_matchedBy,
       score: var_score,
+    );
+  }
+
+  @protected
+  OnlineOptions sse_decode_online_options(SseDeserializer deserializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    var var_proxy = sse_decode_opt_String(deserializer);
+    var var_timeoutSecs = sse_decode_u_32(deserializer);
+    var var_preferChineseTitle = sse_decode_bool(deserializer);
+    return OnlineOptions(
+      proxy: var_proxy,
+      timeoutSecs: var_timeoutSecs,
+      preferChineseTitle: var_preferChineseTitle,
     );
   }
 
@@ -2700,6 +2749,15 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
   }
 
   @protected
+  void sse_encode_box_autoadd_online_options(
+    OnlineOptions self,
+    SseSerializer serializer,
+  ) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_online_options(self, serializer);
+  }
+
+  @protected
   void sse_encode_box_autoadd_rip_rules(
     RipRules self,
     SseSerializer serializer,
@@ -3026,6 +3084,14 @@ class RustLibApiImpl extends RustLibApiImplPlatform implements RustLibApi {
     sse_encode_opt_String(self.coverUrl, serializer);
     sse_encode_match_kind(self.matchedBy, serializer);
     sse_encode_i_32(self.score, serializer);
+  }
+
+  @protected
+  void sse_encode_online_options(OnlineOptions self, SseSerializer serializer) {
+    // Codec=Sse (Serialization based), see doc to use other codecs
+    sse_encode_opt_String(self.proxy, serializer);
+    sse_encode_u_32(self.timeoutSecs, serializer);
+    sse_encode_bool(self.preferChineseTitle, serializer);
   }
 
   @protected
