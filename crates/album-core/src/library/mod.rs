@@ -16,14 +16,14 @@ use std::path::{Path, PathBuf};
 use std::sync::{LazyLock, Mutex, MutexGuard, RwLock};
 
 #[derive(Default)]
-pub struct State {
-    pub data_dir: Option<PathBuf>,
-    pub root: Option<PathBuf>,
-    pub albums: Vec<Album>,
-    pub overrides: overrides::Overrides,
+struct State {
+    data_dir: Option<PathBuf>,
+    root: Option<PathBuf>,
+    albums: Vec<Album>,
+    overrides: overrides::Overrides,
 }
 
-pub static STATE: LazyLock<RwLock<State>> = LazyLock::new(|| RwLock::new(State::default()));
+static STATE: LazyLock<RwLock<State>> = LazyLock::new(|| RwLock::new(State::default()));
 
 // One writer owns the complete operation, including analysis and persistence.
 // Reject rather than queue: queued album IDs could belong to a different root.
@@ -147,6 +147,54 @@ pub fn get(id: &str) -> Option<Album> {
         .iter()
         .find(|a| a.summary.id == id)
         .cloned()
+}
+
+pub fn root() -> Option<String> {
+    STATE
+        .read()
+        .unwrap()
+        .root
+        .as_ref()
+        .map(|r| r.to_string_lossy().into_owned())
+}
+
+pub fn data_dir() -> Result<PathBuf> {
+    STATE
+        .read()
+        .unwrap()
+        .data_dir
+        .clone()
+        .ok_or_else(|| anyhow!("library not initialised"))
+}
+
+pub fn summaries() -> Vec<AlbumSummary> {
+    STATE
+        .read()
+        .unwrap()
+        .albums
+        .iter()
+        .map(|a| a.summary.clone())
+        .collect()
+}
+
+pub fn search_tracks(query: &str, titles: bool, artists: bool) -> Vec<String> {
+    let q = query.trim().to_lowercase();
+    if q.is_empty() || !(titles || artists) {
+        return Vec::new();
+    }
+    let hit = |s: &str| s.to_lowercase().contains(&q);
+    STATE
+        .read()
+        .unwrap()
+        .albums
+        .iter()
+        .filter(|a| {
+            a.discs.iter().flat_map(|d| &d.tracks).any(|t| {
+                (titles && hit(&t.title)) || (artists && t.artist.as_deref().is_some_and(hit))
+            })
+        })
+        .map(|a| a.summary.id.clone())
+        .collect()
 }
 
 /// Stores the user's edits for an album (empty = back to detection) and

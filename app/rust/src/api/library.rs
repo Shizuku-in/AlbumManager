@@ -9,28 +9,12 @@ use std::path::Path;
 use std::sync::Mutex;
 use std::time::Instant;
 
-fn summaries() -> Vec<AlbumSummary> {
-    library::STATE
-        .read()
-        .unwrap()
-        .albums
-        .iter()
-        .map(|a| a.summary.clone())
-        .collect()
-}
-
 /// Loads config + cached library. Call once at startup.
 pub fn init_library(data_dir: String) -> Result<LibraryInfo> {
     library::init(Path::new(&data_dir))?;
-    let root = library::STATE
-        .read()
-        .unwrap()
-        .root
-        .as_ref()
-        .map(|r| r.to_string_lossy().into_owned());
     Ok(LibraryInfo {
-        root,
-        albums: summaries(),
+        root: library::root(),
+        albums: library::summaries(),
     })
 }
 
@@ -60,7 +44,7 @@ pub fn scan_library(force: bool, sink: StreamSink<ScanEvent>) -> Result<()> {
         }
     })?;
     let _ = sink.lock().unwrap().add(ScanEvent::Finished {
-        albums: summaries(),
+        albums: library::summaries(),
         elapsed_ms: start.elapsed().as_millis() as i64,
         rescanned: rescanned as i32,
     });
@@ -71,23 +55,7 @@ pub fn scan_library(force: bool, sink: StreamSink<ScanEvent>) -> Result<()> {
 /// contains `query`, ignoring case. Sync: it only walks the in-memory library.
 #[flutter_rust_bridge::frb(sync)]
 pub fn search_tracks(query: String, titles: bool, artists: bool) -> Vec<String> {
-    let q = query.trim().to_lowercase();
-    if q.is_empty() || !(titles || artists) {
-        return Vec::new();
-    }
-    let hit = |s: &str| s.to_lowercase().contains(&q);
-    library::STATE
-        .read()
-        .unwrap()
-        .albums
-        .iter()
-        .filter(|a| {
-            a.discs.iter().flat_map(|d| &d.tracks).any(|t| {
-                (titles && hit(&t.title)) || (artists && t.artist.as_deref().is_some_and(hit))
-            })
-        })
-        .map(|a| a.summary.id.clone())
-        .collect()
+    library::search_tracks(&query, titles, artists)
 }
 
 /// Releases on the given online databases that may be this album, best
@@ -172,12 +140,7 @@ pub fn clear_thumbnail_cache() -> Result<()> {
 
 /// Where the app keeps its data and how much the thumbnail cache takes.
 pub fn cache_info() -> Result<CacheInfo> {
-    let data = library::STATE
-        .read()
-        .unwrap()
-        .data_dir
-        .clone()
-        .ok_or_else(|| anyhow!("library not initialised"))?;
+    let data = library::data_dir()?;
     let (mut count, mut bytes) = (0, 0);
     if let Ok(entries) = std::fs::read_dir(data.join("thumbs")) {
         for m in entries
