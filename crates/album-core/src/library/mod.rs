@@ -37,6 +37,12 @@ pub fn init(data_dir: &Path) -> Result<()> {
             .unwrap_or_else(album_formats::riplog::default_rules),
     );
     let root = cfg.root.map(PathBuf::from);
+    overrides::migrate(data_dir, root.as_deref())?;
+    let edits = root
+        .as_deref()
+        .map(|r| overrides::load(data_dir, r))
+        .transpose()?
+        .unwrap_or_default();
     let albums = match &root {
         Some(r) => cache::load_cache(data_dir, r).unwrap_or_default(),
         None => Vec::new(),
@@ -45,7 +51,7 @@ pub fn init(data_dir: &Path) -> Result<()> {
     st.data_dir = Some(data_dir.to_path_buf());
     st.root = root;
     st.albums = albums;
-    st.overrides = overrides::load(data_dir);
+    st.overrides = edits;
     Ok(())
 }
 
@@ -58,13 +64,16 @@ pub fn set_root(root: &Path) -> Result<()> {
         .data_dir
         .clone()
         .ok_or_else(|| anyhow!("library not initialised"))?;
+    let edits = overrides::load(&data, root)?;
+    let mut cfg = cache::load_config(&data);
+    cfg.root = Some(root.to_string_lossy().into_owned());
+    cache::save_config(&data, &cfg)?;
     if st.root.as_deref() != Some(root) {
         st.albums.clear();
     }
     st.root = Some(root.to_path_buf());
-    let mut cfg = cache::load_config(&data);
-    cfg.root = Some(root.to_string_lossy().into_owned());
-    cache::save_config(&data, &cfg)
+    st.overrides = edits;
+    Ok(())
 }
 
 /// Validates, installs and saves recognition rules. Takes effect on the next
@@ -140,7 +149,11 @@ pub fn set_override(id: &str, ov: AlbumOverride) -> Result<Album> {
         } else {
             st.overrides.insert(id.to_string(), ov);
         }
-        overrides::save(&data, &st.overrides)?;
+        let root = st
+            .root
+            .as_ref()
+            .ok_or_else(|| anyhow!("尚未设置专辑库目录"))?;
+        overrides::save(&data, root, &st.overrides)?;
     }
     rescan_album(id)
 }

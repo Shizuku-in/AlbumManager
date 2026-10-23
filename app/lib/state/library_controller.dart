@@ -8,6 +8,7 @@ import 'package:album_manager/src/rust/api/library.dart' as api;
 import 'package:album_manager/src/rust/api/models.dart';
 import 'package:album_manager/src/rust/third_party/album_model.dart';
 import 'package:album_manager/state/settings_controller.dart';
+import 'package:album_manager/state/favorites.dart';
 import 'package:album_manager/util/memo.dart';
 
 class ScanProgress {
@@ -39,6 +40,7 @@ class LibraryController extends ChangeNotifier {
     final dir = await getApplicationSupportDirectory();
     final info = await api.initLibrary(dataDir: dir.path);
     root = info.root;
+    await favorites.load(root);
     albums = info.albums;
     ready = true;
     notifyListeners();
@@ -53,6 +55,7 @@ class LibraryController extends ChangeNotifier {
     await api.setLibraryRoot(root: path);
     if (path != root) albums = const [];
     root = path;
+    await favorites.load(root);
     notifyListeners();
     await rescan();
   }

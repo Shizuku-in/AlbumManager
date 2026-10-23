@@ -3,7 +3,6 @@ import 'package:window_manager/window_manager.dart';
 
 import 'package:album_manager/app.dart';
 import 'package:album_manager/src/rust/frb_generated.dart';
-import 'package:album_manager/state/favorites.dart';
 import 'package:album_manager/state/library_browser.dart';
 import 'package:album_manager/state/library_controller.dart';
 import 'package:album_manager/state/settings_controller.dart';
@@ -15,7 +14,6 @@ Future<void> main() async {
   PaintingBinding.instance.imageCache.maximumSizeBytes = 400 << 20;
   await RustLib.init();
   await settings.load();
-  favorites.load();
   browser.load();
   await windowManager.ensureInitialized();
   await windowManager.waitUntilReadyToShow(
