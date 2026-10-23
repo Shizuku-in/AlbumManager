@@ -33,10 +33,15 @@ class LibraryController extends ChangeNotifier {
   /// indicators listen to it.
   final scanProgress = ValueNotifier<ScanProgress?>(null);
 
-  /// Bumped when one album changes so detail pages can reload; [allAlbums]
-  /// when every album may have changed.
-  final albumChanged = ValueNotifier<String?>(null);
-  static const allAlbums = '*';
+  /// A null id invalidates every album; revision also notifies for repeated ids.
+  final albumChanged = ValueNotifier<({String? id, int revision})>((
+    id: null,
+    revision: 0,
+  ));
+
+  void _albumChanged([String? id]) {
+    albumChanged.value = (id: id, revision: albumChanged.value.revision + 1);
+  }
 
   Future<void> init() async {
     final dir = await getApplicationSupportDirectory();
@@ -59,8 +64,10 @@ class LibraryController extends ChangeNotifier {
     notifyListeners();
     try {
       await api.setLibraryRoot(root: path);
-      if (path != root) albums = const [];
+      final changed = path != root;
+      if (changed) albums = const [];
       root = path;
+      if (changed) _albumChanged();
       await favorites.load(root);
     } finally {
       _changingRoot = false;
@@ -88,6 +95,7 @@ class LibraryController extends ChangeNotifier {
             :final rescanned,
           ):
             this.albums = albums;
+            _albumChanged();
             lastScanMessage =
                 '扫描完成：${albums.length} 张专辑，更新 $rescanned 张，用时 ${(elapsedMs / 1000).toStringAsFixed(1)} 秒';
         }
@@ -101,17 +109,22 @@ class LibraryController extends ChangeNotifier {
   }
 
   void replaceAlbum(AlbumSummary s) {
-    albums = [for (final a in albums) a.id == s.id ? s : a];
-    albumChanged.value = s.id;
+    final index = albums.indexWhere((a) => a.id == s.id && a.path == s.path);
+    // Ignore responses from an old library, and callers publishing twice.
+    if (index < 0 || identical(albums[index], s)) return;
+    albums = [...albums]..[index] = s;
+    _albumChanged(s.id);
     notifyListeners();
   }
 
   /// Applies new rip log rules: the library re-judges every album's logs.
   Future<void> setRipRules(RipRules rules) async {
-    albums = await api.setRipRules(rules: rules);
+    final currentRoot = root;
+    final updated = await api.setRipRules(rules: rules);
+    if (root != currentRoot) return;
+    albums = updated;
     // Open album pages reload their logs.
-    albumChanged.value = null;
-    albumChanged.value = allAlbums;
+    _albumChanged();
     notifyListeners();
   }
 

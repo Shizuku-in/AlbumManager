@@ -37,6 +37,8 @@ class AlbumPage extends StatefulWidget {
 class _AlbumPageState extends State<AlbumPage> with TickerProviderStateMixin {
   late AlbumSummary _s = widget.summary;
   Album? _album;
+  late final _root = library.root;
+  int _loadVersion = 0;
   // The controller also notifies when its indicator animation ends; select()
   // ignores repeats.
   late final TabController _tabs = TabController(length: 4, vsync: this)
@@ -72,13 +74,23 @@ class _AlbumPageState extends State<AlbumPage> with TickerProviderStateMixin {
   }
 
   void _onChanged() {
-    final changed = library.albumChanged.value;
-    if (changed == _s.id || changed == LibraryController.allAlbums) _load();
+    if (library.root != _root) {
+      Navigator.of(context).maybePop();
+      return;
+    }
+    final changed = library.albumChanged.value.id;
+    if (changed == null || changed == _s.id) _load();
   }
 
   Future<void> _load() async {
+    final version = ++_loadVersion;
+    if (library.root != _root) return;
     final a = await api.getAlbum(id: _s.id);
-    if (!mounted || a == null) return;
+    if (!mounted || version != _loadVersion || library.root != _root) return;
+    if (a == null || a.summary.path != widget.summary.path) {
+      Navigator.of(context).maybePop();
+      return;
+    }
     setState(() {
       _album = a;
       _s = a.summary;
