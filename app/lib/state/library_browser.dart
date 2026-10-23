@@ -51,10 +51,7 @@ extension ContentFlagX on ContentFlag {
     ContentFlag.hasScans => a.hasScans,
     ContentFlag.hasCue => a.hasCue,
     ContentFlag.multiDisc => a.discCount > 1,
-    ContentFlag.edited =>
-      a.overrides.source != null ||
-          a.overrides.coverPath != null ||
-          a.overrides.hasScans != null,
+    ContentFlag.edited => a.overrides != const AlbumOverride(),
   };
 }
 
