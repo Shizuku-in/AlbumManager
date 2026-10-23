@@ -28,7 +28,7 @@ dependencies = [
 
 [[package]]
 name = "album-core"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "album-formats",
  "album-model",
@@ -44,7 +44,7 @@ dependencies = [
 
 [[package]]
 name = "album-formats"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "album-model",
  "chardetng",
@@ -55,14 +55,14 @@ dependencies = [
 
 [[package]]
 name = "album-model"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "serde",
 ]
 
 [[package]]
 name = "album-online"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "album-formats",
  "album-model",
@@ -1833,7 +1833,7 @@ dependencies = [
 
 [[package]]
 name = "rust_lib_album_manager"
-version = "0.1.1"
+version = "0.1.2"
 dependencies = [
  "album-core",
  "album-formats",
