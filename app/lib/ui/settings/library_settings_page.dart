@@ -37,7 +37,9 @@ class LibrarySettingsPage extends StatelessWidget {
                     ),
                   const SizedBox(width: 8),
                   FilledButton.tonal(
-                    onPressed: () => pickLibraryRoot(context),
+                    onPressed: !library.ready || library.busy
+                        ? null
+                        : () => pickLibraryRoot(context),
                     child: const Text('更改'),
                   ),
                 ],

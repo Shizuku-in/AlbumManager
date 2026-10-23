@@ -5,7 +5,7 @@ use crate::frb_generated::StreamSink;
 use album_core::{imaging, library, rules};
 use album_formats::{riplog, text};
 use anyhow::{anyhow, Result};
-use std::path::{Path, PathBuf};
+use std::path::Path;
 use std::sync::Mutex;
 use std::time::Instant;
 
@@ -109,9 +109,10 @@ pub fn save_online_cover(
     name: String,
     options: OnlineOptions,
 ) -> Result<String> {
-    let album = library::get(&id).ok_or_else(|| anyhow!("album not found"))?;
-    let path = album_online::save_cover(&url, Path::new(&album.summary.path), &name, &options)?;
-    Ok(path.to_string_lossy().into_owned())
+    library::edit_album_files(&id, |album| {
+        let path = album_online::save_cover(&url, Path::new(&album.summary.path), &name, &options)?;
+        Ok(path.to_string_lossy().into_owned())
+    })
 }
 
 pub fn get_album(id: String) -> Option<Album> {
@@ -161,34 +162,12 @@ pub fn translate_log(path: String) -> Result<Option<String>> {
 /// `include_missing_bom` also UTF-8 ones that lack the BOM. With
 /// `keep_backup` the original is kept next to it as `*.cue.bak`.
 pub fn fix_cue_encoding(id: String, include_missing_bom: bool, keep_backup: bool) -> Result<Album> {
-    let album = library::get(&id).ok_or_else(|| anyhow!("album not found"))?;
-    for cue in album
-        .cues
-        .iter()
-        .filter(|c| !c.is_utf8 || (include_missing_bom && c.missing_bom))
-    {
-        let path = PathBuf::from(&cue.path);
-        let bytes = std::fs::read(&path)?;
-        let decoded = text::decode(&bytes);
-        let backup = PathBuf::from(format!("{}.bak", cue.path));
-        if keep_backup && !backup.exists() {
-            std::fs::write(&backup, &bytes)?;
-        }
-        let mut out = vec![0xEF, 0xBB, 0xBF];
-        out.extend_from_slice(decoded.text.as_bytes());
-        std::fs::write(&path, out)?;
-    }
-    library::rescan_album(&id)
+    library::fix_cue_encoding(&id, include_missing_bom, keep_backup)
 }
 
 /// Removes all cached thumbnails (they are regenerated on next scan).
 pub fn clear_thumbnail_cache() -> Result<()> {
-    let (_, data) = library::dirs()?;
-    let dir = data.join("thumbs");
-    if dir.exists() {
-        std::fs::remove_dir_all(dir)?;
-    }
-    Ok(())
+    library::clear_thumbnail_cache()
 }
 
 /// Where the app keeps its data and how much the thumbnail cache takes.

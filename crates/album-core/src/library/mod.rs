@@ -13,7 +13,7 @@ use crate::scanner::analyze;
 use album_model::{Album, AlbumOverride, AlbumSummary, RipRules, ScanRules};
 use anyhow::{anyhow, Result};
 use std::path::{Path, PathBuf};
-use std::sync::{LazyLock, RwLock};
+use std::sync::{LazyLock, Mutex, MutexGuard, RwLock};
 
 #[derive(Default)]
 pub struct State {
@@ -25,7 +25,18 @@ pub struct State {
 
 pub static STATE: LazyLock<RwLock<State>> = LazyLock::new(|| RwLock::new(State::default()));
 
+// One writer owns the complete operation, including analysis and persistence.
+// Reject rather than queue: queued album IDs could belong to a different root.
+static MUTATION: Mutex<()> = Mutex::new(());
+
+fn begin_mutation() -> Result<MutexGuard<'static, ()>> {
+    MUTATION
+        .try_lock()
+        .map_err(|_| anyhow!("专辑库正在更新，请完成后重试"))
+}
+
 pub fn init(data_dir: &Path) -> Result<()> {
+    let _operation = begin_mutation()?;
     std::fs::create_dir_all(data_dir)?;
     let cfg = cache::load_config(data_dir);
     // Invalid saved rules fall back to the defaults rather than failing startup.
@@ -56,6 +67,7 @@ pub fn init(data_dir: &Path) -> Result<()> {
 }
 
 pub fn set_root(root: &Path) -> Result<()> {
+    let _operation = begin_mutation()?;
     if !root.is_dir() {
         return Err(anyhow!("目录不存在：{}", root.display()));
     }
@@ -79,6 +91,7 @@ pub fn set_root(root: &Path) -> Result<()> {
 /// Validates, installs and saves recognition rules. Takes effect on the next
 /// full scan.
 pub fn set_rules(r: ScanRules) -> Result<()> {
+    let _operation = begin_mutation()?;
     rules::set(r.clone())?;
     let data = STATE
         .read()
@@ -94,6 +107,7 @@ pub fn set_rules(r: ScanRules) -> Result<()> {
 /// Installs new rip log rules and re-judges every album's logs with them
 /// (no files are read). Returns the updated summaries.
 pub fn set_rip_rules(r: RipRules) -> Result<Vec<AlbumSummary>> {
+    let _operation = begin_mutation()?;
     rules::set_rip(r.clone());
     let mut st = STATE.write().unwrap();
     let data = st
@@ -138,6 +152,7 @@ pub fn get(id: &str) -> Option<Album> {
 /// Stores the user's edits for an album (empty = back to detection) and
 /// re-analyses it so cleared values return to their detected state.
 pub fn set_override(id: &str, ov: AlbumOverride) -> Result<Album> {
+    let _operation = begin_mutation()?;
     {
         let mut st = STATE.write().unwrap();
         let data = st
@@ -155,5 +170,45 @@ pub fn set_override(id: &str, ov: AlbumOverride) -> Result<Album> {
             .ok_or_else(|| anyhow!("尚未设置专辑库目录"))?;
         overrides::save(&data, root, &st.overrides)?;
     }
-    rescan_album(id)
+    scan::rescan_album_locked(id)
+}
+
+/// File edits share the same writer gate as scans and root changes.
+pub fn edit_album_files<T>(id: &str, edit: impl FnOnce(&Album) -> Result<T>) -> Result<T> {
+    let _operation = begin_mutation()?;
+    let album = get(id).ok_or_else(|| anyhow!("album not found"))?;
+    edit(&album)
+}
+
+pub fn fix_cue_encoding(id: &str, include_missing_bom: bool, keep_backup: bool) -> Result<Album> {
+    use album_formats::text;
+    let _operation = begin_mutation()?;
+    let album = get(id).ok_or_else(|| anyhow!("album not found"))?;
+    for cue in album
+        .cues
+        .iter()
+        .filter(|c| !c.is_utf8 || (include_missing_bom && c.missing_bom))
+    {
+        let path = Path::new(&cue.path);
+        let bytes = std::fs::read(path)?;
+        let decoded = text::decode(&bytes);
+        let backup = PathBuf::from(format!("{}.bak", cue.path));
+        if keep_backup && !backup.exists() {
+            std::fs::write(&backup, &bytes)?;
+        }
+        let mut out = vec![0xEF, 0xBB, 0xBF];
+        out.extend_from_slice(decoded.text.as_bytes());
+        std::fs::write(path, out)?;
+    }
+    scan::rescan_album_locked(id)
+}
+
+pub fn clear_thumbnail_cache() -> Result<()> {
+    let _operation = begin_mutation()?;
+    let (_, data) = dirs()?;
+    let dir = data.join("thumbs");
+    if dir.exists() {
+        std::fs::remove_dir_all(dir)?;
+    }
+    Ok(())
 }

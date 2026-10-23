@@ -268,7 +268,7 @@ pub fn current() -> Arc<Rules> {
 }
 
 /// Validates and installs new rules.
-pub fn set(rules: ScanRules) -> Result<()> {
+pub(crate) fn set(rules: ScanRules) -> Result<()> {
     *CURRENT.write().unwrap() = Arc::new(Rules::compile(rules)?);
     Ok(())
 }
@@ -281,6 +281,6 @@ pub fn rip() -> RipRules {
     RIP.read().unwrap().clone()
 }
 
-pub fn set_rip(rules: RipRules) {
+pub(crate) fn set_rip(rules: RipRules) {
     *RIP.write().unwrap() = rules;
 }

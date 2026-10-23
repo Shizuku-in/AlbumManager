@@ -13,6 +13,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 /// Scans the library; unchanged albums (same fingerprint) are reused unless `force`.
 /// Returns the number of re-analysed albums.
 pub fn scan(force: bool, progress: impl Fn(usize, usize, &str) + Sync) -> Result<usize> {
+    let _operation = super::begin_mutation()?;
     let (root, data) = dirs()?;
     let (previous, edits): (HashMap<String, Album>, overrides::Overrides) = {
         let st = STATE.read().unwrap();
@@ -73,6 +74,11 @@ pub fn scan(force: bool, progress: impl Fn(usize, usize, &str) + Sync) -> Result
 }
 
 pub fn rescan_album(id: &str) -> Result<Album> {
+    let _operation = super::begin_mutation()?;
+    rescan_album_locked(id)
+}
+
+pub(super) fn rescan_album_locked(id: &str) -> Result<Album> {
     let (root, data) = dirs()?;
     let dir = root.join(id);
     let mut album = analyze::analyze(&root, &dir, &data);

@@ -7,6 +7,38 @@ use std::collections::HashMap;
 use std::path::Path;
 
 #[test]
+fn scan_rejects_conflicting_writes_and_releases_gate() {
+    let data = Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../target")
+        .join(format!(
+            "album-scan-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+    let root = data.join("library");
+    let other = data.join("other");
+    std::fs::create_dir_all(&root).unwrap();
+    std::fs::create_dir(&other).unwrap();
+    init(&data).unwrap();
+    set_root(&root).unwrap();
+    scan(false, |_, _, _| {
+        assert!(set_root(&other).is_err());
+        assert!(set_override("album", AlbumOverride::default()).is_err());
+        assert!(set_rules(ScanRules::default()).is_err());
+        assert!(set_rip_rules(album_formats::riplog::default_rules()).is_err());
+        assert!(rescan_album("album").is_err());
+    })
+    .unwrap();
+    assert_eq!(dirs().unwrap().0, root);
+    set_root(&other).unwrap();
+    assert_eq!(dirs().unwrap().0, other);
+    std::fs::remove_dir_all(data).unwrap();
+}
+
+#[test]
 #[ignore]
 fn real_library() {
     let root = std::env::var("ALBUM_ROOT").unwrap_or_else(|_| "F:/Music".into());

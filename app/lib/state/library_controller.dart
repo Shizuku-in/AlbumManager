@@ -26,6 +26,8 @@ class LibraryController extends ChangeNotifier {
   List<AlbumSummary> albums = const [];
   bool ready = false;
   String? lastScanMessage;
+  bool _changingRoot = false;
+  bool get busy => scanning || _changingRoot;
 
   /// Non-null while a scan is running. Updated ~30×/s, so only the progress
   /// indicators listen to it.
@@ -52,18 +54,25 @@ class LibraryController extends ChangeNotifier {
   }
 
   Future<void> setRoot(String path) async {
-    await api.setLibraryRoot(root: path);
-    if (path != root) albums = const [];
-    root = path;
-    await favorites.load(root);
+    if (!ready || busy) throw StateError('专辑库正在更新，请完成后重试');
+    _changingRoot = true;
     notifyListeners();
+    try {
+      await api.setLibraryRoot(root: path);
+      if (path != root) albums = const [];
+      root = path;
+      await favorites.load(root);
+    } finally {
+      _changingRoot = false;
+      notifyListeners();
+    }
     await rescan();
   }
 
   bool get scanning => scanProgress.value != null;
 
   Future<void> rescan({bool force = false}) async {
-    if (scanning || root == null) return;
+    if (busy || root == null) return;
     scanProgress.value = const ScanProgress(0, 0, '');
     notifyListeners();
     try {

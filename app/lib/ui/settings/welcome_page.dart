@@ -8,7 +8,15 @@ Future<void> pickLibraryRoot(BuildContext context) async {
     confirmButtonText: '选择专辑库',
     initialDirectory: library.root,
   );
-  if (dir != null) await library.setRoot(dir);
+  if (dir == null) return;
+  try {
+    await library.setRoot(dir);
+  } catch (e) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text('切换专辑库失败：$e')));
+    }
+  }
 }
 
 class WelcomePage extends StatelessWidget {
