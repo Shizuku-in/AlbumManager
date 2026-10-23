@@ -1,6 +1,6 @@
 //! On-disk persistence: `config.json` (library root, rules) and `library.json` (scan cache).
 
-use super::State;
+use super::STATE;
 use album_model::{Album, RipRules, ScanRules};
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
@@ -49,17 +49,29 @@ pub fn load_cache(data: &Path, root: &Path) -> Option<Vec<Album>> {
     (cache.version == CACHE_VERSION && Path::new(&cache.root) == root).then_some(cache.albums)
 }
 
-pub fn save_cache(st: &State) -> Result<()> {
-    let (Some(data), Some(root)) = (&st.data_dir, &st.root) else {
-        return Ok(());
+/// Called while holding the writer gate, but without a state lock. Serialize
+/// borrowed albums under a read lock, then release it before disk I/O.
+pub fn save_cache() -> Result<()> {
+    #[derive(Serialize)]
+    struct CacheRef<'a> {
+        version: u32,
+        root: std::borrow::Cow<'a, str>,
+        albums: &'a [Album],
+    }
+    let (path, bytes) = {
+        let st = STATE.read().unwrap();
+        let (Some(data), Some(root)) = (&st.data_dir, &st.root) else {
+            return Ok(());
+        };
+        let cache = CacheRef {
+            version: CACHE_VERSION,
+            root: root.to_string_lossy(),
+            albums: &st.albums,
+        };
+        (cache_path(data), serde_json::to_vec(&cache)?)
     };
-    let cache = Cache {
-        version: CACHE_VERSION,
-        root: root.to_string_lossy().into_owned(),
-        albums: st.albums.clone(),
-    };
-    let tmp = cache_path(data).with_extension("tmp");
-    std::fs::write(&tmp, serde_json::to_vec(&cache)?)?;
-    std::fs::rename(tmp, cache_path(data))?;
+    let tmp = path.with_extension("tmp");
+    std::fs::write(&tmp, bytes)?;
+    std::fs::rename(tmp, path)?;
     Ok(())
 }

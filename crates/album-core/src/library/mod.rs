@@ -121,8 +121,10 @@ pub fn set_rip_rules(r: RipRules) -> Result<Vec<AlbumSummary>> {
         let source = album.summary.source;
         analyze::apply_source(&mut album.summary, &mut album.logs, source);
     }
-    cache::save_cache(&st)?;
-    Ok(st.albums.iter().map(|a| a.summary.clone()).collect())
+    let summaries = st.albums.iter().map(|a| a.summary.clone()).collect();
+    drop(st);
+    cache::save_cache()?;
+    Ok(summaries)
 }
 
 /// (library root, app data dir)

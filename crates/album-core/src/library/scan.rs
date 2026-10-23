@@ -15,16 +15,13 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 pub fn scan(force: bool, progress: impl Fn(usize, usize, &str) + Sync) -> Result<usize> {
     let _operation = super::begin_mutation()?;
     let (root, data) = dirs()?;
-    let (previous, edits): (HashMap<String, Album>, overrides::Overrides) = {
-        let st = STATE.read().unwrap();
-        (
-            st.albums
-                .iter()
-                .map(|a| (a.summary.id.clone(), a.clone()))
-                .collect(),
-            st.overrides.clone(),
-        )
-    };
+    // The writer gate keeps this snapshot stable; queries can still read it.
+    let snapshot = STATE.read().unwrap();
+    let previous: HashMap<&str, &Album> = snapshot
+        .albums
+        .iter()
+        .map(|a| (a.summary.id.as_str(), a))
+        .collect();
     let album_dirs = discover(&root);
     let total = album_dirs.len();
     progress(0, total, "");
@@ -39,7 +36,7 @@ pub fn scan(force: bool, progress: impl Fn(usize, usize, &str) + Sync) -> Result
                 .to_string_lossy()
                 .replace('\\', "/");
             let (fp, files) = list_files(dir);
-            let reuse = previous.get(&id).filter(|old| {
+            let reuse = previous.get(id.as_str()).copied().filter(|old| {
                 !force
                     && old.fingerprint == fp
                     && old
@@ -55,7 +52,7 @@ pub fn scan(force: bool, progress: impl Fn(usize, usize, &str) + Sync) -> Result
                 None => {
                     rescanned.fetch_add(1, Ordering::Relaxed);
                     let mut a = analyze::analyze_files(&root, dir, &data, fp, files);
-                    if let Some(ov) = edits.get(&id) {
+                    if let Some(ov) = snapshot.overrides.get(&id) {
                         overrides::apply(&mut a, ov, &data);
                     }
                     a
@@ -67,9 +64,12 @@ pub fn scan(force: bool, progress: impl Fn(usize, usize, &str) + Sync) -> Result
         })
         .collect();
     albums.sort_by(|a, b| a.summary.id.cmp(&b.summary.id));
+    drop(previous);
+    drop(snapshot);
     let mut st = STATE.write().unwrap();
     st.albums = albums;
-    cache::save_cache(&st)?;
+    drop(st);
+    cache::save_cache()?;
     Ok(rescanned.into_inner())
 }
 
@@ -90,6 +90,7 @@ pub(super) fn rescan_album_locked(id: &str) -> Result<Album> {
         Some(slot) => *slot = album.clone(),
         None => st.albums.push(album.clone()),
     }
-    cache::save_cache(&st)?;
+    drop(st);
+    cache::save_cache()?;
     Ok(album)
 }
